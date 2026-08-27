@@ -19,6 +19,15 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
 
 ---
 
+## [0.0.6] - Real v0: hardware-independent tool logic (ID decode, lifecycle, pre-heat)
+
+- **`src/tool_id.h`/`.c`** - decodes a raw 5-bit ID-jumper/F-RAM reading into a tool identity (`tool_id_decode()`), with `TOOL_ID_NONE` (all bits set) reserved as "no tool present". Pure bit masking, no GPIO/F-RAM driver needed.
+- **`src/lifecycle.h`/`.c`** - the README's "Lifecycle Logs" feature: `lifecycle_t` (cycle + usage-time counters), `lifecycle_record_use()`, `lifecycle_needs_maintenance()` against a caller-supplied threshold.
+- **`src/preheat.h`/`.c`** - the README's "Smart Idle" workflow: `preheat_target_temp_c()` (200°C for a soldering iron, matching the README's own diagram; 350°C for hot air; 0 for tools with nothing to preheat) and `preheat_should_activate()` (starts pre-heating once an anticipated swap is within its lead time, not before and not after it already happened).
+- **`tests/`** - a minimal, dependency-free host-side test harness (`test_runner.h`'s `TEST_ASSERT`, `test_main.c`) compiled with the *host's* C compiler, never `arm-none-eabi-gcc` - these are pure-logic tests, not anything that touches real MCU registers. 25 real assertions across `test_tool_id.c`, `test_lifecycle.c`, `test_preheat.c`.
+- **`build_firmware.sh`/`.bat`** - new step 2, before the version bump and the ARM cross-compile: builds and runs the host-native test suite, failing the whole build if any assertion fails.
+- Still out of scope: real GPIO/F-RAM/CAN drivers to actually read a tool's ID, persist its lifecycle counters, and command a real heater - all need the PCB this board doesn't have yet.
+
 ## [0.0.3]
 
 - Build version synchronized with `hydra-umc.project.json` and the repository-native version source.

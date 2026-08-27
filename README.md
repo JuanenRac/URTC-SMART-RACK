@@ -23,13 +23,14 @@
 
 It enables "Smart Idle" modes, such as pre-heating T12 soldering tips just before a tool swap, and tracks the electronic ID, firmware version, and total usage cycles of every URTC head, ensuring optimal maintenance and zero-second deployment.
 
-No PCB/schematic exists for this board yet (see `hardware/`) - the features below describe the target design; only the firmware toolchain itself is real today.
+No PCB/schematic exists for this board yet (see `hardware/`), so nothing below can drive real GPIO/F-RAM/CAN hardware - but the *logic* those features boil down to (decoding an ID, tracking usage, deciding when to pre-heat and to what temperature) is real, pure C, unit-tested today.
 
 ### Key Features:
-* 🗄️ **Tool Tracking** — automatic identification of URTC heads via 5-bit ID jumpers or F-RAM. *(planned — needs the real PCB)*
-* 🌡️ **Pre-Heating Logic** — intelligent thermal management for soldering and hot-air tools. *(planned)*
-* 📈 **Lifecycle Logs** — records total actuation cycles and hours of use into the tool's F-RAM. *(planned)*
-* 📡 **CAN Integration** — communicates directly with the HYDRA-UMC Kinematic Brain for coordinated ATC (Auto Tool Change). *(planned)*
+* ✅ **Real v0 - tool ID, lifecycle & pre-heat logic:** `tool_id.c` decodes a raw 5-bit ID reading into a tool identity; `lifecycle.c` tracks usage cycles/time and flags maintenance due; `preheat.c` decides when Smart Idle pre-heating should start and to what target temperature. 25 test assertions on the host's own C compiler - no PCB, GPIO driver, or F-RAM needed to run or test any of it.
+* 🗄️ **Tool Tracking** — automatic identification of URTC heads via 5-bit ID jumpers or F-RAM. *(the ID-decoding logic itself is real - see above; reading real jumpers/F-RAM needs the PCB.)*
+* 🌡️ **Pre-Heating Logic** — intelligent thermal management for soldering and hot-air tools. *(the activation decision and target temperatures are real - see above; driving a real heater needs the PCB.)*
+* 📈 **Lifecycle Logs** — records total actuation cycles and hours of use into the tool's F-RAM. *(the counters and maintenance-due logic are real - see above; persisting them to real F-RAM needs the PCB.)*
+* 📡 **CAN Integration** — communicates directly with the HYDRA-UMC Kinematic Brain for coordinated ATC (Auto Tool Change). *(planned - needs a real CAN transceiver.)*
 * ✅ **Cortex-M4F firmware toolchain** — a real bare-metal image (startup + linker + `main.c`) that cross-compiles and links with `arm-none-eabi-gcc`, the same toolchain sibling repo URTC uses. *(implemented — see BUILD below)*
 
 ---
@@ -52,6 +53,7 @@ flowchart TB
 * **Why this board has no real pinout/hardware ID defined yet.** There is no PCB for this board yet - `src/firmware_common.h` carries a version identity with no hardware ID, and the startup/linker files are hand-written placeholders standing in for ST's own CMSIS/HAL startup until a real STM32G4 part is pinned down.
 * **Why it isn't a child of URTC itself.** URTC-SMART-RACK is a Complementary Tool, not a URTC-family child - it's a separate physical board (a tool storage rack, not a tool head) that happens to share URTC's own CAN bus and firmware conventions, not its integration hierarchy.
 * **Why `bump_version.py` is a straight copy of URTC's own.** Same odometer versioning rule, same firmware-header format - reusing the exact script rather than reinventing it keeps the two in lockstep by construction.
+* **Why `tool_id.c`/`lifecycle.c`/`preheat.c` ship before any GPIO/F-RAM/CAN driver.** Decoding an ID, accumulating usage, and deciding when to pre-heat are pure functions of data already in hand - they need no PCB to write or test, so v0 lands that logic first, host-tested with the machine's own C compiler rather than `arm-none-eabi-gcc`. The drivers that would actually source that data from real hardware come once the PCB exists.
 * **How this fits the rest of the ecosystem.** Shares URTC's own CAN bus/tool ecosystem, and is a natural pairing with HYDRA-UMC-DETECTION-HEF for visually recognizing which tool is actually racked.
 
 ---
@@ -61,10 +63,14 @@ flowchart TB
 ```text
 URTC-SMART-RACK/
 ├── src/                            # Firmware source
-│   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH = 0.0.0
+│   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
+│   ├── tool_id.h / .c              # Real: 5-bit raw reading -> tool ID decoding
+│   ├── lifecycle.h / .c            # Real: usage-cycle/time tracking, maintenance-due check
+│   ├── preheat.h / .c              # Real: Smart Idle activation + target temperature
 │   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
 │   ├── startup_stm32g4_minimal.c   # Vector table + Reset_Handler (no ST HAL yet, see file header)
 │   └── STM32G4_MINIMAL.ld          # Placeholder linker script (128K FLASH / 32K RAM floor)
+├── tests/                          # Real host-native test harness (tool_id, lifecycle, preheat)
 ├── docs/                           # Documentation and user manual
 ├── hardware/                       # Hardware design files (PCB, 3D) - empty, no schematic yet
 ├── firmware/                       # Versioned build output (.bin/.elf/.hex), committed like sibling repo URTC
@@ -72,7 +78,7 @@ URTC-SMART-RACK/
 ├── images/                         # Media and diagrams
 ├── scripts/                        # Utility scripts
 ├── bump_version.py                 # Odometer-style version bump (generic, shared with URTC)
-├── build_firmware.sh / .bat        # Real build: bump version + compile + link + publish to firmware/
+├── build_firmware.sh / .bat        # Real build: host tests + bump version + compile + link + publish
 └── README.md
 ```
 
@@ -91,9 +97,19 @@ chmod +x build_firmware.sh   # one-time
 build_firmware.bat
 ```
 
-The build bumps `src/firmware_common.h`'s version (odometer rule, same as the rest of the ecosystem), compiles `main.c` and `startup_stm32g4_minimal.c` for Cortex-M4F, links them against the placeholder `STM32G4_MINIMAL.ld` memory map, and publishes versioned `.elf`/`.bin`/`.hex` files to `firmware/`.
+The build first compiles and runs `tests/` against the *host's own* C compiler (never `arm-none-eabi-gcc` - these are pure-logic tests, no MCU registers touched) and fails the whole build if any assertion fails. Only then does it bump `src/firmware_common.h`'s version (odometer rule, same as the rest of the ecosystem), compile `main.c` and `startup_stm32g4_minimal.c` for Cortex-M4F, link them against the placeholder `STM32G4_MINIMAL.ld` memory map, and publish versioned `.elf`/`.bin`/`.hex` files to `firmware/`.
 
 There is nothing to flash to real hardware yet — no PCB exists to confirm the target STM32G4 part, pinout, or its real flash/RAM sizes. The linker script's memory map is a conservative placeholder (documented in its own header comment) that will be replaced once real hardware exists, the same point at which `startup_stm32g4_minimal.c`'s hand-written vector table gets replaced by ST's own CMSIS/HAL startup code (mirroring sibling repo URTC's `src/F303-master/` for its STM32F303 boards).
+
+Real example - the host-side tests run standalone too, useful to check the logic without a full firmware build:
+
+```bash
+cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
+  tests/test_main.c tests/test_tool_id.c tests/test_lifecycle.c tests/test_preheat.c \
+  src/tool_id.c src/lifecycle.c src/preheat.c
+./build/host_tests
+# All tests passed.
+```
 
 ---
 

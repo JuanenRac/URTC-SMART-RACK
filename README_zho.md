@@ -25,14 +25,17 @@
 它支持"智能待机"模式，例如在换刀前预热 T12 烙铁头，并跟踪每个 URTC
 刀头的电子 ID、固件版本和总使用周期数，确保最佳维护和零延迟部署。
 
-该板卡目前尚不存在 PCB/原理图（见 `hardware/`）——以下功能描述的是目标
-设计；目前只有固件工具链本身是真实存在的。
+该板卡目前尚不存在 PCB/原理图（见 `hardware/`），因此下面的功能都无法驱动
+真实的 GPIO/F-RAM/CAN 硬件——但这些功能所归结的*逻辑*（解码 ID、追踪使用
+情况、决定何时以及以何种温度预热）是真实的、纯 C 编写的，并且今天已经过
+单元测试。
 
 ### 关键特性：
-* 🗄️ **工具追踪** —— 通过 5 位 ID 跳线或 F-RAM 自动识别 URTC 刀头。*（计划中——需要真实的 PCB）*
-* 🌡️ **预热逻辑** —— 针对焊接和热风工具的智能热管理。*（计划中）*
-* 📈 **生命周期日志** —— 将总致动周期数和使用小时数记录到工具的 F-RAM 中。*（计划中）*
-* 📡 **CAN 集成** —— 直接与 HYDRA-UMC 运动学大脑通信，实现协调的 ATC（自动换刀）。*（计划中）*
+* ✅ **真实 v0 —— ID、生命周期与预热逻辑：** `tool_id.c` 将原始 5 位 ID 读数解码为工具身份；`lifecycle.c` 追踪使用周期/时间并标记到期维护；`preheat.c` 决定智能待机预热应何时启动以及目标温度。使用宿主机自身的 C 编译器完成 25 个测试断言——无需 PCB、GPIO 驱动或 F-RAM 即可运行或测试这一切。
+* 🗄️ **工具追踪** —— 通过 5 位 ID 跳线或 F-RAM 自动识别 URTC 刀头。*（ID 解码逻辑本身是真实的——见上文；读取真实跳线/F-RAM 需要 PCB。）*
+* 🌡️ **预热逻辑** —— 针对焊接和热风工具的智能热管理。*（激活决策和目标温度是真实的——见上文；驱动真实加热器需要 PCB。）*
+* 📈 **生命周期日志** —— 将总致动周期数和使用小时数记录到工具的 F-RAM 中。*（计数器和到期维护逻辑是真实的——见上文；将其持久化到真实 F-RAM 需要 PCB。）*
+* 📡 **CAN 集成** —— 直接与 HYDRA-UMC 运动学大脑通信，实现协调的 ATC（自动换刀）。*（计划中——需要真实的 CAN 收发器。）*
 * ✅ **Cortex-M4F 固件工具链** —— 一个真实的裸机镜像（启动文件 + 链接脚本 + `main.c`），使用与兄弟仓库 URTC 相同的工具链，通过 `arm-none-eabi-gcc` 交叉编译并链接。*（已实现——见下方"构建"）*
 
 ---
@@ -55,6 +58,7 @@ flowchart TB
 * **为什么该板卡尚未定义真实的引脚布局/硬件 ID。** 该板卡目前尚无 PCB——`src/firmware_common.h` 携带一个没有硬件 ID 的版本标识，启动文件/链接脚本是手写的占位符，暂时代替 ST 自身的 CMSIS/HAL 启动代码，直到确定真实的 STM32G4 型号。
 * **为什么它不是 URTC 自身的子项目。** URTC-SMART-RACK 是一个配套工具，而非 URTC 系列的子项目——它是一块独立的物理板卡（工具存储架，而非刀头本身），恰好共享 URTC 自身的 CAN 总线和固件惯例，而非其集成层级结构。
 * **为什么 `bump_version.py` 直接复制自 URTC 自身。** 相同的里程表版本规则，相同的固件头格式——直接复用同一脚本而非重新发明，可以通过构造方式使两者天然保持同步。
+* **为什么 `tool_id.c`/`lifecycle.c`/`preheat.c` 先于任何 GPIO/F-RAM/CAN 驱动交付。** 解码 ID、累积使用情况、决定何时预热，都是对已有数据的纯函数运算——无需 PCB 即可编写或测试，因此 v0 首先交付这部分逻辑，使用宿主机自身的 C 编译器而非 `arm-none-eabi-gcc` 进行宿主测试。真正从真实硬件获取这些数据的驱动程序，将在 PCB 存在后到来。
 * **这如何融入生态系统的其余部分。** 共享 URTC 自身的 CAN 总线/工具生态系统，并与 HYDRA-UMC-DETECTION-HEF 自然搭配，用于视觉识别实际存放在架上的工具。
 
 ---
@@ -64,10 +68,14 @@ flowchart TB
 ```text
 URTC-SMART-RACK/
 ├── src/                            # 固件源代码
-│   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH = 0.0.0
+│   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
+│   ├── tool_id.h / .c              # 真实：原始 5 位读数解码 -> 工具 ID
+│   ├── lifecycle.h / .c            # 真实：使用周期/时间追踪，到期维护检查
+│   ├── preheat.h / .c              # 真实：智能待机激活 + 目标温度
 │   ├── main.c                      # 最小入口点（存活证明心跳循环）
 │   ├── startup_stm32g4_minimal.c   # 向量表 + Reset_Handler（暂无 ST HAL，见文件头说明）
 │   └── STM32G4_MINIMAL.ld          # 占位链接脚本（128K FLASH / 32K RAM 下限）
+├── tests/                          # 真实的宿主机原生测试工具集（tool_id、lifecycle、preheat）
 ├── docs/                           # 文档与用户手册
 ├── hardware/                       # 硬件设计文件（PCB、3D）—— 目前为空，尚无原理图
 ├── firmware/                       # 版本化构建输出（.bin/.elf/.hex），与兄弟仓库 URTC 一样被提交
@@ -75,7 +83,7 @@ URTC-SMART-RACK/
 ├── images/                         # 媒体与图表
 ├── scripts/                        # 实用脚本
 ├── bump_version.py                 # 里程表式版本递增（通用脚本，与 URTC 共享）
-├── build_firmware.sh / .bat        # 真实构建：版本递增 + 编译 + 链接 + 发布到 firmware/
+├── build_firmware.sh / .bat        # 真实构建：宿主测试 + 版本递增 + 编译 + 链接 + 发布
 └── README.md
 ```
 
@@ -95,16 +103,30 @@ chmod +x build_firmware.sh   # 仅需一次
 build_firmware.bat
 ```
 
-该构建会递增 `src/firmware_common.h` 中的版本号（里程表规则，与生态系统
-其余部分一致），针对 Cortex-M4F 编译 `main.c` 和
-`startup_stm32g4_minimal.c`，将其与占位性质的 `STM32G4_MINIMAL.ld` 内存
-映射进行链接，并将版本化的 `.elf`/`.bin`/`.hex` 文件发布到 `firmware/`。
+该构建首先使用*宿主机自身*的 C 编译器（绝不是 `arm-none-eabi-gcc`——这些
+是纯逻辑测试，不涉及任何 MCU 寄存器）编译并运行 `tests/`，若任何断言失败
+则整个构建失败。只有在此之后，它才会递增 `src/firmware_common.h` 中的
+版本号（里程表规则，与生态系统其余部分一致），针对 Cortex-M4F 编译
+`main.c` 和 `startup_stm32g4_minimal.c`，将其与占位性质的
+`STM32G4_MINIMAL.ld` 内存映射进行链接，并将版本化的 `.elf`/`.bin`/`.hex`
+文件发布到 `firmware/`。
 
 目前尚无内容可刷写到真实硬件——因为没有 PCB 可以确认目标 STM32G4 型号、
 引脚布局或其真实的 flash/RAM 容量。链接脚本的内存映射是一个保守的占位符
 （在其自身的文件头注释中有说明），一旦真实硬件问世将被替换，届时
 `startup_stm32g4_minimal.c` 手写的向量表也会被 ST 自身的 CMSIS/HAL 启动
 代码取代（对应兄弟仓库 URTC 中针对 STM32F303 板卡的 `src/F303-master/`）。
+
+真实示例——宿主机侧测试也可以独立运行，便于在不进行完整固件构建的情况下
+检查逻辑：
+
+```bash
+cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
+  tests/test_main.c tests/test_tool_id.c tests/test_lifecycle.c tests/test_preheat.c \
+  src/tool_id.c src/lifecycle.c src/preheat.c
+./build/host_tests
+# All tests passed.
+```
 
 ---
 

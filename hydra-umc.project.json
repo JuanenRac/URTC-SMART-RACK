@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "ecosystem": "HYDRA-UMC",
   "name": "URTC-SMART-RACK",
-  "version": "0.0.3",
+  "version": "0.0.6",
   "role": "firmware",
   "stack": "firmware-c",
   "technologies": [
@@ -11,11 +11,11 @@
     "arm-none-eabi-gcc"
   ],
   "deployment_target": "user-pc",
-  "maturity": "scaffolding",
+  "maturity": "functional",
   "family": "Complementary Tools",
   "parent": null,
-  "build": "bash build_firmware.sh.",
-  "notes": "Scaffolding stage, but with a real, verified cross-compile toolchain (arm-none-eabi-gcc -> .bin/.hex with a real size report) - the real tool-tracking/pre-heat/CAN features need a real PCB first.",
+  "build": "bash build_firmware.sh. Real host-native unit tests run before the arm-none-eabi-gcc cross-compile.",
+  "notes": "Functional v0: real, hardware-independent pure-C logic (tool_id.c ID decoding, lifecycle.c usage/maintenance tracking, preheat.c Smart Idle activation + target temperature) with 25 host-native test assertions, plus the verified cross-compile toolchain (arm-none-eabi-gcc -> .bin/.hex with a real size report). Real CAN/F-RAM/GPIO I/O to actually drive tool tracking and pre-heating needs a real PCB, which doesn't exist yet.",
   "native_version": {
     "file": "src/firmware_common.h",
     "pattern": {

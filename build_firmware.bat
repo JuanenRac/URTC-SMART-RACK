@@ -37,13 +37,28 @@ if errorlevel 1 (
 echo   OK   arm-none-eabi-gcc found
 echo.
 
-echo === 2. Version bump (odometer, see bump_version.py) ===
+echo === 2. Real logic tests (host cl/gcc, not arm-none-eabi-gcc) ===
+if not exist build mkdir build
+where gcc >nul 2>nul
+if errorlevel 1 (
+    echo FAIL: no host C compiler found ^(gcc^). Install MinGW/MSYS2 or run
+    echo       this from a shell that has a native gcc on PATH.
+    goto :error
+)
+gcc -std=c11 -Wall -Wextra -Isrc -Itests -o build\host_tests.exe tests\test_main.c tests\test_tool_id.c tests\test_lifecycle.c tests\test_preheat.c src\tool_id.c src\lifecycle.c src\preheat.c
+if errorlevel 1 goto :error
+build\host_tests.exe
+if errorlevel 1 goto :error
+echo   OK   tool_id.c / lifecycle.c / preheat.c pure-logic tests passed
+echo.
+
+echo === 3. Version bump (odometer, see bump_version.py) ===
 for /f "delims=" %%V in ('python bump_version.py src\firmware_common.h FIRMWARE_VERSION') do set VERSION=%%V
 if "%VERSION%"=="" goto :error
 echo   Firmware version: %VERSION%
 echo.
 
-echo === 3. Compile + link ===
+echo === 4. Compile + link ===
 if not exist build mkdir build
 if not exist firmware mkdir firmware
 
@@ -63,11 +78,11 @@ arm-none-eabi-objcopy -O ihex build\urtc-smart-rack.elf build\urtc-smart-rack.he
 echo   OK   build\urtc-smart-rack.bin / .hex
 echo.
 
-echo === 4. Size report ===
+echo === 5. Size report ===
 arm-none-eabi-size build\urtc-smart-rack.elf
 echo.
 
-echo === 5. Publish versioned artifacts to firmware\ ===
+echo === 6. Publish versioned artifacts to firmware\ ===
 copy /y build\urtc-smart-rack.elf firmware\URTC_SMART_RACK_FIRMWARE_v%VERSION%.elf >nul
 copy /y build\urtc-smart-rack.bin firmware\URTC_SMART_RACK_FIRMWARE_v%VERSION%.bin >nul
 copy /y build\urtc-smart-rack.hex firmware\URTC_SMART_RACK_FIRMWARE_v%VERSION%.hex >nul
@@ -77,9 +92,11 @@ echo.
 echo =============================================================================
 echo  Build complete - v%VERSION%
 echo =============================================================================
+pause
 exit /b 0
 
 :error
 echo.
 echo BUILD FAILED - see the output above.
+pause
 exit /b 1

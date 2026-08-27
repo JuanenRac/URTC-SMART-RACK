@@ -42,5 +42,4 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
   `firmware/`.
 - The real tool-tracking, pre-heat, and CAN integration features
   described in the README are the next milestone - they all need a real
-  PCB first (F-RAM, ID jumpers, CAN transceiver, thermal sensor wiring),
-  tracked in `SONNET/URTC-SMART-RACK/mejoras_futuras.txt`.
+  PCB first (F-RAM, ID jumpers, CAN transceiver, thermal sensor wiring).

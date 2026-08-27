@@ -10,8 +10,7 @@
 
 // =============================================================================
 // TARGET MCU: STM32G4 series (exact part TBD - no PCB/schematic exists yet
-// for this board, see hardware/ and SONNET/URTC-SMART-RACK/
-// mejoras_futuras.txt). Cortex-M4F is fixed across the whole G4 family, so
+// for this board; see hardware/. Cortex-M4F is fixed across the whole G4 family, so
 // this firmware and its linker script (STM32G4_MINIMAL.ld) target that core
 // generically rather than guessing a specific flash/RAM size that a real
 // schematic hasn't confirmed yet - see that file's own header comment for

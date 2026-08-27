@@ -9,8 +9,7 @@
 // tracking/pre-heat logic described in the README yet. There is no real
 // PCB/schematic for URTC-SMART-RACK to date (see hardware/), so this
 // firmware has nothing to drive - no F-RAM, no CAN transceiver, no ID
-// jumpers wired up. That real work lands once hardware exists - see
-// SONNET/URTC-SMART-RACK/mejoras_futuras.txt.
+// jumpers wired up. That real work lands once hardware exists.
 #include "firmware_common.h"
 
 // Read by a debugger/reset inspection without needing a CAN link (this

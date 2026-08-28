@@ -1,9 +1,32 @@
 @echo off
-REM =============================================================================
+REM HYDRA_UMC_SCRIPT_STANDARD_HEADER_BEGIN
+REM *****************************************************************************
+REM Project   : URTC-SMART-RACK
+REM Script    : build_firmware.bat
+REM Purpose   : Incremental firmware build and versioned artifact packaging workflow.
+REM Author    : JuanenRac (Electro Hobby 3D)
+REM Email     : electrohobby3d@gmail.com
+REM Copyright : (C) 2026 JuanenRac
+REM License   : GPL-3.0 - see LICENSE
+REM *****************************************************************************
+REM HYDRA_UMC_SCRIPT_STANDARD_HEADER_END
+REM HYDRA_UMC_SCRIPT_STANDARD_BANNER_BEGIN
+echo.
+echo *****************************************************************************
+echo * URTC-SMART-RACK - build_firmware.bat
+echo * Mode      : INCREMENTAL BUILD
+echo * Author    : JuanenRac (Electro Hobby 3D)
+echo * Email     : electrohobby3d@gmail.com
+echo * Copyright : (C) 2026 JuanenRac
+echo * License   : GPL-3.0 - see LICENSE
+echo * ------------------------------------------------------------------------- *
+echo * 1. Increment the project version and synchronise its manifest.
+echo * 2. Run this project's declared build, verification and packaging commands.
+echo * 3. Report the result and keep an interactive terminal open.
+echo *****************************************************************************
+echo.
+REM HYDRA_UMC_SCRIPT_STANDARD_BANNER_END
 REM URTC-SMART-RACK - Firmware Build Script
-REM Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-REM GPL-3.0 - see LICENSE
-REM =============================================================================
 REM Compiles this project's minimal Cortex-M4F skeleton (src/main.c +
 REM src/startup_stm32g4_minimal.c - see those files' own header comments for
 REM why there's no ST HAL/CMSIS dependency yet, no real PCB exists to pin
@@ -12,22 +35,12 @@ REM sibling repo URTC/build_firmware.bat, reused rather than reinvented, but
 REM with the HAL/CMSIS fetch steps skipped entirely - nothing chip-specific
 REM to fetch yet at this project's current andamiaje (scaffolding) stage.
 setlocal enabledelayedexpansion
-python "%~dp0bump_manifest_version.py"
-if errorlevel 1 ( echo VERSION BUMP FAILED. & pause & exit /b 1 )
+REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_STEP
+echo [1/3] Incrementing project version and synchronising its manifest...
+REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_BEFORE
+for /f "usebackq delims=" %%V in (`python -c "import json; print(json.load(open(r'%~dp0hydra-umc.project.json', encoding='utf-8'))['version'])"`) do set "HYDRA_UMC_VERSION_BEFORE=%%V"
+echo.
 cd /d "%~dp0"
-
-echo =============================================================================
-echo  URTC-SMART-RACK - firmware build
-echo.
-echo  Compiles the minimal Cortex-M4F skeleton (no ST HAL yet - see
-echo  src/firmware_common.h for why) with arm-none-eabi-gcc.
-echo.
-echo  Author:  JuanenRac (Electro Hobby 3D) - electrohobby3d@gmail.com
-echo  License: GPL-3.0 - see LICENSE
-echo =============================================================================
-echo.
-
-echo === 1. Toolchain ===
 where arm-none-eabi-gcc >nul 2>nul
 if errorlevel 1 (
     echo FAIL: arm-none-eabi-gcc not found. Install the ARM GNU Toolchain
@@ -55,6 +68,19 @@ echo.
 echo === 3. Version bump (odometer, see bump_version.py) ===
 for /f "delims=" %%V in ('python bump_version.py src\firmware_common.h FIRMWARE_VERSION') do set VERSION=%%V
 if "%VERSION%"=="" goto :error
+python "%~dp0bump_manifest_version.py" --sync
+if errorlevel 1 goto :error
+REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_AFTER
+for /f "usebackq delims=" %%V in (`python -c "import json; print(json.load(open(r'%~dp0hydra-umc.project.json', encoding='utf-8'))['version'])"`) do set "HYDRA_UMC_VERSION_AFTER=%%V"
+if not defined HYDRA_UMC_VERSION_BEFORE set "HYDRA_UMC_VERSION_BEFORE=unknown"
+if not defined HYDRA_UMC_VERSION_AFTER set "HYDRA_UMC_VERSION_AFTER=unknown"
+echo.
+echo *****************************************************************************
+echo * VERSION INCREMENT COMPLETED
+echo * v%HYDRA_UMC_VERSION_BEFORE% ^> v%HYDRA_UMC_VERSION_AFTER%
+echo * Project manifest synchronized with the firmware version.
+echo *****************************************************************************
+echo.
 echo   Firmware version: %VERSION%
 echo.
 

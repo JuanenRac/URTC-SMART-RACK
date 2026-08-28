@@ -24,5 +24,9 @@
 void run_tool_id_tests(int *failures);
 void run_lifecycle_tests(int *failures);
 void run_preheat_tests(int *failures);
+void run_protocol_tests(int *failures);
+void run_rack_command_tests(int *failures);
+void run_link_watchdog_tests(int *failures);
+void run_rack_link_scenario_tests(int *failures);
 
 #endif // TEST_RUNNER_H

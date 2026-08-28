@@ -12,6 +12,10 @@ int main(void)
     run_tool_id_tests(&failures);
     run_lifecycle_tests(&failures);
     run_preheat_tests(&failures);
+    run_protocol_tests(&failures);
+    run_rack_command_tests(&failures);
+    run_link_watchdog_tests(&failures);
+    run_rack_link_scenario_tests(&failures);
 
     if (failures == 0) {
         printf("All tests passed.\n");

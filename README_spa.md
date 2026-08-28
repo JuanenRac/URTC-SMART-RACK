@@ -30,7 +30,8 @@ Todavia no existe PCB/esquematico para esta placa (ver `hardware/`), asi que nad
 * 🗄️ **Seguimiento de Herramientas** — identificacion automatica de cabezales URTC via jumpers de ID de 5 bits o F-RAM. *(la logica de decodificacion de ID en si es real - ver arriba; leer jumpers/F-RAM reales necesita el PCB.)*
 * 🌡️ **Logica de Precalentamiento** — gestion termica inteligente para herramientas de soldadura y aire caliente. *(la decision de activacion y las temperaturas objetivo son reales - ver arriba; accionar un calentador real necesita el PCB.)*
 * 📈 **Registros de Vida Util** — registra ciclos totales de actuacion y horas de uso en la F-RAM de la herramienta. *(los contadores y la logica de mantenimiento debido son reales - ver arriba; persistirlos en F-RAM real necesita el PCB.)*
-* 📡 **Integracion CAN** — se comunica directamente con el Cerebro Cinematico de HYDRA-UMC para ATC coordinado (Cambio Automatico de Herramienta). *(planeado - necesita un transceptor CAN real.)*
+* 📡 **Integracion CAN** — se comunica directamente con el Cerebro Cinematico de HYDRA-UMC para ATC coordinado (Cambio Automatico de Herramienta). *(el protocolo en si - framing, CRC, validacion de comandos - es real, ver mas abajo; todavia hace falta un transceptor CAN real para transportarlo.)*
+* 🔒 **Limites de Seguridad del Protocolo** — framing versionado real con suma de verificacion CRC8, validacion real de rango de actuacion, y un watchdog real de timeout de enlace/idempotencia con un estado seguro definido. *(implementado)*
 * ✅ **Toolchain de firmware Cortex-M4F** — una imagen bare-metal real (startup + linker + `main.c`) que compila y enlaza de verdad con `arm-none-eabi-gcc`, el mismo toolchain que usa el repositorio hermano URTC. *(implementado — ver COMPILACIÓN abajo)*
 
 ---
@@ -55,6 +56,8 @@ flowchart TB
 * **Por qué `bump_version.py` es una copia directa del propio de URTC.** Misma regla de versionado cuentakilómetros, mismo formato de cabecera de firmware - reutilizar el script exacto en vez de reinventarlo mantiene a los dos sincronizados por construcción.
 * **Por qué `tool_id.c`/`lifecycle.c`/`preheat.c` se implementan antes que cualquier driver de GPIO/F-RAM/CAN.** Decodificar un ID, acumular uso y decidir cuándo precalentar son funciones puras de datos que ya se tienen en mano - no necesitan PCB para escribirse ni testearse, así que el v0 implementa primero esa lógica, testeada con el propio compilador C de la máquina en vez de `arm-none-eabi-gcc`. Los drivers que de verdad obtendrían esos datos de hardware real llegan cuando exista el PCB.
 * **Cómo encaja en el resto del ecosistema.** Comparte el propio bus CAN/ecosistema de herramientas de URTC, y forma pareja natural con HYDRA-UMC-DETECTION-HEF para reconocer visualmente qué herramienta está realmente en el rack.
+* **Por qué el protocolo, la validación de comandos y el watchdog de enlace son tres módulos separados.** `protocol.c` sólo conoce bytes, framing y un CRC - no tiene idea de qué es una temperatura "segura". `rack_command.c` es dueño de ese juicio, decodificando y verificando el rango de un comando real sin importarle cómo llegó por el cable. `link_watchdog.c` rastrea el timeout/idempotencia independientemente de ambos - una trama corrupta nunca debe siquiera llegar hasta él (ver la propia aserción real de `test_rack_link_scenarios.c` de que una trama con CRC incorrecto nunca revive el watchdog). Mantenerlos separados es lo que hace que cada uno sea testeable de forma independiente en el host, y mantiene delgado a un futuro manejador de recepción CAN - llama a cada capa en orden, no reimplementa el juicio de ninguna de ellas.
+* **Por qué un enlace no verificado se trata exactamente igual que uno muerto.** `link_watchdog_is_link_lost()` es verdadero tanto después de un timeout real COMO antes de que haya llegado la primerísima trama - la propia auditoría de promoción lo llama "estado seguro al arrancar". Un rack que se enciende sin que todavía haya un host conectado debe arrancar en el estado seguro, no asumir en silencio que "está bien" hasta que se demuestre lo contrario.
 
 ---
 
@@ -66,11 +69,14 @@ URTC-SMART-RACK/
 │   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
 │   ├── tool_id.h / .c              # Real: decodificacion de lectura de 5 bits -> ID de herramienta
 │   ├── lifecycle.h / .c            # Real: seguimiento de ciclos/tiempo de uso, chequeo de mantenimiento debido
-│   ├── preheat.h / .c              # Real: activacion de Smart Idle + temperatura objetivo
+│   ├── preheat.h / .c              # Real: activacion de Smart Idle + temperatura objetivo + objetivo de estado seguro
+│   ├── protocol.h / .c             # Real: formato de trama versionado + parseo/codificacion CRC8
+│   ├── rack_command.h / .c         # Real: decodificacion de comandos + validacion de limites de actuacion
+│   ├── link_watchdog.h / .c        # Real: timeout de enlace + idempotencia de comandos
 │   ├── main.c                      # Punto de entrada minimo (bucle de latido de vida)
 │   ├── startup_stm32g4_minimal.c   # Tabla de vectores + Reset_Handler (sin HAL de ST todavia, ver cabecera del archivo)
 │   └── STM32G4_MINIMAL.ld          # Linker script placeholder (suelo de 128K FLASH / 32K RAM)
-├── tests/                          # Harness de tests real host-native (tool_id, lifecycle, preheat)
+├── tests/                          # Harness de tests real host-native (tool_id, lifecycle, preheat, protocol, rack_command, link_watchdog, escenarios de enlace del rack)
 ├── docs/                           # Documentacion y manual de usuario
 ├── hardware/                       # Archivos de diseno de hardware (PCB, 3D) - vacio, sin esquematico todavia
 ├── firmware/                       # Salida de build versionada (.bin/.elf/.hex), commiteada igual que el repo hermano URTC

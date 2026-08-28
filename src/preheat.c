@@ -25,3 +25,8 @@ bool preheat_should_activate(uint32_t ms_until_next_use, uint32_t lead_time_ms)
     }
     return ms_until_next_use <= lead_time_ms;
 }
+
+uint16_t preheat_safe_state_temp_c(void)
+{
+    return 0;
+}

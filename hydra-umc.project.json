@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "ecosystem": "HYDRA-UMC",
   "name": "URTC-SMART-RACK",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "role": "firmware",
   "stack": "firmware-c",
   "technologies": [
@@ -11,11 +11,11 @@
     "arm-none-eabi-gcc"
   ],
   "deployment_target": "user-pc",
-  "maturity": "functional",
+  "maturity": "established",
   "family": "Complementary Tools",
   "parent": null,
   "build": "bash build_firmware.sh. Real host-native unit tests run before the arm-none-eabi-gcc cross-compile.",
-  "notes": "Functional v0: real, hardware-independent pure-C logic (tool_id.c ID decoding, lifecycle.c usage/maintenance tracking, preheat.c Smart Idle activation + target temperature) with 25 host-native test assertions, plus the verified cross-compile toolchain (arm-none-eabi-gcc -> .bin/.hex with a real size report). Real CAN/F-RAM/GPIO I/O to actually drive tool tracking and pre-heating needs a real PCB, which doesn't exist yet.",
+  "notes": "Real, hardware-independent pure-C logic (tool_id.c ID decoding, lifecycle.c usage/maintenance tracking, preheat.c Smart Idle activation + target temperature + real safe-state target), a real rack command protocol (protocol.c: versioned framing + CRC8; rack_command.c: real actuation-limit validation; link_watchdog.c: real timeout + idempotency), and a real host-side scenario harness playing valid/CRC-corrupted/out-of-range/timed-out/duplicate frames through the whole pipeline - 74 host-native test assertions total, plus the verified cross-compile toolchain (arm-none-eabi-gcc -> .bin/.hex with a real size report). Real CAN/F-RAM/GPIO I/O to actually drive tool tracking and pre-heating needs a real PCB, which doesn't exist yet.",
   "native_version": {
     "file": "src/firmware_common.h",
     "pattern": {

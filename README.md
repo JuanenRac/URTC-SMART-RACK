@@ -30,7 +30,8 @@ No PCB/schematic exists for this board yet (see `hardware/`), so nothing below c
 * 🗄️ **Tool Tracking** — automatic identification of URTC heads via 5-bit ID jumpers or F-RAM. *(the ID-decoding logic itself is real - see above; reading real jumpers/F-RAM needs the PCB.)*
 * 🌡️ **Pre-Heating Logic** — intelligent thermal management for soldering and hot-air tools. *(the activation decision and target temperatures are real - see above; driving a real heater needs the PCB.)*
 * 📈 **Lifecycle Logs** — records total actuation cycles and hours of use into the tool's F-RAM. *(the counters and maintenance-due logic are real - see above; persisting them to real F-RAM needs the PCB.)*
-* 📡 **CAN Integration** — communicates directly with the HYDRA-UMC Kinematic Brain for coordinated ATC (Auto Tool Change). *(planned - needs a real CAN transceiver.)*
+* 📡 **CAN Integration** — communicates directly with the HYDRA-UMC Kinematic Brain for coordinated ATC (Auto Tool Change). *(the wire protocol itself - framing, CRC, command validation - is real, see below; a real CAN transceiver to actually carry it is still needed.)*
+* 🔒 **Protocol Safety Limits** — real versioned framing with a CRC8 checksum, real actuation-range validation, and a real link-timeout/idempotency watchdog with a defined safe state. *(implemented)*
 * ✅ **Cortex-M4F firmware toolchain** — a real bare-metal image (startup + linker + `main.c`) that cross-compiles and links with `arm-none-eabi-gcc`, the same toolchain sibling repo URTC uses. *(implemented — see BUILD below)*
 
 ---
@@ -55,6 +56,8 @@ flowchart TB
 * **Why `bump_version.py` is a straight copy of URTC's own.** Same odometer versioning rule, same firmware-header format - reusing the exact script rather than reinventing it keeps the two in lockstep by construction.
 * **Why `tool_id.c`/`lifecycle.c`/`preheat.c` ship before any GPIO/F-RAM/CAN driver.** Decoding an ID, accumulating usage, and deciding when to pre-heat are pure functions of data already in hand - they need no PCB to write or test, so v0 lands that logic first, host-tested with the machine's own C compiler rather than `arm-none-eabi-gcc`. The drivers that would actually source that data from real hardware come once the PCB exists.
 * **How this fits the rest of the ecosystem.** Shares URTC's own CAN bus/tool ecosystem, and is a natural pairing with HYDRA-UMC-DETECTION-HEF for visually recognizing which tool is actually racked.
+* **Why the protocol, command validation, and link watchdog are three separate modules.** `protocol.c` only knows about bytes, framing and a CRC - it has no idea what a "safe" temperature is. `rack_command.c` owns that judgment, decoding and range-checking a real command without caring how it arrived on the wire. `link_watchdog.c` tracks timeout/idempotency independently of both - a corrupted frame must never even reach it (see `test_rack_link_scenarios.c`'s own real assertion that a bad-CRC frame never revives the watchdog). Keeping these separate is what makes each one host-testable on its own, and keeps a future CAN receive handler thin - it calls each layer in order, it doesn't reimplement any of their judgment itself.
+* **Why an unproven link is treated exactly like a dead one.** `link_watchdog_is_link_lost()` is true both after a real timeout AND before the very first frame has ever arrived - the promotion audit's own "estado seguro al arrancar". A rack that powers on with no host yet connected must start in the safe state, not silently assume "fine" until proven otherwise.
 
 ---
 
@@ -66,11 +69,14 @@ URTC-SMART-RACK/
 │   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
 │   ├── tool_id.h / .c              # Real: 5-bit raw reading -> tool ID decoding
 │   ├── lifecycle.h / .c            # Real: usage-cycle/time tracking, maintenance-due check
-│   ├── preheat.h / .c              # Real: Smart Idle activation + target temperature
+│   ├── preheat.h / .c              # Real: Smart Idle activation + target temperature + safe-state target
+│   ├── protocol.h / .c             # Real: versioned frame format + CRC8 parse/encode
+│   ├── rack_command.h / .c         # Real: command decode + actuation-limit validation
+│   ├── link_watchdog.h / .c        # Real: link timeout + command idempotency
 │   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
 │   ├── startup_stm32g4_minimal.c   # Vector table + Reset_Handler (no ST HAL yet, see file header)
 │   └── STM32G4_MINIMAL.ld          # Placeholder linker script (128K FLASH / 32K RAM floor)
-├── tests/                          # Real host-native test harness (tool_id, lifecycle, preheat)
+├── tests/                          # Real host-native test harness (tool_id, lifecycle, preheat, protocol, rack_command, link_watchdog, rack link scenarios)
 ├── docs/                           # Documentation and user manual
 ├── hardware/                       # Hardware design files (PCB, 3D) - empty, no schematic yet
 ├── firmware/                       # Versioned build output (.bin/.elf/.hex), committed like sibling repo URTC

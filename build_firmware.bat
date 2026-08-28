@@ -58,7 +58,7 @@ if errorlevel 1 (
     echo       this from a shell that has a native gcc on PATH.
     goto :error
 )
-gcc -std=c11 -Wall -Wextra -Isrc -Itests -o build\host_tests.exe tests\test_main.c tests\test_tool_id.c tests\test_lifecycle.c tests\test_preheat.c src\tool_id.c src\lifecycle.c src\preheat.c
+gcc -std=c11 -Wall -Wextra -Isrc -Itests -o build\host_tests.exe tests\test_main.c tests\test_tool_id.c tests\test_lifecycle.c tests\test_preheat.c tests\test_protocol.c tests\test_rack_command.c tests\test_link_watchdog.c tests\test_rack_link_scenarios.c src\tool_id.c src\lifecycle.c src\preheat.c src\protocol.c src\rack_command.c src\link_watchdog.c
 if errorlevel 1 goto :error
 build\host_tests.exe
 if errorlevel 1 goto :error

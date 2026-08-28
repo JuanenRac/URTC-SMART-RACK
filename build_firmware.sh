@@ -79,9 +79,10 @@ mkdir -p "$BUILD"
 "$HOST_CC" -std=c11 -Wall -Wextra -Isrc -Itests \
     -o "$BUILD/host_tests" \
     tests/test_main.c tests/test_tool_id.c tests/test_lifecycle.c tests/test_preheat.c \
-    src/tool_id.c src/lifecycle.c src/preheat.c
+    tests/test_protocol.c tests/test_rack_command.c tests/test_link_watchdog.c tests/test_rack_link_scenarios.c \
+    src/tool_id.c src/lifecycle.c src/preheat.c src/protocol.c src/rack_command.c src/link_watchdog.c
 "$BUILD/host_tests"
-echo "  OK   tool_id.c / lifecycle.c / preheat.c pure-logic tests passed"
+echo "  OK   tool_id.c / lifecycle.c / preheat.c / protocol.c / rack_command.c / link_watchdog.c pure-logic tests passed"
 
 echo ""
 echo "=== 3. Version bump (odometer, see bump_version.py) ==="

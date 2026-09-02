@@ -82,9 +82,13 @@ URTC-SMART-RACK/
 ├── firmware/                       # Sortie de build versionnée (.bin/.elf/.hex), commitée comme le dépôt frère URTC
 ├── build/                          # Objets de build intermédiaires (ignoré par git)
 ├── images/                         # Médias et diagrammes
-├── scripts/                        # Scripts utilitaires
+├── tools/
+│   ├── build_test.py               # Contrôle build/compilation sans gestion de version
+│   └── ci_validate.py              # Validation manifest/CHANGELOG/docs utilisée par la CI
 ├── bump_version.py                 # Incrémentation de version façon compteur kilométrique (générique, partagé avec URTC)
+├── bump_manifest_version.py        # Synchronise la version de hydra-umc.project.json avec la version native (--sync)
 ├── build_firmware.sh / .bat        # Build réel : tests hôte + incrémente la version + compile + lie + publie
+├── build-test.sh / .bat            # Contrôle build/compilation sans gestion de version
 └── README.md
 ```
 

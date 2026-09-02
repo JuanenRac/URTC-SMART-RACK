@@ -87,9 +87,13 @@ URTC-SMART-RACK/
 ├── firmware/                       # 版本化构建输出（.bin/.elf/.hex），与兄弟仓库 URTC 一样被提交
 ├── build/                          # 中间构建对象（已被 gitignore）
 ├── images/                         # 媒体与图表
-├── scripts/                        # 实用脚本
+├── tools/
+│   ├── build_test.py               # 不递增版本号的构建/编译检查
+│   └── ci_validate.py              # CI 使用的 manifest/CHANGELOG/docs 校验
 ├── bump_version.py                 # 里程表式版本递增（通用脚本，与 URTC 共享）
+├── bump_manifest_version.py        # 将 hydra-umc.project.json 的版本与原生版本同步（--sync）
 ├── build_firmware.sh / .bat        # 真实构建：宿主测试 + 版本递增 + 编译 + 链接 + 发布
+├── build-test.sh / .bat            # 不递增版本号的构建/编译检查
 └── README.md
 ```
 

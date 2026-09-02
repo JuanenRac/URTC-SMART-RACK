@@ -6,7 +6,7 @@
 
 <p align="center"><a href="README.md">🇺🇸 English</a> | 🇪🇸 <b>Español</b> | <a href="README_fra.md">🇫🇷 Français</a> | <a href="README_ita.md">🇮🇹 Italiano</a> | <a href="README_deu.md">🇩🇪 Deutsch</a> | <a href="README_zho.md">🇨🇳 简体中文</a> | <a href="README_jpn.md">🇯🇵 日本語</a></p>
 
-### 🤖 Gestion Inteligente de Cabezales con Seguimiento de Vida Util y Termico
+### 🤖 Gestión Inteligente de Cabezales con Seguimiento de Vida Útil y Térmico
 
 <p align="left">
   <img src="https://img.shields.io/badge/Licencia-GPL%203.0-blue.svg" alt="GPL 3.0">
@@ -19,19 +19,19 @@
 
 ## 1. 🛠️ VISIÓN TÉCNICA GENERAL
 
-**URTC-SMART-RACK** es un sistema de almacenamiento inteligente para cabezales de herramienta dentro del ecosistema HYDRA-UMC. Basado en el microcontrolador STM32G4, monitoriza y prepara las herramientas mientras no estan acopladas a un robot.
+**URTC-SMART-RACK** es un sistema de almacenamiento inteligente para cabezales de herramienta dentro del ecosistema HYDRA-UMC. Basado en el microcontrolador STM32G4, monitoriza y prepara las herramientas mientras no están acopladas a un robot.
 
-Habilita modos "Smart Idle", como precalentar puntas de soldadura T12 justo antes de un cambio de herramienta, y registra el ID electronico, la version de firmware y los ciclos totales de uso de cada cabezal URTC, garantizando un mantenimiento optimo y un despliegue de cero segundos.
+Habilita modos "Smart Idle", como precalentar puntas de soldadura T12 justo antes de un cambio de herramienta, y registra el ID electrónico, la versión de firmware y los ciclos totales de uso de cada cabezal URTC, garantizando un mantenimiento óptimo y un despliegue de cero segundos.
 
-Todavia no existe PCB/esquematico para esta placa (ver `hardware/`), asi que nada de lo de abajo puede manejar GPIO/F-RAM/CAN real - pero la *logica* en la que se reducen esas caracteristicas (decodificar un ID, registrar el uso, decidir cuando precalentar y a que temperatura) es real, C puro, con tests hoy mismo.
+Todavía no existe PCB/esquemático para esta placa (ver `hardware/`), así que nada de lo de abajo puede manejar GPIO/F-RAM/CAN real - pero la *lógica* en la que se reducen esas características (decodificar un ID, registrar el uso, decidir cuándo precalentar y a qué temperatura) es real, C puro, con tests hoy mismo.
 
-### Caracteristicas Clave:
-* ✅ **Real v0 - logica de ID, vida util y precalentamiento:** `tool_id.c` decodifica una lectura de ID de 5 bits en una identidad de herramienta; `lifecycle.c` registra ciclos/tiempo de uso y marca cuando hace falta mantenimiento; `preheat.c` decide cuando debe empezar el precalentamiento Smart Idle y a que temperatura objetivo. 25 aserciones de test con el propio compilador C del host - no hace falta PCB, driver de GPIO ni F-RAM para ejecutar ni testear nada de esto.
-* 🗄️ **Seguimiento de Herramientas** — identificacion automatica de cabezales URTC via jumpers de ID de 5 bits o F-RAM. *(la logica de decodificacion de ID en si es real - ver arriba; leer jumpers/F-RAM reales necesita el PCB.)*
-* 🌡️ **Logica de Precalentamiento** — gestion termica inteligente para herramientas de soldadura y aire caliente. *(la decision de activacion y las temperaturas objetivo son reales - ver arriba; accionar un calentador real necesita el PCB.)*
-* 📈 **Registros de Vida Util** — registra ciclos totales de actuacion y horas de uso en la F-RAM de la herramienta. *(los contadores y la logica de mantenimiento debido son reales - ver arriba; persistirlos en F-RAM real necesita el PCB.)*
-* 📡 **Integracion CAN** — se comunica directamente con el Cerebro Cinematico de HYDRA-UMC para ATC coordinado (Cambio Automatico de Herramienta). *(el protocolo en si - framing, CRC, validacion de comandos - es real, ver mas abajo; todavia hace falta un transceptor CAN real para transportarlo.)*
-* 🔒 **Limites de Seguridad del Protocolo** — framing versionado real con suma de verificacion CRC8, validacion real de rango de actuacion, y un watchdog real de timeout de enlace/idempotencia con un estado seguro definido. *(implementado)*
+### Características Clave:
+* ✅ **Real v0 - lógica de ID, vida útil y precalentamiento:** `tool_id.c` decodifica una lectura de ID de 5 bits en una identidad de herramienta; `lifecycle.c` registra ciclos/tiempo de uso y marca cuando hace falta mantenimiento; `preheat.c` decide cuándo debe empezar el precalentamiento Smart Idle y a qué temperatura objetivo. 25 aserciones de test con el propio compilador C del host - no hace falta PCB, driver de GPIO ni F-RAM para ejecutar ni testear nada de esto.
+* 🗄️ **Seguimiento de Herramientas** — identificación automática de cabezales URTC vía jumpers de ID de 5 bits o F-RAM. *(la lógica de decodificación de ID en sí es real - ver arriba; leer jumpers/F-RAM reales necesita el PCB.)*
+* 🌡️ **Lógica de Precalentamiento** — gestión térmica inteligente para herramientas de soldadura y aire caliente. *(la decisión de activación y las temperaturas objetivo son reales - ver arriba; accionar un calentador real necesita el PCB.)*
+* 📈 **Registros de Vida Útil** — registra ciclos totales de actuación y horas de uso en la F-RAM de la herramienta. *(los contadores y la lógica de mantenimiento debido son reales - ver arriba; persistirlos en F-RAM real necesita el PCB.)*
+* 📡 **Integración CAN** — se comunica directamente con el Cerebro Cinemático de HYDRA-UMC para ATC coordinado (Cambio Automático de Herramienta). *(el protocolo en sí - framing, CRC, validación de comandos - es real, ver más abajo; todavía hace falta un transceptor CAN real para transportarlo.)*
+* 🔒 **Límites de Seguridad del Protocolo** — framing versionado real con suma de verificación CRC8, validación real de rango de actuación, y un watchdog real de timeout de enlace/idempotencia con un estado seguro definido. *(implementado)*
 * ✅ **Toolchain de firmware Cortex-M4F** — una imagen bare-metal real (startup + linker + `main.c`) que compila y enlaza de verdad con `arm-none-eabi-gcc`, el mismo toolchain que usa el repositorio hermano URTC. *(implementado — ver COMPILACIÓN abajo)*
 
 ---
@@ -65,25 +65,25 @@ flowchart TB
 
 ```text
 URTC-SMART-RACK/
-├── src/                            # Codigo fuente del firmware
+├── src/                            # Código fuente del firmware
 │   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
-│   ├── tool_id.h / .c              # Real: decodificacion de lectura de 5 bits -> ID de herramienta
+│   ├── tool_id.h / .c              # Real: decodificación de lectura de 5 bits -> ID de herramienta
 │   ├── lifecycle.h / .c            # Real: seguimiento de ciclos/tiempo de uso, chequeo de mantenimiento debido
-│   ├── preheat.h / .c              # Real: activacion de Smart Idle + temperatura objetivo + objetivo de estado seguro
+│   ├── preheat.h / .c              # Real: activación de Smart Idle + temperatura objetivo + objetivo de estado seguro
 │   ├── protocol.h / .c             # Real: formato de trama versionado + parseo/codificacion CRC8
-│   ├── rack_command.h / .c         # Real: decodificacion de comandos + validacion de limites de actuacion
+│   ├── rack_command.h / .c         # Real: decodificación de comandos + validación de límites de actuación
 │   ├── link_watchdog.h / .c        # Real: timeout de enlace + idempotencia de comandos
-│   ├── main.c                      # Punto de entrada minimo (bucle de latido de vida)
-│   ├── startup_stm32g4_minimal.c   # Tabla de vectores + Reset_Handler (sin HAL de ST todavia, ver cabecera del archivo)
+│   ├── main.c                      # Punto de entrada mínimo (bucle de latido de vida)
+│   ├── startup_stm32g4_minimal.c   # Tabla de vectores + Reset_Handler (sin HAL de ST todavía, ver cabecera del archivo)
 │   └── STM32G4_MINIMAL.ld          # Linker script placeholder (suelo de 128K FLASH / 32K RAM)
 ├── tests/                          # Harness de tests real host-native (tool_id, lifecycle, preheat, protocol, rack_command, link_watchdog, escenarios de enlace del rack)
-├── docs/                           # Documentacion y manual de usuario
-├── hardware/                       # Archivos de diseno de hardware (PCB, 3D) - vacio, sin esquematico todavia
+├── docs/                           # Documentación y manual de usuario
+├── hardware/                       # Archivos de diseño de hardware (PCB, 3D) - vacío, sin esquemático todavía
 ├── firmware/                       # Salida de build versionada (.bin/.elf/.hex), commiteada igual que el repo hermano URTC
 ├── build/                          # Objetos intermedios de build (ignorado por git)
 ├── images/                         # Medios y diagramas
 ├── scripts/                        # Scripts de utilidad
-├── bump_version.py                 # Incremento de version estilo cuentakilometros (generico, compartido con URTC)
+├── bump_version.py                 # Incremento de versión estilo cuentakilómetros (genérico, compartido con URTC)
 ├── build_firmware.sh / .bat        # Build real: tests de host + incrementa version + compila + enlaza + publica
 └── README.md
 ```
@@ -103,11 +103,11 @@ chmod +x build_firmware.sh   # una sola vez
 build_firmware.bat
 ```
 
-El build primero compila y ejecuta `tests/` con el compilador C *del propio host* (nunca `arm-none-eabi-gcc` - son tests de logica pura, no tocan registros de MCU) y falla el build entero si alguna aserción falla. Solo entonces incrementa la version de `src/firmware_common.h` (regla cuentakilometros, igual que el resto del ecosistema), compila `main.c` y `startup_stm32g4_minimal.c` para Cortex-M4F, los enlaza contra el mapa de memoria placeholder `STM32G4_MINIMAL.ld`, y publica archivos `.elf`/`.bin`/`.hex` versionados en `firmware/`.
+El build primero compila y ejecuta `tests/` con el compilador C *del propio host* (nunca `arm-none-eabi-gcc` - son tests de lógica pura, no tocan registros de MCU) y falla el build entero si alguna aserción falla. Solo entonces incrementa la versión de `src/firmware_common.h` (regla cuentakilometros, igual que el resto del ecosistema), compila `main.c` y `startup_stm32g4_minimal.c` para Cortex-M4F, los enlaza contra el mapa de memoria placeholder `STM32G4_MINIMAL.ld`, y publica archivos `.elf`/`.bin`/`.hex` versionados en `firmware/`.
 
-Todavia no hay nada que flashear a hardware real - no existe PCB que confirme la pieza STM32G4 objetivo, el pinout, o sus tamanos reales de flash/RAM. El mapa de memoria del linker script es un placeholder conservador (documentado en su propia cabecera) que se reemplazara cuando exista hardware real, el mismo momento en que la tabla de vectores escrita a mano de `startup_stm32g4_minimal.c` se reemplazara por el codigo de arranque CMSIS/HAL propio de ST (siguiendo el patron del repositorio hermano URTC en `src/F303-master/` para sus placas STM32F303).
+Todavía no hay nada que flashear a hardware real - no existe PCB que confirme la pieza STM32G4 objetivo, el pinout, o sus tamaños reales de flash/RAM. El mapa de memoria del linker script es un placeholder conservador (documentado en su propia cabecera) que se reemplazará cuando exista hardware real, el mismo momento en que la tabla de vectores escrita a mano de `startup_stm32g4_minimal.c` se reemplazará por el código de arranque CMSIS/HAL propio de ST (siguiendo el patrón del repositorio hermano URTC en `src/F303-master/` para sus placas STM32F303).
 
-Ejemplo real - los tests del lado del host tambien se ejecutan solos, util para comprobar la logica sin un build de firmware completo:
+Ejemplo real - los tests del lado del host también se ejecutan solos, útil para comprobar la lógica sin un build de firmware completo:
 
 ```bash
 cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \

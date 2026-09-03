@@ -77,7 +77,7 @@ URTC-SMART-RACK/
 │   ├── startup_stm32g4_minimal.c   # Tabella dei vettori + Reset_Handler (ancora senza HAL ST, vedi intestazione del file)
 │   └── STM32G4_MINIMAL.ld          # Linker script placeholder (base 128K FLASH / 32K RAM)
 ├── tests/                          # Harness di test reale host-native (tool_id, lifecycle, preheat, protocol, rack_command, link_watchdog, scenari di collegamento del rack)
-├── docs/                           # Documentazione e manuale utente
+├── docs/                           # Documentazione e manuale utente - vuoto, non ancora creato
 ├── hardware/                       # File di progettazione hardware (PCB, 3D) - vuoto, nessuno schematico ancora
 ├── firmware/                       # Output di build versionato (.bin/.elf/.hex), commesso come il repository gemello URTC
 ├── build/                          # Oggetti di build intermedi (ignorato da git)

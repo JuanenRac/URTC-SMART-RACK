@@ -49,11 +49,11 @@
 
 ```mermaid
 flowchart TB
-    TOOL["URTC Tool Head"] -- Plugged into Rack --> RACK["URTC-SMART-RACK"]
-    RACK --> IDENT["Read ID & Lifetime Data"]
-    IDENT --> SYNC["Sync with HYDRA-ORCHESTRATOR"]
-    SYNC -- Anticipated Task --> HEAT["PRE-HEAT: Soldering Tip to 200°C"]
-    RACK -- Health Check --> LOG["Maintenance Report"]
+    TOOL["URTC 工具ヘッド"] -- ラックに接続 --> RACK["URTC-SMART-RACK"]
+    RACK --> IDENT["ID とライフサイクルデータを読み取り"]
+    IDENT --> SYNC["HYDRA-ORCHESTRATOR と同期"]
+    SYNC -- 予期されるタスク --> HEAT["予熱：はんだごて先を 200°C に"]
+    RACK -- ヘルスチェック --> LOG["メンテナンスレポート"]
 ```
 
 ---
@@ -86,7 +86,7 @@ URTC-SMART-RACK/
 │   ├── startup_stm32g4_minimal.c   # ベクターテーブル + Reset_Handler（ST HAL はまだなし、ファイルヘッダー参照）
 │   └── STM32G4_MINIMAL.ld          # プレースホルダーリンカスクリプト（128K FLASH / 32K RAM の下限）
 ├── tests/                          # 本物のホストネイティブテストハーネス（tool_id、lifecycle、preheat、protocol、rack_command、link_watchdog、ラックリンクシナリオ）
-├── docs/                           # ドキュメントとユーザーマニュアル
+├── docs/                           # ドキュメントとユーザーマニュアル —— 空、まだ作成されていない
 ├── hardware/                       # ハードウェア設計ファイル（PCB、3D）—— 現時点では空、回路図なし
 ├── firmware/                       # バージョン管理されたビルド出力（.bin/.elf/.hex）、兄弟リポジトリ URTC と同様にコミットされる
 ├── build/                          # 中間ビルドオブジェクト（gitignore 対象）

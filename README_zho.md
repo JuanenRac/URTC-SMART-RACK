@@ -45,11 +45,11 @@
 
 ```mermaid
 flowchart TB
-    TOOL["URTC Tool Head"] -- Plugged into Rack --> RACK["URTC-SMART-RACK"]
-    RACK --> IDENT["Read ID & Lifetime Data"]
-    IDENT --> SYNC["Sync with HYDRA-ORCHESTRATOR"]
-    SYNC -- Anticipated Task --> HEAT["PRE-HEAT: Soldering Tip to 200°C"]
-    RACK -- Health Check --> LOG["Maintenance Report"]
+    TOOL["URTC 刀头"] -- 接入机架 --> RACK["URTC-SMART-RACK"]
+    RACK --> IDENT["读取 ID 与生命周期数据"]
+    IDENT --> SYNC["与 HYDRA-ORCHESTRATOR 同步"]
+    SYNC -- 预期任务 --> HEAT["预热：烙铁头至 200°C"]
+    RACK -- 健康检查 --> LOG["维护报告"]
 ```
 
 ---
@@ -82,7 +82,7 @@ URTC-SMART-RACK/
 │   ├── startup_stm32g4_minimal.c   # 向量表 + Reset_Handler（暂无 ST HAL，见文件头说明）
 │   └── STM32G4_MINIMAL.ld          # 占位链接脚本（128K FLASH / 32K RAM 下限）
 ├── tests/                          # 真实的宿主机原生测试工具集（tool_id、lifecycle、preheat、protocol、rack_command、link_watchdog、机架链路场景）
-├── docs/                           # 文档与用户手册
+├── docs/                           # 文档与用户手册 —— 目前为空，尚未创建
 ├── hardware/                       # 硬件设计文件（PCB、3D）—— 目前为空，尚无原理图
 ├── firmware/                       # 版本化构建输出（.bin/.elf/.hex），与兄弟仓库 URTC 一样被提交
 ├── build/                          # 中间构建对象（已被 gitignore）

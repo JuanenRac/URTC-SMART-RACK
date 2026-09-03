@@ -149,6 +149,12 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 
 ---
 
+## 5. 📋 チェンジログ
+
+バージョン履歴の全文は [`CHANGELOG.md`](CHANGELOG.md) を参照。実ビルドのたびに `src/firmware_common.h` のバージョンが自動的に上がり(オドメーター方式、上記のビルドを参照)、各更新はそこに個別のエントリを持つ。
+
+---
+
 ## 🔗 関連プロジェクト
 
 本プロジェクトは、同じ作者(JuanenRac / Electro Hobby 3D)による HYDRA-UMC ロボティクスエコシステムの一部です。リクエストが実はこの中のどれかについてのものである可能性があるため、知っておく価値があります。

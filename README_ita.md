@@ -124,6 +124,12 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 
 ---
 
+## 5. 📋 CHANGELOG
+
+Consulta [`CHANGELOG.md`](CHANGELOG.md) per la cronologia completa delle versioni — ogni build reale incrementa automaticamente la versione di `src/firmware_common.h` (regola del contachilometri, vedi COMPILAZIONE sopra), e ogni incremento ha lì la propria voce.
+
+---
+
 ## 🔗 Progetti Correlati
 
 Questo progetto fa parte dell'ecosistema robotico HYDRA-UMC dello stesso autore (JuanenRac / Electro Hobby 3D). Vale la pena conoscerlo, poiché una richiesta potrebbe in realtà riguardare uno di questi invece di questo repository.

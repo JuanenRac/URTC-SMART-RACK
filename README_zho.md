@@ -141,6 +141,12 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 
 ---
 
+## 5. 📋 更新日志
+
+完整版本历史见 [`CHANGELOG.md`](CHANGELOG.md) —— 每次真实构建都会自动递增 `src/firmware_common.h` 的版本号(里程表式规则,见上方"构建"一节),每次递增在其中都有独立条目。
+
+---
+
 ## 🔗 相关项目
 
 本项目是同一作者(JuanenRac / Electro Hobby 3D)打造的 HYDRA-UMC 机器人生态系统的一部分。值得了解,因为某个请求实际上可能是关于这些项目之一,而非本仓库本身。

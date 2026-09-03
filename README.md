@@ -124,6 +124,12 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 
 ---
 
+## 5. 📋 CHANGELOG
+
+See [`CHANGELOG.md`](CHANGELOG.md) for the full version history — every real build bumps `src/firmware_common.h`'s version automatically (odometer rule, see BUILD above), and each bump gets its own entry there.
+
+---
+
 ## 🔗 Related Projects
 
 This project is part of the HYDRA-UMC robotics ecosystem by the same author (JuanenRac / Electro Hobby 3D). Worth knowing about, since a request might actually be about one of these rather than this repository.

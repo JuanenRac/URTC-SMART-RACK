@@ -124,6 +124,12 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 
 ---
 
+## 5. 📋 CHANGELOG
+
+Siehe [`CHANGELOG.md`](CHANGELOG.md) für die vollständige Versionshistorie — jeder echte Build erhöht automatisch die Version von `src/firmware_common.h` (Kilometerzähler-Regel, siehe BUILD oben), und jede Erhöhung hat dort ihren eigenen Eintrag.
+
+---
+
 ## 🔗 Verwandte Projekte
 
 Dieses Projekt ist Teil des HYDRA-UMC-Robotik-Ökosystems desselben Autors (JuanenRac / Electro Hobby 3D). Gut zu wissen, da eine Anfrage eigentlich eines dieser Projekte betreffen könnte statt dieses Repositorys.

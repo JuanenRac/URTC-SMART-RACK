@@ -124,6 +124,12 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 
 ---
 
+## 5. 📋 CHANGELOG
+
+Consultez [`CHANGELOG.md`](CHANGELOG.md) pour l'historique complet des versions — chaque build réel incrémente automatiquement la version de `src/firmware_common.h` (règle de l'odomètre, voir COMPILATION ci-dessus), et chaque incrément y a sa propre entrée.
+
+---
+
 ## 🔗 Projets Liés
 
 Ce projet fait partie de l'écosystème robotique HYDRA-UMC du même auteur (JuanenRac / Electro Hobby 3D). Bon à savoir, car une demande pourrait en réalité concerner l'un de ceux-ci plutôt que ce dépôt.

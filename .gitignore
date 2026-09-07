@@ -1,0 +1,16 @@
+build/
+# MSVC cl.exe writes .obj files to the invoking working directory
+# (repo root), not to -Fe's exe output path - a real gotcha hit while
+# using cl.exe as a substitute host compiler (no gcc/cc on PATH) to
+# verify RACK-01's fix; accidentally committed once before this was
+# added, then removed.
+*.obj
+
+# HYDRA-UMC shared secret protection
+.env
+.env.*
+!.env.example
+
+# Python bytecode (generated locally; never source)
+__pycache__/
+*.py[cod]

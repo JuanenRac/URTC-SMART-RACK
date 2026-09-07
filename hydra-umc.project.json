@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "ecosystem": "HYDRA-UMC",
+  "name": "URTC-SMART-RACK",
+  "version": "0.0.8",
+  "role": "firmware",
+  "stack": "firmware-c",
+  "technologies": [
+    "C",
+    "STM32G4",
+    "arm-none-eabi-gcc"
+  ],
+  "deployment_target": "user-pc",
+  "maturity": "established",
+  "family": "Complementary Tools",
+  "parent": null,
+  "build": "bash build_firmware.sh. Real host-native unit tests run before the arm-none-eabi-gcc cross-compile.",
+  "notes": "Real, hardware-independent pure-C logic (tool_id.c ID decoding, lifecycle.c usage/maintenance tracking, preheat.c Smart Idle activation + target temperature + real safe-state target), a real rack command protocol (protocol.c: versioned framing + CRC8; rack_command.c: real actuation-limit validation; link_watchdog.c: real timeout + idempotency), and a real host-side scenario harness playing valid/CRC-corrupted/out-of-range/timed-out/duplicate frames through the whole pipeline - 89 host-native test assertions total, plus the verified cross-compile toolchain (arm-none-eabi-gcc -> .bin/.hex with a real size report). link_watchdog.c's sequence check is now a real wraparound-aware \"genuinely newer\" comparison (not just \"different from the last one seen\"), with a real session/epoch reset on link-loss recovery. Real CAN/F-RAM/GPIO I/O to actually drive tool tracking and pre-heating needs a real PCB, which doesn't exist yet.",
+  "native_version": {
+    "file": "src/firmware_common.h",
+    "pattern": {
+      "major": "#define\\s+FIRMWARE_VERSION_MAJOR\\s+(\\d+)",
+      "minor": "#define\\s+FIRMWARE_VERSION_MINOR\\s+(\\d+)",
+      "patch": "#define\\s+FIRMWARE_VERSION_PATCH\\s+(\\d+)"
+    }
+  }
+}

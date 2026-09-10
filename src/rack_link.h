@@ -3,7 +3,7 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0 - see LICENSE
 // =============================================================================
-// Found in an ecosystem-wide software-improvements audit: the real
+// Found while auditing the code: the real
 // frame-dispatch decision tying protocol/rack-command/link-watchdog/
 // preheat together existed only as a static function inside this repo's
 // own tests/test_rack_link_scenarios.c, not as a real src/ module anything

@@ -33,7 +33,7 @@ bool preheat_should_activate(uint32_t ms_until_next_use, uint32_t lead_time_ms);
 // The real, safe target when the host link is lost or was never
 // established (see link_watchdog.h's link_watchdog_is_link_lost()) -
 // always "off", regardless of tool type or whatever target was last
-// commanded. The promotion audit's own "estado seguro al arrancar o
+// commanded. The review's own "estado seguro al arrancar o
 // perder enlace": a lost link must never leave a heater running
 // unattended.
 uint16_t preheat_safe_state_temp_c(void);

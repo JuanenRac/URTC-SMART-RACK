@@ -3,7 +3,7 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0 - see LICENSE
 // =============================================================================
-// Real wire framing for the host<->rack link - the promotion audit's own
+// Real wire framing for the host<->rack link - the review's own
 // "definir protocolo de rack con version, framing, CRC/checksum...; no
 // dejar la interpretacion en el loop MCU". Pure byte-buffer logic, no
 // UART/CAN peripheral access - real and testable on the host today, wired

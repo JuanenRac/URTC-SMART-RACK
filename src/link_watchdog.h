@@ -3,8 +3,8 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0 - see LICENSE
 // =============================================================================
-// Real timeout and idempotency tracking for the rack link - the promotion
-// audit's own "timeout, idempotencia... y estado seguro al arrancar o
+// Real timeout and idempotency tracking for the rack link - the review's
+// own "timeout, idempotencia... y estado seguro al arrancar o
 // perder enlace". Pure logic against a caller-supplied millisecond clock
 // (no SysTick/RTC access), so it's real and testable on the host without
 // a real link or board.

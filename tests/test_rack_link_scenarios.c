@@ -3,7 +3,7 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0 - see LICENSE
 // =============================================================================
-// The promotion audit's own "simulador de periferico para probar comando
+// The review's own "simulador de periferico para probar comando
 // invalido sin rack" / "Evidencia: ... trama valida, CRC invalido, timeout
 // y comando fuera de rango, con transicion segura comprobada": this file
 // plays real encoded frames (some deliberately corrupted, some
@@ -14,7 +14,7 @@
 // actuation decision at each step - no rack, CAN transceiver or F-RAM
 // required, since none exist for this board yet (see main.c's own note).
 //
-// Found in an ecosystem-wide software-improvements audit: this real
+// Found while auditing the code: this real
 // decision used to be a static function defined INSIDE this test file
 // rather than a real src/ module anything else could call - promoted to
 // rack_link.c/.h, with this file now calling INTO it instead of defining
@@ -108,8 +108,7 @@ void run_rack_link_scenario_tests(int *failures)
         TEST_ASSERT(resend == preheat_safe_state_temp_c(), "a real resend of the exact same sequence 9 is treated as a duplicate, not re-applied");
     }
 
-    // --- RACK-01 (found in an ecosystem-wide software-improvements
-    // audit, P1): a real link-loss recovery is a genuine epoch boundary -
+    // --- RACK-01 (P1): a real link-loss recovery is a genuine epoch boundary -
     // rack_link_process_frame() must reset per-tool sequence tracking so
     // a tool board that itself rebooted (and restarted its own sequence
     // counter low) is never mistaken for replaying a stale old command. ---

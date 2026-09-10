@@ -49,8 +49,7 @@ bool link_watchdog_accept_sequence(link_watchdog_t *lw, uint8_t tool_id, uint8_t
         return false;
     }
     if (lw->has_seq_by_tool_id[tool_id]) {
-        // RACK-01 (found in an ecosystem-wide software-improvements
-        // audit, P1): the old check only ever rejected an EXACT repeat
+        // RACK-01 (P1): the old check only ever rejected an EXACT repeat
         // of the immediately-previous sequence - 10, 11, 10 accepted the
         // second 10 outright (10 != 11), re-applying a real stale/
         // replayed command as if it were fresh. This treats the 8-bit

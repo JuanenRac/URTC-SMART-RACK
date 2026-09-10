@@ -59,8 +59,7 @@ void run_link_watchdog_tests(int *failures)
         TEST_ASSERT(link_watchdog_accept_sequence(&lw, TOOL_ID_NONE, 1) == false, "a command sequence for TOOL_ID_NONE (no tool present) is never accepted");
     }
 
-    // --- RACK-01 (found in an ecosystem-wide software-improvements
-    // audit, P1): a stale/reordered sequence arriving AFTER a newer one
+    // --- RACK-01 (P1): a stale/reordered sequence arriving AFTER a newer one
     // must be rejected, not just an exact repeat of the immediately-
     // previous value. This is the finding's own exact reproduction. ---
     {

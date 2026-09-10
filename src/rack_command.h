@@ -4,7 +4,7 @@
 // GPL-3.0 - see LICENSE
 // =============================================================================
 // Turns a real, CRC-valid protocol_frame_t (see protocol.h) into a real,
-// range-checked command - the promotion audit's own "aplicar limites de
+// range-checked command - the review's own "aplicar limites de
 // actuacion" - as its own module rather than inline wherever a future
 // CAN/UART receive interrupt eventually calls it. A frame can be
 // perfectly well-formed at the protocol level and still ask for something

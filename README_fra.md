@@ -15,6 +15,8 @@
   <img src="https://img.shields.io/badge/Feature-Smart%20Idle-green.svg" alt="Smart Idle">
 </p>
 
+**Vérification d'honnêteté - ce qui fonctionne réellement aujourd'hui :** `tool_id.c`, `lifecycle.c`, `preheat.c`, `protocol.c`, `rack_command.c`, `link_watchdog.c` et `rack_link.c` sont du vrai C pur, appuyé par 89 vérifications `TEST_ASSERT` qui passent (`tests/test_*.c`, compilées et exécutées avec le propre compilateur C de l'hôte, pas `arm-none-eabi-gcc`) - confirmé en compilant et en exécutant exactement cette suite de tests hôte. Cela couvre le décodage d'ID, le suivi d'usage/cycle de vie, l'activation du préchauffage et la température cible, l'analyse du protocole avec framing CRC8, la validation de plage des commandes, et la gestion du timeout de liaison/idempotence - uniquement de la logique, aucun matériel. Comme le dit déjà l'introduction du README : aucun PCB/schéma n'existe encore pour cette carte, donc rien ici n'a jamais piloté une vraie broche GPIO, une puce F-RAM, un élément chauffant ou un transceiver CAN réels - `main.c`/`startup_stm32g4_minimal.c` prouvent seulement que la compilation croisée et l'édition de liens pour Cortex-M4F réussissent contre un script de liaison provisoire, pas que quoi que ce soit ici tourne sur du vrai silicium. Voir `CHANGELOG.md` pour savoir exactement ce qui a été livré jusqu'à présent.
+
 ---
 
 ## 1. 🛠️ APERÇU TECHNIQUE
@@ -26,7 +28,7 @@ Il permet des modes « Smart Idle », comme préchauffer des pointes à souder T
 Aucun PCB/schéma n'existe encore pour cette carte (voir `hardware/`), donc rien ci-dessous ne peut piloter du GPIO/F-RAM/CAN réel - mais la *logique* à laquelle ces fonctionnalités se résument (décoder un ID, suivre l'utilisation, décider quand préchauffer et à quelle température) est réelle, en C pur, testée unitairement dès aujourd'hui.
 
 ### Fonctionnalités Clés :
-* ✅ **v0 réelle - logique d'ID, cycle de vie & préchauffage :** `tool_id.c` décode une lecture d'ID brute sur 5 bits en une identité d'outil ; `lifecycle.c` suit les cycles/temps d'utilisation et signale la maintenance due ; `preheat.c` décide quand le préchauffage Smart Idle doit démarrer et à quelle température cible. 25 assertions de test sur le propre compilateur C de l'hôte - aucun PCB, driver GPIO ou F-RAM nécessaire pour exécuter ou tester tout cela.
+* ✅ **v0 réelle - logique d'ID, cycle de vie & préchauffage :** `tool_id.c` décode une lecture d'ID brute sur 5 bits en une identité d'outil ; `lifecycle.c` suit les cycles/temps d'utilisation et signale la maintenance due ; `preheat.c` décide quand le préchauffage Smart Idle doit démarrer et à quelle température cible. 89 assertions de test sur le propre compilateur C de l'hôte - aucun PCB, driver GPIO ou F-RAM nécessaire pour exécuter ou tester tout cela.
 * 🗄️ **Suivi des Outils** — identification automatique des têtes URTC via cavaliers d'ID 5 bits ou F-RAM. *(la logique de décodage d'ID elle-même est réelle - voir ci-dessus ; lire de vrais cavaliers/F-RAM nécessite le PCB.)*
 * 🌡️ **Logique de Préchauffage** — gestion thermique intelligente pour les outils de soudure et d'air chaud. *(la décision d'activation et les températures cibles sont réelles - voir ci-dessus ; piloter un vrai chauffage nécessite le PCB.)*
 * 📈 **Journaux de Cycle de Vie** — enregistre le nombre total de cycles d'actionnement et d'heures d'utilisation dans la F-RAM de l'outil. *(les compteurs et la logique de maintenance due sont réels - voir ci-dessus ; les persister dans une vraie F-RAM nécessite le PCB.)*
@@ -73,6 +75,7 @@ URTC-SMART-RACK/
 │   ├── protocol.h / .c             # Réel : format de trame versionné + parsing/encodage CRC8
 │   ├── rack_command.h / .c         # Réel : décodage de commande + validation des limites d'actionnement
 │   ├── link_watchdog.h / .c        # Réel : timeout de liaison + idempotence des commandes
+│   ├── rack_link.h / .c            # Réel : décision de dispatch de trame reliant protocol/rack_command/link_watchdog/preheat
 │   ├── main.c                      # Point d'entrée minimal (boucle de battement de vie)
 │   ├── startup_stm32g4_minimal.c   # Table des vecteurs + Reset_Handler (pas de HAL ST pour l'instant, voir l'en-tête du fichier)
 │   └── STM32G4_MINIMAL.ld          # Script de liaison provisoire (plancher 128K FLASH / 32K RAM)

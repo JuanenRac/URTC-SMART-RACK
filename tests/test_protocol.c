@@ -39,6 +39,30 @@ void run_protocol_tests(int *failures)
         TEST_ASSERT(frame.len == 0, "parsed len is 0");
     }
 
+    // --- H042: a real zero (or partial) payload never leaves undefined
+    // bytes past `len` in out_frame->payload - a caller reading, say,
+    // payload[0] without checking `len` first (the exact receive-path bug
+    // this note documents, see rack_link.c) must get a well-defined 0,
+    // never whatever stack garbage its own protocol_frame_t local happened
+    // to hold before the call. ---
+    {
+        uint8_t buf[PROTOCOL_MAX_FRAME_SIZE];
+        uint8_t written = protocol_encode_frame(1, 0x04, NULL, 0, buf);
+
+        protocol_frame_t frame;
+        memset(&frame, 0xAA, sizeof(frame)); // simulate a "worst case" uninitialized local, deterministically
+        TEST_ASSERT(protocol_parse_frame(buf, written, &frame) == PROTOCOL_OK, "the sentinel-filled frame still parses OK");
+        TEST_ASSERT(frame.payload[0] == 0u, "payload[0] is scrubbed to 0, not left as the pre-call sentinel, even though len == 0 never wrote to it directly");
+        TEST_ASSERT(frame.payload[PROTOCOL_MAX_PAYLOAD - 1] == 0u, "the entire unused payload tail is scrubbed, not just byte 0");
+
+        uint8_t payload[2] = {0x11, 0x22};
+        uint8_t written2 = protocol_encode_frame(1, 0x04, payload, 2, buf);
+        memset(&frame, 0xAA, sizeof(frame));
+        TEST_ASSERT(protocol_parse_frame(buf, written2, &frame) == PROTOCOL_OK, "a real 2-byte payload still parses OK from a sentinel-filled local");
+        TEST_ASSERT(frame.payload[0] == 0x11 && frame.payload[1] == 0x22, "the real payload bytes are copied correctly");
+        TEST_ASSERT(frame.payload[2] == 0u, "the byte right past the real 2-byte payload is scrubbed, not left as the sentinel");
+    }
+
     // --- Real corrupted CRC is rejected, not silently accepted ---
     {
         uint8_t payload[1] = {0x42};

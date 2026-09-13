@@ -131,4 +131,78 @@ void run_rack_link_scenario_tests(int *failures)
             "a real command with a LOW sequence number (5), arriving after the link was genuinely lost, is accepted as a fresh session - not rejected as 'behind' sequence 200 from before the outage"
         );
     }
+
+    // --- H042: a real, CRC-valid but zero-payload SET_PREHEAT frame must
+    // never read payload[0] as a tool_id (there is no real payload byte to
+    // read - see protocol.h's own comment on the smallest legal frame) and
+    // must never consume/mutate ANY tool's watchdog sequence slot as a
+    // side effect of trying anyway. tool_id_decode(0) == 0, and tool 0 is
+    // a real, present tool slot per tool_id.h (only all-ones/0x1F means
+    // "absent") - so this is a real, reachable false tool identity, not a
+    // hypothetical one, and this scenario is what the old code (before
+    // this fix) would have silently mistaken for a legitimate frame from
+    // tool 0 once H042's other fix (protocol.c zeroing the unused payload
+    // tail) made payload[0] well-defined as 0 for this frame instead of
+    // undefined stack garbage. ---
+    {
+        link_watchdog_t lw;
+        link_watchdog_init(&lw, 1000);
+        uint8_t buf[PROTOCOL_MAX_FRAME_SIZE];
+        uint8_t len = protocol_encode_frame(77, RACK_CMD_SET_PREHEAT, NULL, 0, buf);
+
+        uint16_t applied = rack_link_process_frame(&lw, buf, len, 100);
+        TEST_ASSERT(applied == preheat_safe_state_temp_c(), "a real, CRC-valid, zero-payload SET_PREHEAT frame results in the safe state, never a guessed temp");
+        TEST_ASSERT(link_watchdog_is_link_lost(&lw, 100) == false, "the frame was real and CRC-valid, so the link itself is still honestly alive");
+        for (uint8_t tool = 0; tool < LINK_WATCHDOG_TOOL_SLOTS; tool++) {
+            TEST_ASSERT(!lw.has_seq_by_tool_id[tool], "no tool's sequence slot (tool 0 included) was consumed by a frame with no real tool_id byte");
+        }
+
+        // A REAL subsequent frame for tool 0, with a sequence number lower
+        // than the bogus 77 the zero-payload frame above carried, must
+        // still be accepted - proving tool 0's tracking genuinely was
+        // never touched, not merely that this particular check happened
+        // to still pass.
+        uint8_t payload[3] = {0, 0xC8, 0x00}; // tool_id=0, 200C
+        uint8_t real_len = protocol_encode_frame(3, RACK_CMD_SET_PREHEAT, payload, 3, buf);
+        uint16_t real_applied = rack_link_process_frame(&lw, buf, real_len, 200);
+        TEST_ASSERT(real_applied == 200, "a real tool-0 command with a low sequence number (3) is accepted - the earlier zero-payload frame never poisoned tool 0's anti-replay state with its own sequence (77)");
+    }
+
+    // --- H042: an unrelated/unsupported command must not read payload[0]
+    // as a tool_id either, even with a non-zero payload - only
+    // RACK_CMD_SET_PREHEAT's own wire layout defines byte 0 as a tool_id
+    // today. ---
+    {
+        link_watchdog_t lw;
+        link_watchdog_init(&lw, 1000);
+        uint8_t payload[1] = {0}; // would decode as tool 0 if ever (wrongly) read as a tool_id
+        uint8_t buf[PROTOCOL_MAX_FRAME_SIZE];
+        uint8_t len = protocol_encode_frame(9, 0x7F, payload, 1, buf); // 0x7F: not a real rack_command_id_t value
+
+        uint16_t applied = rack_link_process_frame(&lw, buf, len, 100);
+        TEST_ASSERT(applied == preheat_safe_state_temp_c(), "an unrecognized command results in the safe state");
+        TEST_ASSERT(link_watchdog_is_link_lost(&lw, 100) == false, "the link stays alive on a real, CRC-valid frame even carrying an unrecognized command");
+        TEST_ASSERT(!lw.has_seq_by_tool_id[0], "an unrecognized command's own payload byte 0 is never mistaken for a tool_id");
+    }
+
+    // --- H042 (watchdog sequence consumption, reviewed as the finding
+    // asked): a real duplicate resend - correctly rejected so its command
+    // is never re-applied - must still count as real evidence the link
+    // itself is up, since the exact same bytes arriving twice is honest
+    // proof the transport is working, not a sign of silence. ---
+    {
+        link_watchdog_t lw;
+        link_watchdog_init(&lw, 1000);
+        uint8_t payload[3] = {2, 0xC8, 0x00};
+        uint8_t buf[PROTOCOL_MAX_FRAME_SIZE];
+        uint8_t len = protocol_encode_frame(9, RACK_CMD_SET_PREHEAT, payload, 3, buf);
+
+        rack_link_process_frame(&lw, buf, len, 0);
+        // The link goes silent for nearly (but not quite) the full
+        // timeout, then the exact same frame is resent - a real duplicate,
+        // correctly rejected as stale/already-applied.
+        uint16_t resend = rack_link_process_frame(&lw, buf, len, 900);
+        TEST_ASSERT(resend == preheat_safe_state_temp_c(), "the resend is still correctly rejected as a duplicate, never re-applied");
+        TEST_ASSERT(link_watchdog_is_link_lost(&lw, 1899) == false, "a real (if duplicate) frame at t=900 keeps the link alive up to just before a fresh 1000ms timeout from THAT frame, not just from the original one at t=0");
+    }
 }

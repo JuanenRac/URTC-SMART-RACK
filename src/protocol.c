@@ -60,6 +60,23 @@ protocol_status_t protocol_parse_frame(const uint8_t *buf, uint8_t buf_len, prot
     for (uint8_t i = 0; i < len; i++) {
         out_frame->payload[i] = buf[5u + i];
     }
+    // H042: `payload` is a fixed PROTOCOL_MAX_PAYLOAD-byte array - only the
+    // first `len` of those bytes are real wire content, but a caller
+    // holding this protocol_frame_t as an uninitialized local (as
+    // rack_link.c's own rack_link_process_frame() does) has no way to know
+    // that on its own. A real, validly-framed zero-payload frame (len ==
+    // 0 - see this file's own header comment on the smallest legal frame)
+    // used to leave every byte of `payload` as whatever undefined stack
+    // garbage the caller's local happened to hold, which a caller reading
+    // payload[0] without first checking `len` (the exact bug this note
+    // documents) turned into a nondeterministic, memory-unsafe "tool_id".
+    // Zeroing the unused tail here means that mistake is merely wrong
+    // (reads a well-defined 0), never undefined - real safety net for any
+    // future caller, on top of the correct fix already in rack_link.c
+    // (checking `len` before ever reading payload[0]).
+    for (uint8_t i = len; i < PROTOCOL_MAX_PAYLOAD; i++) {
+        out_frame->payload[i] = 0u;
+    }
     return PROTOCOL_OK;
 }
 

@@ -17,7 +17,7 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
 
 ---
 
-## Unreleased - Promoted the real receive-path decision to a real src/ module
+## [0.0.9] - H042: a malformed zero-payload frame could no longer corrupt an unrelated tool's anti-replay state
 
 - **New `src/rack_link.h`/`.c`** (`rack_link_process_frame()`) - found while
   auditing the code: the real frame-dispatch
@@ -36,6 +36,38 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
   already-installed MSVC toolchain (`cl.exe`, VS2019 Build Tools) as a
   real substitute host compiler, same technique already used for this
   repo's own 0.0.7 entry below - `All tests passed.`, 0 failures.
+- **H042 (the bug).** `rack_link_process_frame()` read `frame.payload[0]`
+  as a tool_id before ever checking that `frame.len` actually claims that
+  byte exists. `protocol_parse_frame()` only ever copies `len` real wire
+  bytes into `payload` - a real, validly-framed zero-payload frame
+  (`len == 0`, the smallest legal frame per `protocol.h`'s own framing
+  comment) left `payload[0]` as whatever undefined stack garbage the
+  caller's own local happened to hold. That undefined "tool_id" then had
+  its anti-replay sequence slot silently consumed by
+  `link_watchdog_accept_sequence()` using this unrelated frame's own
+  `seq` byte - real memory-unsafe behavior, and a real path to corrupting
+  a genuine tool's sequence tracking purely from a malformed frame that
+  happens to decode to that tool's ID.
+- **The fix.** Two layers: `protocol_parse_frame()` now zero-fills the
+  unused tail of `payload` past `len`, so any future reader gets a
+  well-defined `0` instead of undefined memory; `rack_link_process_frame()`
+  now checks `frame.len < 1` (and that `frame.cmd` is actually
+  `RACK_CMD_SET_PREHEAT`, the only command whose wire layout defines
+  byte 0 as a tool_id today) before ever decoding `payload[0]`, for any
+  unrelated/unsupported command too.
+- **Reviewed sequence consumption, as the finding also asked.** Marking
+  the link alive (`link_watchdog_note_frame_received()`) used to be
+  gated behind a successful anti-replay check, so a real, correctly
+  rejected duplicate resend did not count as evidence the link was up -
+  a tool board that only ever resends its last command (e.g. waiting for
+  an ack that never existed) could have been spuriously declared "lost".
+  Any real, CRC-valid frame now marks the link alive regardless of which
+  command it carries or whether its own sequence gets re-applied - those
+  are independent real signals.
+- 11 new tests (`test_protocol.c`, `test_rack_link_scenarios.c`) -
+  confirmed to fail against the pre-fix code (7 real failures reproduced
+  via a local revert of just the two fixed files, tests kept), all pass
+  with the fix.
 
 ## [0.0.8] - A stale/reordered sequence can no longer be re-applied as a fresh command (RACK-01)
 

@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Feature-Smart%20Idle-green.svg" alt="Smart Idle">
 </p>
 
-**正直な現状確認 - 実際に今動くもの:** `tool_id.c`、`lifecycle.c`、`preheat.c`、`protocol.c`、`rack_command.c`、`link_watchdog.c`、そして `rack_link.c` は本物の純粋な C コードであり、89件の通過している `TEST_ASSERT` チェック（`tests/test_*.c`、`arm-none-eabi-gcc` ではなくホスト自身の C コンパイラでコンパイル・実行）に裏付けられている——実際にこのホストテストスイートをコンパイルして実行し確認済みだ。これは ID デコード、使用状況/ライフサイクルの追跡、予熱の起動判断と目標温度、CRC8 フレーミングのプロトコル解析、コマンドの範囲検証、そしてリンクタイムアウト/冪等性の処理をカバーしている——すべてロジックであり、ハードウェアは一切含まれない。README 自身の冒頭がすでに述べている通り、このボード用の PCB/回路図はまだ存在しないため、ここにあるものはいずれも実際の GPIO ピン、F-RAM チップ、ヒーター、CAN トランシーバーを一度も駆動したことがない——`main.c`/`startup_stm32g4_minimal.c` は、Cortex-M4F 向けのクロスコンパイルとリンクがプレースホルダーのリンカスクリプトに対して成功することを示すだけであり、これらが実際のシリコン上で動くことを示すものではない。これまでに実際に出荷されたものの詳細は `CHANGELOG.md` を参照。
+**正直な現状確認 - 実際に今動くもの:** `tool_id.c`、`lifecycle.c`、`preheat.c`、`protocol.c`、`rack_command.c`、`link_watchdog.c`、`rack_link.c`、そして `rack_inventory.c` は本物の純粋な C コードであり、131件の通過している `TEST_ASSERT` チェック（`tests/test_*.c`、`arm-none-eabi-gcc` ではなくホスト自身の C コンパイラでコンパイル・実行）に裏付けられている——実際にこのホストテストスイートをコンパイルして実行し確認済みだ。これは ID デコード、使用状況/ライフサイクルの追跡、予熱の起動判断と目標温度、CRC8 フレーミングのプロトコル解析、コマンドの範囲検証、リンクタイムアウト/冪等性の処理、そしてマルチスロット工具インベントリの追跡(どの工具がどのスロットに収納されているか、実物の工具が同時に2つのスロットに存在することはない)をカバーしている——すべてロジックであり、ハードウェアは一切含まれない。README 自身の冒頭がすでに述べている通り、このボード用の PCB/回路図はまだ存在しないため、ここにあるものはいずれも実際の GPIO ピン、F-RAM チップ、ヒーター、CAN トランシーバーを一度も駆動したことがない——`main.c`/`startup_stm32g4_minimal.c` は、Cortex-M4F 向けのクロスコンパイルとリンクがプレースホルダーのリンカスクリプトに対して成功することを示すだけであり、これらが実際のシリコン上で動くことを示すものではない。これまでに実際に出荷されたものの詳細は `CHANGELOG.md` を参照。
 
 ---
 
@@ -37,8 +37,9 @@
 すでに単体テスト済みです。
 
 ### 主な機能：
-* ✅ **本物の v0 —— ID・ライフサイクル・予熱ロジック：** `tool_id.c` は生の 5 ビット ID 読み取り値を工具の識別情報にデコードします。`lifecycle.c` は使用サイクル/時間を追跡し、メンテナンス期限を通知します。`preheat.c` はスマートアイドル予熱をいつ開始すべきか、目標温度は何度かを決定します。ホスト自身の C コンパイラで 89 件のテストアサーションを実施——これらすべての実行・テストに PCB、GPIO ドライバー、F-RAM は不要です。
+* ✅ **本物の v0 —— ID・ライフサイクル・予熱ロジック：** `tool_id.c` は生の 5 ビット ID 読み取り値を工具の識別情報にデコードします。`lifecycle.c` は使用サイクル/時間を追跡し、メンテナンス期限を通知します。`preheat.c` はスマートアイドル予熱をいつ開始すべきか、目標温度は何度かを決定します。ホスト自身の C コンパイラで 131 件のテストアサーションを実施——これらすべての実行・テストに PCB、GPIO ドライバー、F-RAM は不要です。
 * 🗄️ **工具追跡** — 5 ビット ID ジャンパーまたは F-RAM 経由での URTC ヘッドの自動識別。*（ID デコードロジック自体は本物です——上記参照。実際のジャンパー/F-RAM の読み取りには PCB が必要です。）*
+* 🗂️ **マルチスロット・インベントリ** — `rack_inventory.c` はどの工具がどのスロットに収納されているかを追跡し、実物の工具を常に1つのスロットにのみ保持します(別のスロットへ移すと元のスロットは自動的に空になり、2箇所に同時に存在すると主張することはありません)。予熱目標は工具の識別情報で参照されるスロットごとの設定です。*(インベントリロジック自体は本物です——上記参照。実際のスロットごとの検知センサーへの接続には PCB が必要です。)*
 * 🌡️ **予熱ロジック** — はんだ付けおよび熱風工具向けのインテリジェントな温度管理。*（起動判断と目標温度は本物です——上記参照。実際のヒーターの駆動には PCB が必要です。）*
 * 📈 **ライフサイクルログ** — 総アクチュエーションサイクル数と使用時間を工具の F-RAM に記録します。*（カウンターとメンテナンス期限ロジックは本物です——上記参照。実際の F-RAM への永続化には PCB が必要です。）*
 * 📡 **CAN 統合** — HYDRA-UMC 運動学ブレインと直接通信し、協調した ATC（自動工具交換）を実現します。*（ワイヤープロトコル自体——フレーミング、CRC、コマンド検証——は本物です。以下を参照。ただし実際にそれを伝送するための本物の CAN トランシーバーはまだ必要です。）*
@@ -85,10 +86,11 @@ URTC-SMART-RACK/
 │   ├── rack_command.h / .c         # 本物：コマンドデコード + アクチュエーション限界検証
 │   ├── link_watchdog.h / .c        # 本物：リンクタイムアウト + コマンド冪等性
 │   ├── rack_link.h / .c            # 本物：protocol/rack_command/link_watchdog/preheat を結びつけるフレームディスパッチの判断
+│   ├── rack_inventory.h / .c       # 本物：マルチスロット工具インベントリ（I57）——どの工具がどのスロットにあるか、2つのスロットに同時に存在することはない
 │   ├── main.c                      # 最小限のエントリポイント（生存証明のハートビートループ）
 │   ├── startup_stm32g4_minimal.c   # ベクターテーブル + Reset_Handler（ST HAL はまだなし、ファイルヘッダー参照）
 │   └── STM32G4_MINIMAL.ld          # プレースホルダーリンカスクリプト（128K FLASH / 32K RAM の下限）
-├── tests/                          # 本物のホストネイティブテストハーネス（tool_id、lifecycle、preheat、protocol、rack_command、link_watchdog、ラックリンクシナリオ）
+├── tests/                          # 本物のホストネイティブテストハーネス（tool_id、lifecycle、preheat、protocol、rack_command、link_watchdog、ラックリンクシナリオ、ラックインベントリ）
 ├── docs/                           # ドキュメントとユーザーマニュアル —— 空、まだ作成されていない
 ├── hardware/                       # ハードウェア設計ファイル（PCB、3D）—— 現時点では空、回路図なし
 ├── firmware/                       # バージョン管理されたビルド出力（.bin/.elf/.hex）、兄弟リポジトリ URTC と同様にコミットされる
@@ -145,7 +147,9 @@ STM32F303 基板向け `src/F303-master/` を踏襲）。
 cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
   tests/test_main.c tests/test_tool_id.c tests/test_lifecycle.c tests/test_preheat.c \
   tests/test_protocol.c tests/test_rack_command.c tests/test_link_watchdog.c tests/test_rack_link_scenarios.c \
-  src/tool_id.c src/lifecycle.c src/preheat.c src/protocol.c src/rack_command.c src/link_watchdog.c src/rack_link.c
+  tests/test_rack_inventory.c \
+  src/tool_id.c src/lifecycle.c src/preheat.c src/protocol.c src/rack_command.c src/link_watchdog.c src/rack_link.c \
+  src/rack_inventory.c
 ./build/host_tests
 # All tests passed.
 ```

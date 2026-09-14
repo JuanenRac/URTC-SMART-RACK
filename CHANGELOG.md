@@ -17,6 +17,27 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
 
 ---
 
+## [0.1.0]
+
+- **I57: real multi-slot tool inventory (`rack_inventory.c`/`.h`).** Every
+  other module tracked one tool_id at a time - a real Smart Rack (this
+  project's own name, and its own README's "tracks... every URTC head")
+  needs to know which tool is racked in which slot at once. New,
+  independent, pure-C module: `rack_inventory_set_slot_tool()` racks a
+  tool_id in a bounded slot (clearing TOOL_ID_NONE, matching this
+  project's existing wire convention), `rack_inventory_find_tool()`
+  answers "is this tool racked, and where", and
+  `rack_inventory_set_preheat_target()` sets a per-slot pre-heat target
+  reached by tool identity, refusing a target for a tool that isn't
+  racked anywhere right now. Enforces the real physical invariant a rack
+  needs: the same tool_id can never occupy two slots at once - re-racking
+  a tool into a new slot clears its old one automatically instead of
+  claiming it's in both places. 27 new `TEST_ASSERT` checks
+  (`tests/test_rack_inventory.c`), 131 total host-native assertions now
+  passing. `RACK_INVENTORY_MAX_SLOTS` (8) is a placeholder capacity, not
+  a claim about real hardware - no PCB/schematic exists for this board
+  yet, same honest scope as every other module here.
+
 ## [0.0.9] - H042: a malformed zero-payload frame could no longer corrupt an unrelated tool's anti-replay state
 
 - **New `src/rack_link.h`/`.c`** (`rack_link_process_frame()`) - found while

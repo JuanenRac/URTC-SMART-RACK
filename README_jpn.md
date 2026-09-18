@@ -86,7 +86,7 @@ URTC-SMART-RACK/
 │   ├── rack_command.h / .c         # 本物：コマンドデコード + アクチュエーション限界検証
 │   ├── link_watchdog.h / .c        # 本物：リンクタイムアウト + コマンド冪等性
 │   ├── rack_link.h / .c            # 本物：protocol/rack_command/link_watchdog/preheat を結びつけるフレームディスパッチの判断
-│   ├── rack_inventory.h / .c       # 本物：マルチスロット工具インベントリ（I57）——どの工具がどのスロットにあるか、2つのスロットに同時に存在することはない
+│   ├── rack_inventory.h / .c       # 本物：マルチスロット工具インベントリ——どの工具がどのスロットにあるか、2つのスロットに同時に存在することはない
 │   ├── main.c                      # 最小限のエントリポイント（生存証明のハートビートループ）
 │   ├── startup_stm32g4_minimal.c   # ベクターテーブル + Reset_Handler（ST HAL はまだなし、ファイルヘッダー参照）
 │   └── STM32G4_MINIMAL.ld          # プレースホルダーリンカスクリプト（128K FLASH / 32K RAM の下限）

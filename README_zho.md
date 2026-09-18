@@ -82,7 +82,7 @@ URTC-SMART-RACK/
 │   ├── rack_command.h / .c         # 真实：命令解码 + 执行限制验证
 │   ├── link_watchdog.h / .c        # 真实：链路超时 + 命令幂等性
 │   ├── rack_link.h / .c            # 真实：连接 protocol/rack_command/link_watchdog/preheat 的帧分发决策
-│   ├── rack_inventory.h / .c       # 真实：多槽位工具库存（I57）——哪个工具放在哪个槽位，同一工具绝不会同时出现在两个槽位
+│   ├── rack_inventory.h / .c       # 真实：多槽位工具库存——哪个工具放在哪个槽位，同一工具绝不会同时出现在两个槽位
 │   ├── main.c                      # 最小入口点（存活证明心跳循环）
 │   ├── startup_stm32g4_minimal.c   # 向量表 + Reset_Handler（暂无 ST HAL，见文件头说明）
 │   └── STM32G4_MINIMAL.ld          # 占位链接脚本（128K FLASH / 32K RAM 下限）

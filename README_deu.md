@@ -77,7 +77,7 @@ URTC-SMART-RACK/
 │   ├── rack_command.h / .c         # Echt: Befehlsdekodierung + Aktuierungsgrenzen-Validierung
 │   ├── link_watchdog.h / .c        # Echt: Link-Timeout + Befehls-Idempotenz
 │   ├── rack_link.h / .c            # Echt: Frame-Dispatch-Entscheidung, die protocol/rack_command/link_watchdog/preheat verbindet
-│   ├── rack_inventory.h / .c       # Echt: Mehrplatz-Werkzeuginventar (I57) - welches Werkzeug wo eingelagert ist, nie in zwei Plätzen zugleich
+│   ├── rack_inventory.h / .c       # Echt: Mehrplatz-Werkzeuginventar - welches Werkzeug wo eingelagert ist, nie in zwei Plätzen zugleich
 │   ├── main.c                      # Minimaler Einstiegspunkt (Lebenszeichen-Schleife)
 │   ├── startup_stm32g4_minimal.c   # Vektortabelle + Reset_Handler (noch keine ST-HAL, siehe Datei-Header)
 │   └── STM32G4_MINIMAL.ld          # Platzhalter-Linkerskript (Untergrenze 128K FLASH / 32K RAM)

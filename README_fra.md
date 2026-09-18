@@ -77,7 +77,7 @@ URTC-SMART-RACK/
 │   ├── rack_command.h / .c         # Réel : décodage de commande + validation des limites d'actionnement
 │   ├── link_watchdog.h / .c        # Réel : timeout de liaison + idempotence des commandes
 │   ├── rack_link.h / .c            # Réel : décision de dispatch de trame reliant protocol/rack_command/link_watchdog/preheat
-│   ├── rack_inventory.h / .c       # Réel : inventaire multi-emplacements d'outils (I57) - quel outil est rangé où, jamais dans deux emplacements à la fois
+│   ├── rack_inventory.h / .c       # Réel : inventaire multi-emplacements d'outils - quel outil est rangé où, jamais dans deux emplacements à la fois
 │   ├── main.c                      # Point d'entrée minimal (boucle de battement de vie)
 │   ├── startup_stm32g4_minimal.c   # Table des vecteurs + Reset_Handler (pas de HAL ST pour l'instant, voir l'en-tête du fichier)
 │   └── STM32G4_MINIMAL.ld          # Script de liaison provisoire (plancher 128K FLASH / 32K RAM)

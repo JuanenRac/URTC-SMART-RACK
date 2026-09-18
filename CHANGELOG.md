@@ -19,7 +19,7 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
 
 ## [0.1.0]
 
-- **I57: real multi-slot tool inventory (`rack_inventory.c`/`.h`).** Every
+- **Real multi-slot tool inventory (`rack_inventory.c`/`.h`).** Every
   other module tracked one tool_id at a time - a real Smart Rack (this
   project's own name, and its own README's "tracks... every URTC head")
   needs to know which tool is racked in which slot at once. New,
@@ -38,7 +38,7 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
   a claim about real hardware - no PCB/schematic exists for this board
   yet, same honest scope as every other module here.
 
-## [0.0.9] - H042: a malformed zero-payload frame could no longer corrupt an unrelated tool's anti-replay state
+## [0.0.9] - A malformed zero-payload frame could no longer corrupt an unrelated tool's anti-replay state
 
 - **New `src/rack_link.h`/`.c`** (`rack_link_process_frame()`) - found while
   auditing the code: the real frame-dispatch
@@ -57,7 +57,7 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
   already-installed MSVC toolchain (`cl.exe`, VS2019 Build Tools) as a
   real substitute host compiler, same technique already used for this
   repo's own 0.0.7 entry below - `All tests passed.`, 0 failures.
-- **H042 (the bug).** `rack_link_process_frame()` read `frame.payload[0]`
+- **The bug.** `rack_link_process_frame()` read `frame.payload[0]`
   as a tool_id before ever checking that `frame.len` actually claims that
   byte exists. `protocol_parse_frame()` only ever copies `len` real wire
   bytes into `payload` - a real, validly-framed zero-payload frame

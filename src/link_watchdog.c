@@ -49,7 +49,7 @@ bool link_watchdog_accept_sequence(link_watchdog_t *lw, uint8_t tool_id, uint8_t
         return false;
     }
     if (lw->has_seq_by_tool_id[tool_id]) {
-        // RACK-01 (P1): the old check only ever rejected an EXACT repeat
+        // the old check only ever rejected an EXACT repeat
         // of the immediately-previous sequence - 10, 11, 10 accepted the
         // second 10 outright (10 != 11), re-applying a real stale/
         // replayed command as if it were fresh. This treats the 8-bit
@@ -78,7 +78,7 @@ void link_watchdog_reset_all_sequences(link_watchdog_t *lw)
     if (lw == NULL) {
         return;
     }
-    // RACK-01: the real epoch boundary this watchdog can actually detect
+    // the real epoch boundary this watchdog can actually detect
     // without a new protocol field - a link recovering from real loss
     // (see link_watchdog_is_link_lost()) means every previously tracked
     // per-tool sequence number is stale evidence from a session that is

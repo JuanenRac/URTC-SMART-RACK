@@ -44,7 +44,7 @@ bool link_watchdog_is_link_lost(const link_watchdog_t *lw, uint32_t now_ms);
 // Real idempotency/anti-reorder check for one continuous session: a
 // sequence number that is not genuinely newer than the last one accepted
 // for this exact tool_id (a real duplicate resend, or a stale/reordered
-// older frame - see RACK-01's own comment in link_watchdog.c) is rejected,
+// older frame - see this project's own comment in link_watchdog.c) is rejected,
 // not just an exact repeat of the immediately-previous value. Correctly
 // handles real 8-bit wraparound (255 -> 0). Only a real, present tool_id
 // (see tool_id.h) is ever tracked - an absent/invalid slot always returns
@@ -54,7 +54,7 @@ bool link_watchdog_is_link_lost(const link_watchdog_t *lw, uint32_t now_ms);
 // handling a bare sequence counter cannot provide by itself.
 bool link_watchdog_accept_sequence(link_watchdog_t *lw, uint8_t tool_id, uint8_t seq);
 
-// RACK-01: clears every per-tool "last sequence seen" slot - call this
+// clears every per-tool "last sequence seen" slot - call this
 // whenever a real, independent signal (link_watchdog_is_link_lost()
 // having been true just before this frame) means the previous session's
 // sequence state can no longer be trusted as a comparison baseline for a

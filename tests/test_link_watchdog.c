@@ -59,7 +59,7 @@ void run_link_watchdog_tests(int *failures)
         TEST_ASSERT(link_watchdog_accept_sequence(&lw, TOOL_ID_NONE, 1) == false, "a command sequence for TOOL_ID_NONE (no tool present) is never accepted");
     }
 
-    // --- RACK-01 (P1): a stale/reordered sequence arriving AFTER a newer one
+    // --- a stale/reordered sequence arriving AFTER a newer one
     // must be rejected, not just an exact repeat of the immediately-
     // previous value. This is the finding's own exact reproduction. ---
     {
@@ -71,7 +71,7 @@ void run_link_watchdog_tests(int *failures)
         TEST_ASSERT(link_watchdog_accept_sequence(&lw, 4, 12) == true, "a genuinely newer sequence after the rejected replay is still accepted normally");
     }
 
-    // --- RACK-01: real 8-bit sequence wraparound is still accepted as forward progress ---
+    // --- real 8-bit sequence wraparound is still accepted as forward progress ---
     {
         link_watchdog_t lw;
         link_watchdog_init(&lw, 1000);
@@ -82,7 +82,7 @@ void run_link_watchdog_tests(int *failures)
         TEST_ASSERT(link_watchdog_accept_sequence(&lw, 5, 255) == false, "255 arriving again AFTER the wrap to 0/1 is a real stale replay of an old value, not accepted just because the byte is numerically larger");
     }
 
-    // --- RACK-01: link_watchdog_reset_all_sequences() clears every tracked slot ---
+    // --- link_watchdog_reset_all_sequences clears every tracked slot ---
     {
         link_watchdog_t lw;
         link_watchdog_init(&lw, 1000);

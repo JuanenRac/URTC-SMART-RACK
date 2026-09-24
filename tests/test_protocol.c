@@ -39,7 +39,7 @@ void run_protocol_tests(int *failures)
         TEST_ASSERT(frame.len == 0, "parsed len is 0");
     }
 
-    // --- H042: a real zero (or partial) payload never leaves undefined
+    // --- a real zero (or partial) payload never leaves undefined
     // bytes past `len` in out_frame->payload - a caller reading, say,
     // payload[0] without checking `len` first (the exact receive-path bug
     // this note documents, see rack_link.c) must get a well-defined 0,

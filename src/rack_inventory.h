@@ -3,7 +3,7 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0 - see LICENSE
 // =============================================================================
-// I57: every other module in this project already tracks one tool_id at a
+// every other module in this project already tracks one tool_id at a
 // time (rack_command.c validates one command for one tool_id;
 // link_watchdog.c's own per-tool-ID sequence table is about detecting a
 // replayed/reordered COMMAND, not "where is this tool physically racked").

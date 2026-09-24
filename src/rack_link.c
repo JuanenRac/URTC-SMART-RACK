@@ -16,7 +16,7 @@ uint16_t rack_link_process_frame(link_watchdog_t *lw, const uint8_t *buf, uint8_
     if (protocol_parse_frame(buf, buf_len, &frame) != PROTOCOL_OK) {
         return preheat_safe_state_temp_c(); // a corrupt/malformed frame never reaches command validation
     }
-    // RACK-01: a link the watchdog already considers lost (never proven
+    // a link the watchdog already considers lost (never proven
     // alive, or `timeout_ms` really elapsed since the last real frame)
     // means every previously tracked per-tool sequence number is stale
     // evidence from a session that is over - the tool board on the other
@@ -26,7 +26,7 @@ uint16_t rack_link_process_frame(link_watchdog_t *lw, const uint8_t *buf, uint8_
     if (link_watchdog_is_link_lost(lw, now_ms)) {
         link_watchdog_reset_all_sequences(lw);
     }
-    // H042: any frame that reaches here already has a real, CRC-valid
+    // any frame that reaches here already has a real, CRC-valid
     // framing (protocol_parse_frame() proved that) - that alone is honest
     // evidence the link itself is up, independent of which command it
     // carries or whether that command's own sequence gets re-applied.
@@ -44,7 +44,7 @@ uint16_t rack_link_process_frame(link_watchdog_t *lw, const uint8_t *buf, uint8_
         return preheat_safe_state_temp_c(); // unrelated/unsupported command - no tool_id layout to read a sequence against
     }
     // RACK_CMD_SET_PREHEAT's own tool_id lives in payload[0] (see
-    // rack_command.h). H042: this used to be read unconditionally, before
+    // rack_command.h). this used to be read unconditionally, before
     // ever checking that the payload the wire framing itself claims to
     // carry (frame.len) actually has that byte. protocol_parse_frame()
     // only ever copies `len` real bytes into frame.payload - the rest of

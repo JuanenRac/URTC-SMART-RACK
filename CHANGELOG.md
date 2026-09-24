@@ -90,7 +90,7 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
   via a local revert of just the two fixed files, tests kept), all pass
   with the fix.
 
-## [0.0.8] - A stale/reordered sequence can no longer be re-applied as a fresh command (RACK-01)
+## [0.0.8] - A stale/reordered sequence can no longer be re-applied as a fresh command
 
 Found while auditing the code:
 

@@ -108,7 +108,7 @@ void run_rack_link_scenario_tests(int *failures)
         TEST_ASSERT(resend == preheat_safe_state_temp_c(), "a real resend of the exact same sequence 9 is treated as a duplicate, not re-applied");
     }
 
-    // --- RACK-01 (P1): a real link-loss recovery is a genuine epoch boundary -
+    // --- a real link-loss recovery is a genuine epoch boundary -
     // rack_link_process_frame() must reset per-tool sequence tracking so
     // a tool board that itself rebooted (and restarted its own sequence
     // counter low) is never mistaken for replaying a stale old command. ---
@@ -132,7 +132,7 @@ void run_rack_link_scenario_tests(int *failures)
         );
     }
 
-    // --- H042: a real, CRC-valid but zero-payload SET_PREHEAT frame must
+    // --- a real, CRC-valid but zero-payload SET_PREHEAT frame must
     // never read payload[0] as a tool_id (there is no real payload byte to
     // read - see protocol.h's own comment on the smallest legal frame) and
     // must never consume/mutate ANY tool's watchdog sequence slot as a
@@ -141,7 +141,7 @@ void run_rack_link_scenario_tests(int *failures)
     // "absent") - so this is a real, reachable false tool identity, not a
     // hypothetical one, and this scenario is what the old code (before
     // this fix) would have silently mistaken for a legitimate frame from
-    // tool 0 once H042's other fix (protocol.c zeroing the unused payload
+    // tool 0 once 's other fix (protocol.c zeroing the unused payload
     // tail) made payload[0] well-defined as 0 for this frame instead of
     // undefined stack garbage. ---
     {
@@ -168,7 +168,7 @@ void run_rack_link_scenario_tests(int *failures)
         TEST_ASSERT(real_applied == 200, "a real tool-0 command with a low sequence number (3) is accepted - the earlier zero-payload frame never poisoned tool 0's anti-replay state with its own sequence (77)");
     }
 
-    // --- H042: an unrelated/unsupported command must not read payload[0]
+    // --- an unrelated/unsupported command must not read payload[0]
     // as a tool_id either, even with a non-zero payload - only
     // RACK_CMD_SET_PREHEAT's own wire layout defines byte 0 as a tool_id
     // today. ---
@@ -185,7 +185,7 @@ void run_rack_link_scenario_tests(int *failures)
         TEST_ASSERT(!lw.has_seq_by_tool_id[0], "an unrecognized command's own payload byte 0 is never mistaken for a tool_id");
     }
 
-    // --- H042 (watchdog sequence consumption, reviewed as the finding
+    // --- (watchdog sequence consumption, reviewed as the finding
     // asked): a real duplicate resend - correctly rejected so its command
     // is never re-applied - must still count as real evidence the link
     // itself is up, since the exact same bytes arriving twice is honest

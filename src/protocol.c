@@ -60,7 +60,7 @@ protocol_status_t protocol_parse_frame(const uint8_t *buf, uint8_t buf_len, prot
     for (uint8_t i = 0; i < len; i++) {
         out_frame->payload[i] = buf[5u + i];
     }
-    // H042: `payload` is a fixed PROTOCOL_MAX_PAYLOAD-byte array - only the
+    // `payload` is a fixed PROTOCOL_MAX_PAYLOAD-byte array - only the
     // first `len` of those bytes are real wire content, but a caller
     // holding this protocol_frame_t as an uninitialized local (as
     // rack_link.c's own rack_link_process_frame() does) has no way to know

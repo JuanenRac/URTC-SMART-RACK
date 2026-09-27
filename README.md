@@ -91,7 +91,7 @@ URTC-SMART-RACK/
 │   ├── build_test.py               # Non-versioning build/compile check
 │   └── ci_validate.py              # Manifest/CHANGELOG/docs validation used by CI
 ├── bump_version.py                 # Odometer-style version bump (generic, shared with URTC)
-├── bump_manifest_version.py        # Syncs hydra-umc.project.json's version to the native one (--sync)
+├── bump_manifest_version.py        # Syncs urtc.project.json's version to the native one (--sync)
 ├── build_firmware.sh / .bat        # Real build: host tests + bump version + compile + link + publish
 ├── build-test.sh / .bat            # Non-versioning build/compile check
 └── README.md

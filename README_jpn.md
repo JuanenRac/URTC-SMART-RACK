@@ -100,7 +100,7 @@ URTC-SMART-RACK/
 │   ├── build_test.py               # バージョンを更新しないビルド/コンパイル確認
 │   └── ci_validate.py              # CI が使用する manifest/CHANGELOG/docs の検証
 ├── bump_version.py                 # オドメーター式バージョンインクリメント（汎用スクリプト、URTC と共有）
-├── bump_manifest_version.py        # hydra-umc.project.json のバージョンをネイティブ側と同期（--sync）
+├── bump_manifest_version.py        # urtc.project.json のバージョンをネイティブ側と同期（--sync）
 ├── build_firmware.sh / .bat        # 実際のビルド：ホストテスト + バージョンインクリメント + コンパイル + リンク + 公開
 ├── build-test.sh / .bat            # バージョンを更新しないビルド/コンパイル確認
 └── README.md

@@ -73,4 +73,27 @@ void run_rack_inventory_tests(int *failures)
     TEST_ASSERT(rack_inventory_get_slot(&inv, RACK_INVENTORY_MAX_SLOTS, &out_of_range) == false, "reading an out-of-range slot is refused");
     TEST_ASSERT(rack_inventory_set_slot_tool(&inv, RACK_INVENTORY_MAX_SLOTS, 1) == false, "writing an out-of-range slot is refused");
     TEST_ASSERT(rack_inventory_get_slot(&inv, 255, &out_of_range) == false, "a far out-of-range slot is refused, not just the first one past the end");
+
+    // Reconciling against the physical slot-presence sensors after a power
+    // cut: slot 0 still holds tool 5 (sensor agrees), tool 9 in slot 1 was
+    // pulled while the rack was off (sensor empty), and someone dropped an
+    // unknown tool into slot 3.
+    rack_inventory_t r;
+    rack_inventory_init(&r);
+    rack_inventory_set_slot_tool(&r, 0, 5);
+    rack_inventory_set_slot_tool(&r, 1, 9);
+    rack_inventory_set_preheat_target(&r, 9, 350);
+    rack_reconcile_report_t rep = rack_inventory_reconcile(&r, (uint8_t)((1u << 0) | (1u << 3)));
+    TEST_ASSERT(rep.removed_mask == (1u << 1), "reconcile reports exactly the slot whose tool was pulled");
+    TEST_ASSERT(rep.unidentified_mask == (1u << 3), "reconcile reports the slot with an unknown tool");
+    rack_slot_t rs;
+    rack_inventory_get_slot(&r, 1, &rs);
+    TEST_ASSERT(!rs.occupied && rs.target_temp_c == 0, "a pulled tool's slot is cleared, pre-heat target included");
+    TEST_ASSERT(rack_inventory_set_preheat_target(&r, 9, 300) == false, "the pulled tool can no longer be pre-heated");
+    rack_inventory_get_slot(&r, 3, &rs);
+    TEST_ASSERT(!rs.occupied, "an unidentified tool stays unoccupied until it is identified");
+    rack_inventory_get_slot(&r, 0, &rs);
+    TEST_ASSERT(rs.occupied && rs.tool_id == 5, "a slot that agrees with its sensor is untouched");
+    rep = rack_inventory_reconcile(&r, (uint8_t)((1u << 0) | (1u << 3)));
+    TEST_ASSERT(rep.removed_mask == 0 && rep.unidentified_mask == (1u << 3), "reconcile is idempotent");
 }

@@ -95,3 +95,21 @@ uint8_t rack_inventory_occupied_count(const rack_inventory_t *inv)
     }
     return count;
 }
+
+rack_reconcile_report_t rack_inventory_reconcile(rack_inventory_t *inv, uint8_t presence_mask)
+{
+    rack_reconcile_report_t report = {0u, 0u};
+    for (uint8_t i = 0; i < RACK_INVENTORY_MAX_SLOTS && i < 8u; i++) {
+        const uint8_t bit = (uint8_t)(1u << i);
+        const bool sensed = (presence_mask & bit) != 0u;
+        if (inv->slots[i].occupied && !sensed) {
+            inv->slots[i].occupied = false;
+            inv->slots[i].tool_id = TOOL_ID_NONE;
+            inv->slots[i].target_temp_c = 0;
+            report.removed_mask |= bit;
+        } else if (!inv->slots[i].occupied && sensed) {
+            report.unidentified_mask |= bit;
+        }
+    }
+    return report;
+}

@@ -17,6 +17,19 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
 
 ---
 
+## [0.1.1]
+
+- **Inventory reconciliation against slot-presence sensors
+  (`rack_inventory_reconcile()`).** Run at boot and whenever the sensors
+  change: a slot the inventory thinks is occupied but whose sensor reads
+  empty is cleared, pre-heat target included (a tool pulled while the rack
+  was off must never keep a heater command alive); a slot whose sensor
+  reads occupied while the inventory holds nothing is reported for
+  identification and stays unoccupied. 7 new assertions in
+  `tests/test_rack_inventory.c` (138 in total). Wiring real sensors still
+  needs the PCB. READMEs in all 7 languages and `docs/OPERATIONS.md`
+  updated.
+
 ## [0.1.0]
 
 - **Real multi-slot tool inventory (`rack_inventory.c`/`.h`).** Every

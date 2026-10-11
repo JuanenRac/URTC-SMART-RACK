@@ -71,4 +71,25 @@ bool rack_inventory_set_preheat_target(rack_inventory_t *inv, uint8_t tool_id, u
 // rack right now" query instead of every caller looping the array itself.
 uint8_t rack_inventory_occupied_count(const rack_inventory_t *inv);
 
+// Result of reconciling the inventory against the physical slot-presence
+// sensors (one bit per slot, bit N = slot N, 1 = something is sitting in
+// it). Both masks use the same bit layout.
+typedef struct {
+    uint8_t removed_mask;      // inventory said occupied, sensor says empty: slot cleared
+    uint8_t unidentified_mask; // sensor says occupied, inventory has no tool: needs identification
+} rack_reconcile_report_t;
+
+// Reconciles the inventory with what the slot-presence sensors see - run at
+// boot (the inventory may come from before a power cut, during which tools
+// can have been pulled or dropped in by hand) and whenever the sensors
+// change. A slot the inventory thinks is occupied but whose sensor reads
+// empty is CLEARED, including its pre-heat target: a tool that is no
+// longer there must never keep a heater command alive. A slot whose sensor
+// reads occupied while the inventory holds nothing is only REPORTED - the
+// sensor cannot say which tool it is, so it stays unoccupied (and cannot be
+// pre-heated) until the tool is identified and racked with
+// rack_inventory_set_slot_tool(). Slots that agree are left untouched.
+// Bits above RACK_INVENTORY_MAX_SLOTS in presence_mask are ignored.
+rack_reconcile_report_t rack_inventory_reconcile(rack_inventory_t *inv, uint8_t presence_mask);
+
 #endif // RACK_INVENTORY_H

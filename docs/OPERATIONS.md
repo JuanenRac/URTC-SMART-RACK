@@ -35,6 +35,13 @@ the logic decides", not "what a real rack does".
 - Pre-heat targets are stored per slot, and can only be set for a tool that
   is currently racked. A pre-heat request for a tool that was already
   pulled fails rather than "succeeding" against a stale slot.
+- Reconciliation (`rack_inventory_reconcile()`): at boot, and whenever the
+  per-slot presence sensors change, the inventory is checked against them.
+  A slot recorded as occupied whose sensor reads empty is cleared together
+  with its pre-heat target (the tool was pulled while the rack was off); a
+  slot whose sensor reads occupied while the inventory holds nothing is
+  reported for identification and stays unoccupied, so it cannot be
+  pre-heated until it is identified and racked.
 - Simulated vs physical: today the ID comes from whatever the caller passes
   in. Reading real jumpers or F-RAM needs the PCB.
 

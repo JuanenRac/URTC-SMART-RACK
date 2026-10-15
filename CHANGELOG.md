@@ -53,8 +53,7 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
 
 ## [0.0.9] - A malformed zero-payload frame could no longer corrupt an unrelated tool's anti-replay state
 
-- **New `src/rack_link.h`/`.c`** (`rack_link_process_frame()`) - found while
-  auditing the code: the real frame-dispatch
+- **New `src/rack_link.h`/`.c`** (`rack_link_process_frame()`) - found on code review: the real frame-dispatch
   decision tying `protocol.c`/`rack_command.c`/`link_watchdog.c`/
   `preheat.c` together existed only as a `static` function inside
   `tests/test_rack_link_scenarios.c`, not as a real `src/` module
@@ -105,7 +104,7 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
 
 ## [0.0.8] - A stale/reordered sequence can no longer be re-applied as a fresh command
 
-Found while auditing the code:
+Found on code review:
 
 - **The bug.** `link_watchdog_accept_sequence()` only ever rejected an
   EXACT repeat of the immediately-previous sequence number - the

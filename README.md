@@ -76,7 +76,7 @@ URTC-SMART-RACK/
 │   ├── protocol.h / .c             # Real: versioned frame format + CRC8 parse/encode
 │   ├── rack_command.h / .c         # Real: command decode + actuation-limit validation
 │   ├── link_watchdog.h / .c        # Real: link timeout + command idempotency
-│   ├── rack_link.h / .c            # Real: frame-dispatch decision tying protocol/rack_command/link_watchdog/preheat together
+│   ├── rack_link.h / .c            # Real: frame-dispatch decision (rack_link_decide) tying protocol/rack_command/link_watchdog/preheat together
 │   ├── rack_inventory.h / .c       # Real: multi-slot tool inventory - which tool is racked where, one tool never in two slots at once
 │   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
 │   ├── startup_stm32g4_minimal.c   # Vector table + Reset_Handler (no ST HAL yet, see file header)

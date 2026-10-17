@@ -77,9 +77,13 @@ is wrong, the tool slot is absent, or the temperature exceeds 400 °C.
 - After the timeout with no valid frame, the safe pre-heat target is **off**
   (0 °C), whatever was last commanded. A lost link must never leave a heater
   running unattended.
-- Any frame that fails at any layer (corrupt, duplicate, unrelated command,
-  out-of-range value) also resolves to the safe target, never to "keep the
-  previous value".
+- A frame that is not a command to act on (corrupt, a retransmission of a
+  command already applied, a command this rack does not act on) **changes
+  nothing**: noise on the bus or a resend must not switch a heater off. A
+  command with an out-of-range value puts **that tool** in the safe state.
+  Only a lost link brings every tool to the safe state. Every decision
+  names the tool it is for (`rack_link_decide()`), so a rack with several
+  tools never applies one tool's temperature to another.
 - Replayed or reordered commands are rejected per tool with a sequence check
   that handles 8-bit wraparound. When the link had been lost, the sequence
   baseline is reset so a new session is not compared against the old one.

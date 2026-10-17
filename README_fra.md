@@ -84,11 +84,12 @@ URTC-SMART-RACK/
 ├── tests/                          # Harnais de tests réel host-native (tool_id, lifecycle, preheat, protocol, rack_command, link_watchdog, scénarios de liaison du rack, inventaire du rack)
 ├── docs/                           # Documentation et manuel utilisateur - vide, pas encore créé
 ├── hardware/                       # Fichiers de conception matérielle (PCB, 3D) - vide, pas de schéma pour l'instant
-├── firmware/                       # Sortie de build versionnée (.bin/.elf/.hex), commitée comme le dépôt frère URTC
+├── firmware/                       # Sortie de build (.bin/.elf/.hex), ignorée par git - publiée uniquement comme assets de la release GitHub
 ├── build/                          # Objets de build intermédiaires (ignoré par git)
 ├── images/                         # Médias et diagrammes
 ├── tools/
 │   ├── build_test.py               # Contrôle build/compilation sans gestion de version
+│   ├── publish_release_assets.py   # Liste les assets de la release et affiche la commande gh
 │   └── ci_validate.py              # Validation manifest/CHANGELOG/docs utilisée par la CI
 ├── bump_version.py                 # Incrémentation de version façon compteur kilométrique (générique, partagé avec URTC)
 ├── bump_manifest_version.py        # Synchronise la version de urtc.project.json avec la version native (--sync)
@@ -113,6 +114,8 @@ build_firmware.bat
 ```
 
 Le build compile et exécute d'abord `tests/` avec le compilateur C de *l'hôte lui-même* (jamais `arm-none-eabi-gcc` - ce sont des tests de logique pure, aucun registre MCU touché) et fait échouer tout le build si une assertion échoue. Ce n'est qu'ensuite qu'il incrémente la version de `src/firmware_common.h` (règle du compteur kilométrique, comme le reste de l'écosystème), compile `main.c` et `startup_stm32g4_minimal.c` pour Cortex-M4F, les lie avec la carte mémoire provisoire `STM32G4_MINIMAL.ld`, et publie des fichiers `.elf`/`.bin`/`.hex` versionnés dans `firmware/`.
+
+Les images du firmware (`.bin`, `.hex`, `.elf`) ne sont pas versionnées dans git : un build de release écrit `firmware/URTC_SMART_RACK_FIRMWARE_v<version>.*` (ignoré par git ; `build/firmware` en mode CI, `HYDRA_UMC_CI=1`) et elles ne sont publiées que comme assets de la release GitHub de chaque version. `python tools/publish_release_assets.py` vérifie les fichiers, écrit le fichier `.sha256` manquant et affiche la commande `gh release create` exacte avec les fichiers à joindre.
 
 Il n'y a encore rien à flasher sur du matériel réel - aucun PCB n'existe pour confirmer la référence STM32G4 cible, le brochage, ou ses tailles réelles de flash/RAM. La carte mémoire du script de liaison est un placeholder prudent (documenté dans son propre en-tête) qui sera remplacé une fois le matériel réel existant, au même moment où la table des vecteurs écrite à la main de `startup_stm32g4_minimal.c` sera remplacée par le code de démarrage CMSIS/HAL propre à ST (suivant le modèle du dépôt frère URTC dans `src/F303-master/` pour ses cartes STM32F303).
 

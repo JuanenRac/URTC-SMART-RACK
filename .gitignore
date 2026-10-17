@@ -14,3 +14,10 @@ build/
 # Python bytecode (generated locally; never source)
 __pycache__/
 *.py[cod]
+
+# Firmware images are published only as assets of the GitHub release of their
+# version (tools/publish_release_assets.py); build_firmware.sh writes them here.
+firmware/*.bin
+firmware/*.elf
+firmware/*.hex
+firmware/*.sha256

@@ -93,11 +93,12 @@ URTC-SMART-RACK/
 ├── tests/                          # 本物のホストネイティブテストハーネス（tool_id、lifecycle、preheat、protocol、rack_command、link_watchdog、ラックリンクシナリオ、ラックインベントリ）
 ├── docs/                           # ドキュメントとユーザーマニュアル —— 空、まだ作成されていない
 ├── hardware/                       # ハードウェア設計ファイル（PCB、3D）—— 現時点では空、回路図なし
-├── firmware/                       # バージョン管理されたビルド出力（.bin/.elf/.hex）、兄弟リポジトリ URTC と同様にコミットされる
+├── firmware/                       # ビルド出力（.bin/.elf/.hex）、git の無視対象——GitHub リリースのアセットとしてのみ公開
 ├── build/                          # 中間ビルドオブジェクト（gitignore 対象）
 ├── images/                         # メディアと図表
 ├── tools/
 │   ├── build_test.py               # バージョンを更新しないビルド/コンパイル確認
+│   ├── publish_release_assets.py   # 添付するリリースアセットを列挙し gh コマンドを表示
 │   └── ci_validate.py              # CI が使用する manifest/CHANGELOG/docs の検証
 ├── bump_version.py                 # オドメーター式バージョンインクリメント（汎用スクリプト、URTC と共有）
 ├── bump_manifest_version.py        # urtc.project.json のバージョンをネイティブ側と同期（--sync）
@@ -130,6 +131,8 @@ build_firmware.bat
 `main.c` と `startup_stm32g4_minimal.c` を Cortex-M4F 向けにコンパイルし、
 プレースホルダーである `STM32G4_MINIMAL.ld` のメモリマップとリンクし、
 バージョン管理された `.elf`/`.bin`/`.hex` ファイルを `firmware/` に公開します。
+
+ファームウェアイメージ（`.bin`、`.hex`、`.elf`）は git で管理されません。リリースビルドは `firmware/URTC_SMART_RACK_FIRMWARE_v<バージョン>.*` に書き出し（git の無視対象。CI モード、つまり `HYDRA_UMC_CI=1` では `build/firmware`）、各バージョンの GitHub リリースのアセットとしてのみ公開されます。`python tools/publish_release_assets.py` がファイルを検査し、不足している `.sha256` ファイルを書き出して、添付するファイルを含む正確な `gh release create` コマンドを表示します。
 
 実際のハードウェアにフラッシュできるものは今のところ何もありません——
 対象の STM32G4 部品、ピン配置、実際の flash/RAM サイズを確認できる PCB が

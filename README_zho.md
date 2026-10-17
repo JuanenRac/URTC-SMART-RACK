@@ -89,11 +89,12 @@ URTC-SMART-RACK/
 ├── tests/                          # 真实的宿主机原生测试工具集（tool_id、lifecycle、preheat、protocol、rack_command、link_watchdog、机架链路场景、机架库存）
 ├── docs/                           # 文档与用户手册 —— 目前为空，尚未创建
 ├── hardware/                       # 硬件设计文件（PCB、3D）—— 目前为空，尚无原理图
-├── firmware/                       # 版本化构建输出（.bin/.elf/.hex），与兄弟仓库 URTC 一样被提交
+├── firmware/                       # 构建输出（.bin/.elf/.hex），被 git 忽略——仅作为 GitHub 发布的资源发布
 ├── build/                          # 中间构建对象（已被 gitignore）
 ├── images/                         # 媒体与图表
 ├── tools/
 │   ├── build_test.py               # 不递增版本号的构建/编译检查
+│   ├── publish_release_assets.py   # 列出要附加的发布资源并输出 gh 命令
 │   └── ci_validate.py              # CI 使用的 manifest/CHANGELOG/docs 校验
 ├── bump_version.py                 # 里程表式版本递增（通用脚本，与 URTC 共享）
 ├── bump_manifest_version.py        # 将 urtc.project.json 的版本与原生版本同步（--sync）
@@ -125,6 +126,8 @@ build_firmware.bat
 `main.c` 和 `startup_stm32g4_minimal.c`，将其与占位性质的
 `STM32G4_MINIMAL.ld` 内存映射进行链接，并将版本化的 `.elf`/`.bin`/`.hex`
 文件发布到 `firmware/`。
+
+固件映像（`.bin`、`.hex`、`.elf`）不纳入 git 版本管理：发布构建会写入 `firmware/URTC_SMART_RACK_FIRMWARE_v<版本>.*`（已被 git 忽略；CI 模式即 `HYDRA_UMC_CI=1` 时写入 `build/firmware`），它们仅作为每个版本的 GitHub 发布资源发布。`python tools/publish_release_assets.py` 会检查这些文件、补写缺失的 `.sha256` 文件，并输出带有待附加文件的准确 `gh release create` 命令。
 
 目前尚无内容可刷写到真实硬件——因为没有 PCB 可以确认目标 STM32G4 型号、
 引脚布局或其真实的 flash/RAM 容量。链接脚本的内存映射是一个保守的占位符

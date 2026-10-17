@@ -84,11 +84,12 @@ URTC-SMART-RACK/
 ├── tests/                          # Real host-native test harness (tool_id, lifecycle, preheat, protocol, rack_command, link_watchdog, rack link scenarios, rack inventory)
 ├── docs/                           # Documentation and user manual - empty, not created yet
 ├── hardware/                       # Hardware design files (PCB, 3D) - empty, no schematic yet
-├── firmware/                       # Versioned build output (.bin/.elf/.hex), committed like sibling repo URTC
+├── firmware/                       # Saída de compilação (.bin/.elf/.hex), ignorada pelo git - publicada apenas como assets da release do GitHub
 ├── build/                          # Intermediate build objects (gitignored)
 ├── images/                         # Media and diagrams
 ├── tools/
 │   ├── build_test.py               # Non-versioning build/compile check
+│   ├── publish_release_assets.py   # Lista os assets da release e imprime o comando gh
 │   └── ci_validate.py              # Manifest/CHANGELOG/docs validation used by CI
 ├── bump_version.py                 # Odometer-style version bump (generic, shared with URTC)
 ├── bump_manifest_version.py        # Syncs urtc.project.json's version to the native one (--sync)
@@ -113,6 +114,8 @@ build_firmware.bat
 ```
 
 A compilação começa por compilar e executar `tests/` com o compilador de C *do próprio anfitrião* (nunca `arm-none-eabi-gcc` - estes são testes de lógica pura, sem tocar em registos do MCU) e falha por inteiro se alguma asserção falhar. Só então incrementa a versão de `src/firmware_common.h` (regra do odómetro, igual ao resto do ecossistema), compila `main.c` e `startup_stm32g4_minimal.c` para Cortex-M4F, liga-os ao mapa de memória provisório `STM32G4_MINIMAL.ld` e publica ficheiros `.elf`/`.bin`/`.hex` versionados em `firmware/`.
+
+As imagens de firmware (`.bin`, `.hex`, `.elf`) não são versionadas no git: uma compilação de release escreve `firmware/URTC_SMART_RACK_FIRMWARE_v<versão>.*` (ignorado pelo git; `build/firmware` em modo CI, `HYDRA_UMC_CI=1`) e são publicadas apenas como assets da release do GitHub de cada versão. `python tools/publish_release_assets.py` verifica os ficheiros, escreve o ficheiro `.sha256` em falta e imprime o comando `gh release create` exato com os ficheiros a anexar.
 
 Ainda não há nada para gravar em hardware real — não existe PCB que confirme a peça STM32G4 de destino, o pinout ou os tamanhos reais de flash/RAM. O mapa de memória do linker script é um marcador de posição conservador (documentado no seu próprio comentário de cabeçalho) que será substituído quando existir hardware real, o mesmo momento em que a tabela de vetores escrita à mão de `startup_stm32g4_minimal.c` é substituída pelo código de startup CMSIS/HAL da própria ST (espelhando o `src/F303-master/` do repositório irmão URTC para as suas placas STM32F303).
 

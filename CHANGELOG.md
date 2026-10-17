@@ -17,6 +17,12 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
 
 ---
 
+## [0.1.3] - Firmware version boundaries and side-effect-free CI builds
+
+- The firmware version scripts keep their own three-component odometer (0.7.9 -> 0.8.0, 0.9.9 -> 1.0.0, 9.9.9 -> 10.0.0) and no longer hand over to the shared manifest utility, which broke the build at the boundary versions; the successor rule is now a pure function covered by boundary tests that run in CI and as a step of the build script.
+- CI builds (HYDRA_UMC_CI=1) publish firmware images under build/firmware instead of firmware/, so a validation build leaves the tracked images untouched.
+- Verified: unit tests and shell syntax checks only; the ARM firmware build itself was not run.
+
 ## [0.1.2] - A frame that is not a command changes nothing, and every decision names its tool
 
 - **`rack_link_decide()` replaces `rack_link_process_frame()`.** The old function returned one number that meant two things - "apply this temperature" and "this frame does not count" - so noise on the CRC, an honest retransmission with the same sequence number or a command other than SET_PREHEAT came out as 0, which is "switch the heater off"; with two tools in the rack it also did not say which tool the number was for. The new function returns a decision (`NONE`, `SET_TARGET` or `SAFE_STATE`) that always names the tool: a frame that is not a command to act on changes nothing, a retransmission is acknowledged and changes nothing, and a command with an out-of-range value puts that tool in the safe state. Only a lost link (the watchdog) brings every tool to the safe state.

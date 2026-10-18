@@ -17,6 +17,12 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
 
 ---
 
+## [0.1.5] - Claims aligned with what has been tested
+
+- Maturity is functional: nothing here has been verified on real hardware yet.
+- The README (all eight languages) no longer shows an FDCAN badge (no CAN driver exists), renames the protocol range checks from safety limits, and says that the CAN integration has never run because no driver or board exists.
+- The manifest notes count 138 host-native test assertions, as the README does.
+
 ## [0.1.4] - Firmware published only as release assets
 
 - Firmware binaries (bin, elf, hex) are no longer versioned in git; they are published only as assets of the GitHub release of each version. build_firmware.sh and build_firmware.bat write them to firmware/ (git-ignored) in release mode and to build/firmware in CI mode.

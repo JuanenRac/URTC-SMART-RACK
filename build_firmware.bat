@@ -35,6 +35,10 @@ REM sibling repo URTC/build_firmware.bat, reused rather than reinvented, but
 REM with the HAL/CMSIS fetch steps skipped entirely - nothing chip-specific
 REM to fetch yet at this project's current andamiaje (scaffolding) stage.
 setlocal enabledelayedexpansion
+rem Keep the window open for people, never in automation (CI / HYDRA_UMC_CI).
+set "KEEP_OPEN=pause"
+if defined CI set "KEEP_OPEN=ver >nul"
+if "%HYDRA_UMC_CI%"=="1" set "KEEP_OPEN=ver >nul"
 REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_STEP
 echo [1/3] Incrementing project version and synchronising its manifest...
 REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_BEFORE
@@ -126,11 +130,11 @@ echo.
 echo =============================================================================
 echo  Build complete - v%VERSION%
 echo =============================================================================
-pause
+%KEEP_OPEN%
 exit /b 0
 
 :error
 echo.
 echo BUILD FAILED - see the output above.
-pause
+%KEEP_OPEN%
 exit /b 1

@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-SMART-RACK Firmware - Rack command validation: rack_command.h
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // Turns a real, CRC-valid protocol_frame_t (see protocol.h) into a real,
 // range-checked command - the review's own "aplicar limites de

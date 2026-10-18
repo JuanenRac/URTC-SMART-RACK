@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| バージョン | `0.1.6` |
+| バージョン | `0.1.7` |
 | 成熟度 | 機能する |
 | 技術 | C / STM32G4 / arm-none-eabi-gcc |
 | 対象 | マイコン基板（ファームウェア）。ビルドは PC で行います |
@@ -114,6 +114,7 @@ URTC-SMART-RACK/
 │   ├── build_test.py               # バージョンを更新しないビルド/コンパイル確認
 │   ├── publish_release_assets.py   # 添付するリリースアセットを列挙し gh コマンドを表示
 │   └── ci_validate.py              # CI が使用する manifest/CHANGELOG/docs の検証
+├── bump.py                         # 明示的なバージョン加算コマンド（コンパイルでは加算されない）
 ├── bump_version.py                 # オドメーター式バージョンインクリメント（汎用スクリプト、URTC と共有）
 ├── bump_manifest_version.py        # urtc.project.json のバージョンをネイティブ側と同期（--sync）
 ├── build_firmware.sh / .bat        # 実際のビルド：ホストテスト + バージョンインクリメント + コンパイル + リンク + 公開
@@ -286,4 +287,4 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 📺 [youtube.com/@electrohobby3d](https://youtube.com/@electrohobby3d)
 
 ## 📜 ライセンス
-GPL-3.0 —— 詳細は LICENSE を参照してください。
+GPL-3.0-or-later —— 詳細は LICENSE を参照してください。

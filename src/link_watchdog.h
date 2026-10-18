@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-SMART-RACK Firmware - Link timeout + command idempotency: link_watchdog.h
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // Real timeout and idempotency tracking for the rack link - the review's
 // own "timeout, idempotencia... y estado seguro al arrancar o

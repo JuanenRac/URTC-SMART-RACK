@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-SMART-RACK Firmware - Tool ID decoding: tool_id.h
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // Pure logic, no hardware access: decoding a raw 5-bit ID jumper reading
 // (or an F-RAM-stored byte, once that exists - see README's "Tool

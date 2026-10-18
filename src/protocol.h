@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-SMART-RACK Firmware - Rack command protocol: protocol.h
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // Real wire framing for the host<->rack link - the review's own
 // "definir protocolo de rack con version, framing, CRC/checksum...; no

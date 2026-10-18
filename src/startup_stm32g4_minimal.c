@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-SMART-RACK Firmware - Minimal Cortex-M4F startup: startup_stm32g4_minimal.c
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // Hand-written vector table + reset entry, standing in for ST's own
 // CMSIS/HAL startup_stm32g4xx.s until a real PCB pins down the exact

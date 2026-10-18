@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-SMART-RACK Firmware - Host-side peripheral/link scenarios
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // Real encoded frames (some deliberately corrupted, some deliberately out of range) played through rack_link_decide(), the decision a real receive interrupt makes - no rack,
 // CAN transceiver or F-RAM required, since none exist for this board yet (see main.c's own note).

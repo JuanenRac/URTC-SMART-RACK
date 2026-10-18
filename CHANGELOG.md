@@ -5,11 +5,9 @@ This file intentionally omits calendar dates from individual entries.
 
 ## Versioning scheme
 
-`src/firmware_common.h`'s `FIRMWARE_VERSION_MAJOR`/`_MINOR`/`_PATCH` bump
-automatically on every real build (`build_firmware.sh` / `.bat` - see
-`bump_version.py`, run as the third step of both scripts - after the
-toolchain check and the host tests - and undone if a later step fails, the
-same generic script sibling repo URTC uses). It follows the ecosystem-wide
+`src/firmware_common.h`'s `FIRMWARE_VERSION_MAJOR`/`_MINOR`/`_PATCH` are raised
+only by the explicit `python bump.py` step (`build_firmware.sh` / `.bat` only read
+them; `bump.py` runs `bump_version.py`, the same generic script sibling repo URTC uses). It follows the ecosystem-wide
 base-10 "odometer" rule rather than semantic-versioning judgment calls:
 
 - `PATCH` +1 on every build
@@ -17,6 +15,11 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
 - the same carry cascades into `MAJOR` if `MINOR` would exceed 9
 
 ---
+
+## [0.1.7] - An explicit bump command: building never changes the version
+
+- Building no longer changes the firmware version: build_firmware.sh and build_firmware.bat only read it from src/firmware_common.h, and raising it is the explicit `python bump.py` step.
+- Every licence statement and source header says GPL-3.0-or-later.
 
 ## [0.1.6] - Tool IDs, per-tool limits, safe link handling and builds that undo their version bump
 

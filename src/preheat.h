@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-SMART-RACK Firmware - Smart Idle pre-heat logic: preheat.h
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // The README's "Smart Idle" workflow (see the SMART RACK WORKFLOW diagram:
 // "PRE-HEAT: Soldering Tip to 200 C"): deciding *whether* to pre-heat and

@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| Version | `0.1.6` |
+| Version | `0.1.7` |
 | Maturity | Functional |
 | Stack | C / STM32G4 / arm-none-eabi-gcc |
 | Target | A microcontroller board (the firmware); built on a PC |
@@ -105,9 +105,10 @@ URTC-SMART-RACK/
 │   ├── build_test.py               # Non-versioning build/compile check
 │   ├── publish_release_assets.py   # Lists the release assets to attach and prints the gh command
 │   └── ci_validate.py              # Manifest/CHANGELOG/docs validation used by CI
-├── bump_version.py                 # Odometer-style version bump (generic, shared with URTC)
+├── bump.py                         # Explicit version bump command (building never bumps)
+├── bump_version.py                 # Odometer-style version bump (generic, shared with URTC), called by bump.py
 ├── bump_manifest_version.py        # Syncs urtc.project.json's version to the native one (--sync)
-├── build_firmware.sh / .bat        # Real build: host tests + bump version + compile + link + publish
+├── build_firmware.sh / .bat        # Real build: host tests + compile + link + publish (never changes the version)
 ├── build-test.sh / .bat            # Non-versioning build/compile check
 └── README.md
 ```
@@ -152,7 +153,7 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 
 ## 5. 📋 CHANGELOG
 
-See [`CHANGELOG.md`](CHANGELOG.md) for the full version history — every real build bumps `src/firmware_common.h`'s version automatically (odometer rule, see BUILD above), and each bump gets its own entry there.
+See [`CHANGELOG.md`](CHANGELOG.md) for the full version history — `python bump.py` raises `src/firmware_common.h`'s version by one odometer step (building never does), and each bump gets its own entry there.
 
 ---
 
@@ -261,4 +262,4 @@ This project is part of the HYDRA-UMC robotics ecosystem by the same author (Jua
 📺 [youtube.com/@electrohobby3d](https://youtube.com/@electrohobby3d)
 
 ## 📜 LICENSE
-GPL-3.0 - See LICENSE for details.
+GPL-3.0-or-later - See LICENSE for details.

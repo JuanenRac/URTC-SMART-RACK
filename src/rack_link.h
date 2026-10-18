@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-SMART-RACK Firmware - Real receive-path decision: rack_link.h
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // The real frame-dispatch decision tying protocol/rack-command/link-watchdog together, as a module a real UART/CAN receive interrupt can call (the tests call INTO it).
 //

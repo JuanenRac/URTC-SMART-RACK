@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| 版本 | `0.1.6` |
+| 版本 | `0.1.7` |
 | 成熟度 | 可用 |
 | 技术栈 | C / STM32G4 / arm-none-eabi-gcc |
 | 目标 | 微控制器板（固件）；在电脑上构建 |
@@ -110,6 +110,7 @@ URTC-SMART-RACK/
 │   ├── build_test.py               # 不递增版本号的构建/编译检查
 │   ├── publish_release_assets.py   # 列出要附加的发布资源并输出 gh 命令
 │   └── ci_validate.py              # CI 使用的 manifest/CHANGELOG/docs 校验
+├── bump.py                         # 显式的版本递增命令（编译从不递增）
 ├── bump_version.py                 # 里程表式版本递增（通用脚本，与 URTC 共享）
 ├── bump_manifest_version.py        # 将 urtc.project.json 的版本与原生版本同步（--sync）
 ├── build_firmware.sh / .bat        # 真实构建：宿主测试 + 版本递增 + 编译 + 链接 + 发布
@@ -278,4 +279,4 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 📺 [youtube.com/@electrohobby3d](https://youtube.com/@electrohobby3d)
 
 ## 📜 许可证
-GPL-3.0 —— 详见 LICENSE。
+GPL-3.0-or-later —— 详见 LICENSE。

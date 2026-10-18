@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-SMART-RACK Firmware - Per-tool pre-heat limits: tool_limits.h
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // The highest pre-heat target the rack accepts depends on the tool: a head
 // that URTC itself never lets above 310 C must not be asked for 390 C, and a

@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| Versión | `0.1.6` |
+| Versión | `0.1.7` |
 | Madurez | Funcional |
 | Tecnología | C / STM32G4 / arm-none-eabi-gcc |
 | Destino | Una placa con microcontrolador (el firmware); se compila en un PC |
@@ -105,6 +105,7 @@ URTC-SMART-RACK/
 │   ├── build_test.py               # Comprobación de build/compilación sin subir versión
 │   ├── publish_release_assets.py   # Lista los assets de la release y imprime el comando gh
 │   └── ci_validate.py              # Validación de manifest/CHANGELOG/docs usada por la CI
+├── bump.py                         # Orden explícita de subir versión (compilar nunca la sube)
 ├── bump_version.py                 # Incremento de versión estilo cuentakilómetros (genérico, compartido con URTC)
 ├── bump_manifest_version.py        # Sincroniza la versión de urtc.project.json con la nativa (--sync)
 ├── build_firmware.sh / .bat        # Build real: tests de host + incrementa version + compila + enlaza + publica
@@ -261,4 +262,4 @@ Este proyecto es parte del ecosistema de robótica HYDRA-UMC del mismo autor (Ju
 📺 [youtube.com/@electrohobby3d](https://youtube.com/@electrohobby3d)
 
 ## 📜 LICENCIA
-GPL-3.0 - Ver LICENSE para más detalles.
+GPL-3.0-or-later - Ver LICENSE para más detalles.

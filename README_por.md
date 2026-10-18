@@ -19,6 +19,16 @@
 
 ---
 
+## 📋 Num relance
+
+| | |
+|---|---|
+| Versão | `0.1.4` |
+| Maturidade | Estabelecido |
+| Tecnologia | C / STM32G4 / arm-none-eabi-gcc |
+| Destino | Uma placa com microcontrolador (o firmware); compila-se num PC |
+| Em hardware real | Ainda não: não há registo de execução em hardware real para esta versão |
+
 ## 1. 🛠️ VISÃO TÉCNICA GERAL
 
 O **URTC-SMART-RACK** é um sistema inteligente de armazenamento de end-effectors dentro do ecossistema HYDRA-UMC. Baseado no microcontrolador STM32G4, monitoriza e prepara as ferramentas enquanto não estão acopladas a um robô.

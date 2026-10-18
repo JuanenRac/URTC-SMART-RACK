@@ -19,6 +19,16 @@
 
 ---
 
+## 📋 In breve
+
+| | |
+|---|---|
+| Versione | `0.1.4` |
+| Maturità | Consolidato |
+| Tecnologia | C / STM32G4 / arm-none-eabi-gcc |
+| Destinazione | Una scheda con microcontrollore (il firmware); compilato su un PC |
+| Su hardware reale | Non ancora: per questa versione non risulta alcuna esecuzione su hardware reale |
+
 ## 1. 🛠️ PANORAMICA TECNICA
 
 **URTC-SMART-RACK** è un sistema di stoccaggio intelligente per testine utensile all'interno dell'ecosistema HYDRA-UMC. Basato sul microcontrollore STM32G4, monitora e prepara gli utensili mentre non sono collegati a un robot.

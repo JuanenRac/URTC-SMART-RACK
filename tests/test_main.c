@@ -17,6 +17,7 @@ int main(void)
     run_link_watchdog_tests(&failures);
     run_rack_link_scenario_tests(&failures);
     run_rack_inventory_tests(&failures);
+    run_robustness_tests(&failures);
 
     if (failures == 0) {
         printf("All tests passed.\n");

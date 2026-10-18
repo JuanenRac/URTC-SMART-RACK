@@ -86,7 +86,7 @@ mkdir -p "$BUILD"
     -o "$BUILD/host_tests" \
     tests/test_main.c tests/test_tool_id.c tests/test_lifecycle.c tests/test_preheat.c \
     tests/test_protocol.c tests/test_rack_command.c tests/test_link_watchdog.c tests/test_rack_link_scenarios.c \
-    tests/test_rack_inventory.c \
+    tests/test_rack_inventory.c tests/test_robustness.c \
     src/tool_id.c src/lifecycle.c src/preheat.c src/protocol.c src/rack_command.c src/link_watchdog.c src/rack_link.c \
     src/rack_inventory.c
 "$BUILD/host_tests"

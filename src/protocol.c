@@ -13,7 +13,7 @@ uint8_t protocol_crc8(const uint8_t *data, uint8_t len)
         crc ^= data[i];
         for (uint8_t bit = 0; bit < 8u; bit++) {
             if (crc & 0x80u) {
-                crc = (uint8_t)((crc << 1) ^ 0x07u);
+                crc = (uint8_t)(((unsigned)crc << 1) ^ 0x07u);
             } else {
                 crc = (uint8_t)(crc << 1);
             }

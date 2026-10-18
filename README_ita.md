@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Feature-Smart%20Idle-green.svg" alt="Smart Idle">
 </p>
 
-**Verifica di onestà - cosa funziona davvero oggi:** `tool_id.c`, `lifecycle.c`, `preheat.c`, `protocol.c`, `rack_command.c`, `link_watchdog.c`, `rack_link.c` e `rack_inventory.c` sono vero C puro, supportato da 138 controlli `TEST_ASSERT` superati (`tests/test_*.c`, compilati ed eseguiti con il compilatore C proprio dell'host, non `arm-none-eabi-gcc`) - confermato compilando ed eseguendo esattamente quella suite di test host. Questo copre la decodifica dell'ID, il tracciamento di utilizzo/ciclo di vita, l'attivazione del preriscaldamento e la temperatura target, il parsing del protocollo con framing CRC8, la validazione dell'intervallo dei comandi, la gestione di timeout del collegamento/idempotenza, e il tracciamento dell'inventario multi-slot (quale utensile è riposto dove, un utensile reale mai in due slot contemporaneamente) - tutta logica, niente hardware. Come dice già l'introduzione del README: non esiste ancora un PCB/schema per questa scheda, quindi niente qui ha mai pilotato un vero pin GPIO, un chip F-RAM, un elemento riscaldante o un transceiver CAN reali - `main.c`/`startup_stm32g4_minimal.c` dimostrano solo che la compilazione incrociata e il linking per Cortex-M4F riescono contro un linker script segnaposto, non che qualcosa qui giri su silicio reale. Vedi `CHANGELOG.md` per sapere esattamente cosa è stato consegnato finora.
+**Verifica di onestà - cosa funziona davvero oggi:** `tool_id.c`, `lifecycle.c`, `preheat.c`, `protocol.c`, `rack_command.c`, `link_watchdog.c`, `tool_limits.c`, `rack_app.c`, `rack_link.c` e `rack_inventory.c` sono vero C puro, supportato da 290 controlli `TEST_ASSERT` superati (`tests/test_*.c`, compilati ed eseguiti con il compilatore C proprio dell'host, non `arm-none-eabi-gcc`) - confermato compilando ed eseguendo esattamente quella suite di test host. Questo copre la decodifica dell'ID, il tracciamento di utilizzo/ciclo di vita, l'attivazione del preriscaldamento e la temperatura target, il parsing del protocollo con framing CRC8, la validazione dell'intervallo dei comandi, la gestione di timeout del collegamento/idempotenza, e il tracciamento dell'inventario multi-slot (quale utensile è riposto dove, un utensile reale mai in due slot contemporaneamente) - tutta logica, niente hardware. Come dice già l'introduzione del README: non esiste ancora un PCB/schema per questa scheda, quindi niente qui ha mai pilotato un vero pin GPIO, un chip F-RAM, un elemento riscaldante o un transceiver CAN reali - `main.c`/`startup_stm32g4_minimal.c` dimostrano solo che la compilazione incrociata e il linking per Cortex-M4F riescono contro un linker script segnaposto, non che qualcosa qui giri su silicio reale. Vedi `CHANGELOG.md` per sapere esattamente cosa è stato consegnato finora.
 
 ---
 
@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| Versione | `0.1.5` |
+| Versione | `0.1.6` |
 | Maturità | Funzionale |
 | Tecnologia | C / STM32G4 / arm-none-eabi-gcc |
 | Destinazione | Una scheda con microcontrollore (il firmware); compilato su un PC |
@@ -35,12 +35,12 @@
 
 **URTC-SMART-RACK** è un sistema di stoccaggio intelligente per testine utensile all'interno dell'ecosistema HYDRA-UMC. Basato sul microcontrollore STM32G4, monitora e prepara gli utensili mentre non sono collegati a un robot.
 
-Abilita modalità "Smart Idle", come il preriscaldamento delle punte saldanti T12 poco prima di un cambio utensile, e traccia l'ID elettronico, la versione del firmware e i cicli totali di utilizzo di ogni testina URTC, garantendo una manutenzione ottimale e un dispiegamento a zero secondi.
+Abilita modalità "Smart Idle", come il preriscaldamento delle punte saldanti T12 poco prima di un cambio utensile, e traccia l'ID elettronico e i cicli totali di utilizzo di ogni testina URTC (la lettura della versione del firmware di ogni testina è prevista, non implementata), garantendo una manutenzione ottimale e un dispiegamento a zero secondi.
 
 Non esiste ancora un PCB/schematico per questa scheda (vedi `hardware/`), quindi nulla di sottostante può pilotare GPIO/F-RAM/CAN reali - ma la *logica* a cui queste funzionalità si riducono (decodificare un ID, tracciare l'utilizzo, decidere quando preriscaldare e a quale temperatura) è reale, C puro, testata unitariamente oggi stesso.
 
 ### Caratteristiche Principali:
-* ✅ **v0 reale - logica ID, ciclo di vita e preriscaldamento:** `tool_id.c` decodifica una lettura ID grezza a 5 bit in un'identità utensile; `lifecycle.c` traccia cicli/tempo di utilizzo e segnala la manutenzione dovuta; `preheat.c` decide quando deve iniziare il preriscaldamento Smart Idle e a quale temperatura target. 138 asserzioni di test sul compilatore C proprio dell'host - nessun PCB, driver GPIO o F-RAM necessario per eseguire o testare tutto questo.
+* ✅ **v0 reale - logica ID, ciclo di vita e preriscaldamento:** `tool_id.c` decodifica una lettura ID grezza a 5 bit in un'identità utensile; `lifecycle.c` traccia cicli/tempo di utilizzo e segnala la manutenzione dovuta; `preheat.c` decide quando deve iniziare il preriscaldamento Smart Idle e a quale temperatura target. 290 asserzioni di test sul compilatore C proprio dell'host - nessun PCB, driver GPIO o F-RAM necessario per eseguire o testare tutto questo.
 * 🗄️ **Tracciamento Utensili** — identificazione automatica delle testine URTC tramite jumper ID a 5 bit o F-RAM. *(la logica di decodifica ID in sé è reale - vedi sopra; leggere jumper/F-RAM reali richiede il PCB.)*
 * 🗂️ **Inventario Multi-Slot** — `rack_inventory.c` traccia quale utensile è riposto in quale slot, mantiene un utensile reale in esattamente uno slot alla volta (spostarlo altrove libera il suo vecchio slot invece di dichiarare che è in due posti contemporaneamente), e un target di preriscaldamento per slot, indirizzato per identità dell'utensile. All'avvio, `rack_inventory_reconcile()` lo confronta con un sensore di presenza per slot: un utensile rimosso a rack spento viene cancellato (compreso il target di preriscaldamento) e uno inserito a mano viene segnalato per l'identificazione. *(la logica dell'inventario in sé è reale - vedi sopra; collegarla a veri sensori di presenza per slot richiede il PCB.)*
 * 🌡️ **Logica di Preriscaldamento** — gestione termica intelligente per utensili di saldatura e aria calda. *(la decisione di attivazione e le temperature target sono reali - vedi sopra; pilotare un riscaldatore reale richiede il PCB.)*
@@ -67,10 +67,10 @@ flowchart TB
 ## 3. 🧱 ARCHITETTURA E DECISIONI DI PROGETTAZIONE
 
 * **Perché questa scheda non ha ancora un pinout/ID hardware reale definito.** Non esiste ancora un PCB per questa scheda - `src/firmware_common.h` porta un'identità di versione senza ID hardware, e i file di avvio/linker sono scritti a mano come segnaposto in sostituzione dell'avvio CMSIS/HAL proprio di ST finché non viene fissato un vero componente STM32G4.
-* **Perché non è un figlio di URTC stesso.** URTC-SMART-RACK è uno Strumento Complementare, non un figlio della famiglia URTC - è una scheda fisica separata (un rack di stoccaggio utensili, non una testa utensile) che condivide il bus CAN e le convenzioni firmware di URTC, ma non la sua gerarchia di integrazione.
+* **Perché non è un figlio di URTC stesso.** URTC-SMART-RACK è uno Strumento Complementare, non un figlio della famiglia URTC - è una scheda fisica separata (un rack di stoccaggio utensili, non una testa utensile) che condivide lo spazio di ID degli utensili e le convenzioni firmware di URTC, ma non la sua gerarchia di integrazione.
 * **Perché `bump_version.py` è una copia diretta di quello proprio di URTC.** Stessa regola di versionamento contachilometri, stesso formato di intestazione firmware - riutilizzare lo script esatto invece di reinventarlo mantiene i due sincronizzati per costruzione.
 * **Perché `tool_id.c`/`lifecycle.c`/`preheat.c` arrivano prima di qualsiasi driver GPIO/F-RAM/CAN.** Decodificare un ID, accumulare l'utilizzo e decidere quando preriscaldare sono funzioni pure di dati già disponibili - non hanno bisogno di alcun PCB per essere scritte o testate, quindi la v0 consegna prima questa logica, testata con il compilatore C della macchina stessa anziché `arm-none-eabi-gcc`. I driver che effettivamente reperirebbero quei dati da hardware reale arriveranno quando esisterà il PCB.
-* **Come si inserisce nel resto dell'ecosistema.** Condivide il bus CAN/ecosistema utensili proprio di URTC, e forma un abbinamento naturale con HYDRA-UMC-DETECTION-HEF per riconoscere visivamente quale utensile è realmente in rastrelliera.
+* **Come si inserisce nel resto dell'ecosistema.** Usa l'ecosistema utensili proprio di URTC (gli stessi ID utensile; i frame del rack non sono ancora frame CAN, vedi `docs/OPERATIONS.md`), e forma un abbinamento naturale con HYDRA-UMC-DETECTION-HEF per riconoscere visivamente quale utensile è realmente in rastrelliera.
 * **Perché il protocollo, la validazione dei comandi e il watchdog del collegamento sono tre moduli separati.** `protocol.c` conosce solo byte, framing e un CRC - non ha idea di cosa sia una temperatura "sicura". `rack_command.c` possiede quel giudizio, decodificando e verificando l'intervallo di un comando reale senza preoccuparsi di come sia arrivato sul filo. `link_watchdog.c` traccia il timeout/l'idempotenza indipendentemente da entrambi - un frame corrotto non deve mai nemmeno raggiungerlo (vedi la stessa asserzione reale di `test_rack_link_scenarios.c` secondo cui un frame con CRC errato non fa mai rivivere il watchdog). Tenerli separati è ciò che rende ciascuno testabile autonomamente sull'host, e mantiene snello un futuro handler di ricezione CAN - chiama ogni livello in ordine, non reimplementa il giudizio di nessuno di essi.
 * **Perché un collegamento non provato viene trattato esattamente come uno morto.** `link_watchdog_is_link_lost()` è vero sia dopo un vero timeout SIA prima che sia mai arrivato il primissimo frame - le stesse note di diagnosi lo chiamano "estado seguro al arrancar". Una rastrelliera che si accende senza che sia ancora connesso alcun host deve avviarsi nello stato sicuro, non assumere silenziosamente che vada "bene" finché non sia dimostrato il contrario.
 
@@ -90,12 +90,14 @@ URTC-SMART-RACK/
 │   ├── link_watchdog.h / .c        # Reale: timeout del collegamento + idempotenza dei comandi
 │   ├── rack_link.h / .c            # Reale: decisione di dispatch dei frame che collega protocol/rack_command/link_watchdog/preheat
 │   ├── rack_inventory.h / .c       # Reale: inventario multi-slot degli utensili - quale utensile è riposto dove, mai in due slot contemporaneamente
+│   ├── tool_limits.h / .c          # Reale: temperatura massima di preriscaldamento per profilo utensile (0 = nessun riscaldatore)
+│   ├── rack_app.h / .c             # Reale: applica la decisione del percorso di ricezione all'inventario; stato sicuro finché il collegamento è perso
 │   ├── main.c                      # Punto di ingresso minimo (ciclo di battito di vita)
 │   ├── startup_stm32g4_minimal.c   # Tabella dei vettori + Reset_Handler (ancora senza HAL ST, vedi intestazione del file)
 │   └── STM32G4_MINIMAL.ld          # Linker script placeholder (base 128K FLASH / 32K RAM)
-├── tests/                          # Harness di test reale host-native (tool_id, lifecycle, preheat, protocol, rack_command, link_watchdog, scenari di collegamento del rack, inventario del rack)
-├── docs/                           # Documentazione e manuale utente - vuoto, non ancora creato
-├── hardware/                       # File di progettazione hardware (PCB, 3D) - vuoto, nessuno schematico ancora
+├── tests/                          # Harness di test reale host-native (tool_id, limiti per utensile, lifecycle, preheat, protocol, rack_command, link_watchdog, scenari di collegamento del rack, inventario del rack, robustezza, rack_app) e controlli Python che verificano la coerenza tra script di build e numero di test pubblicato
+├── docs/                           # Guida operativa (docs/OPERATIONS.md): cosa fa la logica, cosa rifiuta e cosa resta non verificato
+├── hardware/                       # Note sull'hardware (README.md) - ancora nessun file di progetto (né schema né PCB)
 ├── firmware/                       # Output di build (.bin/.elf/.hex), ignorato da git - pubblicato solo come asset della release GitHub
 ├── build/                          # Oggetti di build intermedi (ignorato da git)
 ├── images/                         # Media e diagrammi
@@ -127,7 +129,9 @@ build_firmware.bat
 
 Il build compila ed esegue prima `tests/` con il compilatore C dell'*host stesso* (mai `arm-none-eabi-gcc` - sono test di logica pura, nessun registro MCU toccato) e fallisce l'intero build se un'asserzione fallisce. Solo allora incrementa la versione di `src/firmware_common.h` (regola contachilometri, come il resto dell'ecosistema), compila `main.c` e `startup_stm32g4_minimal.c` per Cortex-M4F, li collega con la mappa di memoria placeholder `STM32G4_MINIMAL.ld`, e pubblica file `.elf`/`.bin`/`.hex` versionati in `firmware/`.
 
-Le immagini del firmware (`.bin`, `.hex`, `.elf`) non sono versionate in git: una build di release scrive `firmware/URTC_SMART_RACK_FIRMWARE_v<versione>.*` (ignorato da git; `build/firmware` in modalità CI, `HYDRA_UMC_CI=1`) e sono pubblicate solo come asset della release GitHub di ogni versione. `python tools/publish_release_assets.py` controlla i file, scrive il file `.sha256` mancante e stampa il comando `gh release create` esatto con i file da allegare.
+Ogni modulo in `src/` viene compilato anche per Cortex-M4F e tutti vengono collegati insieme come verifica (sul target non c'è libreria C), anche se oggi l'immagine contiene solo `main.c` e il file di avvio. Se la build fallisce dopo l'incremento della versione, versione, manifest e changelog vengono ripristinati. Con `URTC_CI=1` nessun file tracciato viene toccato.
+
+Le immagini del firmware (`.bin`, `.hex`, `.elf`) non sono versionate in git: una build di release scrive `firmware/URTC_SMART_RACK_FIRMWARE_v<versione>.*` (ignorato da git; `build/firmware` in modalità CI, `URTC_CI=1`) e sono pubblicate solo come asset della release GitHub di ogni versione. `python tools/publish_release_assets.py` controlla i file, scrive il file `.sha256` mancante e stampa il comando `gh release create` esatto con i file da allegare.
 
 Non c'è ancora nulla da flashare su hardware reale - non esiste un PCB che confermi la parte STM32G4 target, il pinout, o le sue reali dimensioni di flash/RAM. La mappa di memoria del linker script è un placeholder prudente (documentato nella propria intestazione) che verrà sostituito quando esisterà hardware reale, lo stesso momento in cui la tabella dei vettori scritta a mano di `startup_stm32g4_minimal.c` verrà sostituita dal codice di avvio CMSIS/HAL proprio di ST (seguendo il modello del repository gemello URTC in `src/F303-master/` per le sue schede STM32F303).
 
@@ -137,9 +141,9 @@ Esempio reale - i test lato host si eseguono anche da soli, utile per verificare
 cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
   tests/test_main.c tests/test_tool_id.c tests/test_lifecycle.c tests/test_preheat.c \
   tests/test_protocol.c tests/test_rack_command.c tests/test_link_watchdog.c tests/test_rack_link_scenarios.c \
-  tests/test_rack_inventory.c \
-  src/tool_id.c src/lifecycle.c src/preheat.c src/protocol.c src/rack_command.c src/link_watchdog.c src/rack_link.c \
-  src/rack_inventory.c
+  tests/test_rack_inventory.c tests/test_robustness.c tests/test_rack_app.c \
+  src/tool_id.c src/tool_limits.c src/lifecycle.c src/preheat.c src/protocol.c src/rack_command.c src/link_watchdog.c src/rack_link.c \
+  src/rack_inventory.c src/rack_app.c
 ./build/host_tests
 # All tests passed.
 ```

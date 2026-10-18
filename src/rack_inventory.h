@@ -24,6 +24,10 @@
 
 #define RACK_INVENTORY_MAX_SLOTS 8u
 
+// The presence masks of rack_inventory_reconcile() carry one bit per slot in a
+// uint8_t: a larger rack needs wider masks first.
+_Static_assert(RACK_INVENTORY_MAX_SLOTS <= 8u, "rack_inventory_reconcile() masks hold at most 8 slots");
+
 typedef struct {
     bool occupied;
     uint8_t tool_id;         // valid only while occupied is true
@@ -45,7 +49,8 @@ void rack_inventory_init(rack_inventory_t *inv);
 // clears the slot (occupied=false) instead of racking a real tool there -
 // the same wire convention every other command in this project already
 // uses for "no tool", so callers never need a separate remove function.
-// Returns false (no-op) for an out-of-range slot.
+// Returns false (no-op) for an out-of-range slot, a missing inventory, or a tool
+// ID that names no tool profile (see tool_id.h: only 0..24 can be racked).
 bool rack_inventory_set_slot_tool(rack_inventory_t *inv, uint8_t slot, uint8_t tool_id);
 
 // Real, range-checked read - an out-of-range slot returns false rather
@@ -64,7 +69,10 @@ bool rack_inventory_find_tool(const rack_inventory_t *inv, uint8_t tool_id, uint
 // Sets the commanded pre-heat target for whichever slot currently holds
 // tool_id. Returns false (no-op) if that tool isn't racked anywhere right
 // now - a pre-heat command for a tool that was already pulled must never
-// silently "succeed" against a stale/absent slot.
+// silently "succeed" against a stale/absent slot - or if the target is above
+// what that tool accepts (tool_limits.h; a tool without a heater only accepts
+// 0). The inventory enforces the limit itself, so it does not depend on the
+// caller having validated the command first.
 bool rack_inventory_set_preheat_target(rack_inventory_t *inv, uint8_t tool_id, uint16_t target_temp_c);
 
 // Count of currently-occupied slots - a real, cheap "how full is this

@@ -35,16 +35,23 @@ REM sibling repo URTC/build_firmware.bat, reused rather than reinvented, but
 REM with the HAL/CMSIS fetch steps skipped entirely - nothing chip-specific
 REM to fetch yet at this project's current andamiaje (scaffolding) stage.
 setlocal enabledelayedexpansion
-rem Keep the window open for people, never in automation (CI / HYDRA_UMC_CI).
+rem Keep the window open for people, never in automation (CI / URTC_CI).
 set "KEEP_OPEN=pause"
 if defined CI set "KEEP_OPEN=ver >nul"
-if "%HYDRA_UMC_CI%"=="1" set "KEEP_OPEN=ver >nul"
+if "%URTC_CI%"=="1" set "KEEP_OPEN=ver >nul"
+rem Every path below is relative to the repository root, whatever the directory the script is started from.
+cd /d "%~dp0"
+set "VERSION_BUMPED=0"
+if "%URTC_CI%"=="1" goto :banner_ci
 REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_STEP
 echo [1/3] Incrementing project version and synchronising its manifest...
 REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_BEFORE
 for /f "usebackq delims=" %%V in (`python -c "import json; print(json.load(open(r'%~dp0urtc.project.json', encoding='utf-8'))['version'])"`) do set "HYDRA_UMC_VERSION_BEFORE=%%V"
+goto :banner_done
+:banner_ci
+echo URTC-SMART-RACK CI: version sources are read-only.
+:banner_done
 echo.
-cd /d "%~dp0"
 where arm-none-eabi-gcc >nul 2>nul
 if errorlevel 1 (
     echo FAIL: arm-none-eabi-gcc not found. Install the ARM GNU Toolchain
@@ -62,11 +69,11 @@ if errorlevel 1 (
     echo       this from a shell that has a native gcc on PATH.
     goto :error
 )
-gcc -std=c11 -Wall -Wextra -Isrc -Itests -o build\host_tests.exe tests\test_main.c tests\test_tool_id.c tests\test_lifecycle.c tests\test_preheat.c tests\test_protocol.c tests\test_rack_command.c tests\test_link_watchdog.c tests\test_rack_inventory.c tests\test_robustness.c tests\test_rack_link_scenarios.c src\tool_id.c src\lifecycle.c src\preheat.c src\protocol.c src\rack_command.c src\link_watchdog.c src\rack_inventory.c src\rack_link.c
+gcc -std=c11 -Wall -Wextra -Wconversion -Isrc -Itests -o build\host_tests.exe tests\test_main.c tests\test_tool_id.c tests\test_lifecycle.c tests\test_preheat.c tests\test_protocol.c tests\test_rack_command.c tests\test_link_watchdog.c tests\test_rack_inventory.c tests\test_robustness.c tests\test_rack_app.c tests\test_rack_link_scenarios.c src\tool_id.c src\tool_limits.c src\lifecycle.c src\preheat.c src\protocol.c src\rack_command.c src\link_watchdog.c src\rack_inventory.c src\rack_app.c src\rack_link.c
 if errorlevel 1 goto :error
 build\host_tests.exe
 if errorlevel 1 goto :error
-echo   OK   tool_id.c / lifecycle.c / preheat.c pure-logic tests passed
+echo   OK   tool_id.c / tool_limits.c / lifecycle.c / preheat.c / protocol.c / rack_command.c / link_watchdog.c / rack_link.c / rack_inventory.c pure-logic tests passed
 echo.
 
 echo === 2b. Build tooling tests ^(version odometer boundaries^) ===
@@ -75,6 +82,14 @@ if errorlevel 1 goto :error
 echo.
 
 echo === 3. Version bump (odometer, see bump_version.py) ===
+if "%URTC_CI%"=="1" goto :version_from_header
+rem The files a version bump rewrites are copied aside first and put back if anything fails afterwards.
+if not exist build\version_backup\src mkdir build\version_backup\src
+copy /y src\firmware_common.h build\version_backup\src\firmware_common.h >nul
+copy /y urtc.project.json build\version_backup\urtc.project.json >nul
+copy /y CHANGELOG.md build\version_backup\CHANGELOG.md >nul
+set "VERSION_BUMPED=1"
+set "VERSION="
 for /f "delims=" %%V in ('python bump_version.py src\firmware_common.h FIRMWARE_VERSION') do set VERSION=%%V
 if "%VERSION%"=="" goto :error
 python "%~dp0bump_manifest_version.py" --sync
@@ -90,6 +105,16 @@ echo * v%HYDRA_UMC_VERSION_BEFORE% ^> v%HYDRA_UMC_VERSION_AFTER%
 echo * Project manifest synchronized with the firmware version.
 echo *****************************************************************************
 echo.
+goto :version_done
+
+:version_from_header
+rem CI mode: the version is read from the header and nothing is rewritten.
+for /f "tokens=3" %%A in ('findstr /b /c:"#define FIRMWARE_VERSION_MAJOR" src\firmware_common.h') do set "V_MAJOR=%%A"
+for /f "tokens=3" %%A in ('findstr /b /c:"#define FIRMWARE_VERSION_MINOR" src\firmware_common.h') do set "V_MINOR=%%A"
+for /f "tokens=3" %%A in ('findstr /b /c:"#define FIRMWARE_VERSION_PATCH" src\firmware_common.h') do set "V_PATCH=%%A"
+set "VERSION=%V_MAJOR%.%V_MINOR%.%V_PATCH%"
+
+:version_done
 echo   Firmware version: %VERSION%
 echo.
 
@@ -97,22 +122,33 @@ echo === 4. Compile + link ===
 if not exist build mkdir build
 REM Release mode writes to firmware\ (git-ignored, published only as release assets); CI mode writes to build\firmware.
 set "FIRMWARE_OUT=firmware"
-if "%HYDRA_UMC_CI%"=="1" set "FIRMWARE_OUT=build\firmware"
+if "%URTC_CI%"=="1" set "FIRMWARE_OUT=build\firmware"
 if not exist %FIRMWARE_OUT% mkdir %FIRMWARE_OUT%
+if not exist build\arm mkdir build\arm
 
-set CFLAGS=-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -ffreestanding -fno-builtin -Wall -Wextra -O2 -g -Isrc
+set CFLAGS=-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -ffreestanding -fno-builtin -ffunction-sections -fdata-sections -Wall -Wextra -Wconversion -O2 -g -Isrc
 set LDFLAGS=-T src\STM32G4_MINIMAL.ld -nostdlib -Wl,--gc-sections -Wl,-Map=build\urtc-smart-rack.map
 
-arm-none-eabi-gcc %CFLAGS% -c src\startup_stm32g4_minimal.c -o build\startup_stm32g4_minimal.o
-if errorlevel 1 goto :error
-arm-none-eabi-gcc %CFLAGS% -c src\main.c -o build\main.o
-if errorlevel 1 goto :error
-arm-none-eabi-gcc %CFLAGS% %LDFLAGS% build\startup_stm32g4_minimal.o build\main.o -o build\urtc-smart-rack.elf
+rem Every module is compiled for the Cortex-M4F target, not only the two that the image links today.
+for %%S in (src\*.c) do (
+    arm-none-eabi-gcc %CFLAGS% -c %%S -o build\arm\%%~nS.o
+    if errorlevel 1 goto :error
+)
+echo   OK   every src\*.c compiled for Cortex-M4F
+
+arm-none-eabi-gcc %CFLAGS% %LDFLAGS% build\arm\startup_stm32g4_minimal.o build\arm\main.o -o build\urtc-smart-rack.elf
 if errorlevel 1 goto :error
 echo   OK   Linked build\urtc-smart-rack.elf
 
+rem All modules must also resolve against each other without a C library; this link is only a check and produces no image.
+arm-none-eabi-gcc %CFLAGS% -T src\STM32G4_MINIMAL.ld -nostdlib -Wl,--gc-sections build\arm\*.o -o build\all-modules-check.elf
+if errorlevel 1 goto :error
+echo   OK   all modules link together without a C library
+
 arm-none-eabi-objcopy -O binary build\urtc-smart-rack.elf build\urtc-smart-rack.bin
+if errorlevel 1 goto :error
 arm-none-eabi-objcopy -O ihex build\urtc-smart-rack.elf build\urtc-smart-rack.hex
+if errorlevel 1 goto :error
 echo   OK   build\urtc-smart-rack.bin / .hex
 echo.
 
@@ -135,6 +171,12 @@ exit /b 0
 
 :error
 echo.
+if "%VERSION_BUMPED%"=="1" (
+    copy /y build\version_backup\src\firmware_common.h src\firmware_common.h >nul
+    copy /y build\version_backup\urtc.project.json urtc.project.json >nul
+    copy /y build\version_backup\CHANGELOG.md CHANGELOG.md >nul
+    echo Version, manifest and changelog restored to their previous state.
+)
 echo BUILD FAILED - see the output above.
 %KEEP_OPEN%
 exit /b 1

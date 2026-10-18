@@ -20,8 +20,9 @@ void lifecycle_record_use(lifecycle_t *lc, uint32_t duration_seconds)
     if (lc == NULL) {
         return;
     }
-    lc->total_cycles += 1;
-    lc->total_seconds += duration_seconds;
+    // Saturate instead of wrapping: a wrapped counter would make a worn tool look new again.
+    lc->total_cycles = (lc->total_cycles == UINT32_MAX) ? UINT32_MAX : lc->total_cycles + 1u;
+    lc->total_seconds = (duration_seconds > UINT32_MAX - lc->total_seconds) ? UINT32_MAX : lc->total_seconds + duration_seconds;
 }
 
 bool lifecycle_needs_maintenance(const lifecycle_t *lc, uint32_t max_cycles)

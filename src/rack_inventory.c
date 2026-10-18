@@ -5,20 +5,30 @@
 // =============================================================================
 #include "rack_inventory.h"
 #include "tool_id.h"
+#include "tool_limits.h"
 
-#include <string.h>
+#include <stddef.h>
 
 void rack_inventory_init(rack_inventory_t *inv)
 {
-    memset(inv, 0, sizeof(*inv));
+    if (inv == NULL) {
+        return;
+    }
+    // Explicit field writes instead of memset(): the firmware image links without a C library.
     for (uint8_t i = 0; i < RACK_INVENTORY_MAX_SLOTS; i++) {
+        inv->slots[i].occupied = false;
         inv->slots[i].tool_id = TOOL_ID_NONE;
+        inv->slots[i].target_temp_c = 0;
     }
 }
 
 bool rack_inventory_set_slot_tool(rack_inventory_t *inv, uint8_t slot, uint8_t tool_id)
 {
-    if (slot >= RACK_INVENTORY_MAX_SLOTS) {
+    if (inv == NULL || slot >= RACK_INVENTORY_MAX_SLOTS) {
+        return false;
+    }
+    // Only a tool profile of the URTC catalogue (0..24) can be racked; TOOL_ID_NONE clears the slot.
+    if (tool_id_is_present(tool_id) && !tool_id_is_valid_urtc(tool_id)) {
         return false;
     }
 
@@ -54,7 +64,7 @@ bool rack_inventory_set_slot_tool(rack_inventory_t *inv, uint8_t slot, uint8_t t
 
 bool rack_inventory_get_slot(const rack_inventory_t *inv, uint8_t slot, rack_slot_t *out_slot)
 {
-    if (slot >= RACK_INVENTORY_MAX_SLOTS) {
+    if (inv == NULL || out_slot == NULL || slot >= RACK_INVENTORY_MAX_SLOTS) {
         return false;
     }
     *out_slot = inv->slots[slot];
@@ -63,7 +73,7 @@ bool rack_inventory_get_slot(const rack_inventory_t *inv, uint8_t slot, rack_slo
 
 bool rack_inventory_find_tool(const rack_inventory_t *inv, uint8_t tool_id, uint8_t *out_slot)
 {
-    if (!tool_id_is_present(tool_id)) {
+    if (inv == NULL || out_slot == NULL || !tool_id_is_present(tool_id)) {
         return false;
     }
     for (uint8_t i = 0; i < RACK_INVENTORY_MAX_SLOTS; i++) {
@@ -81,6 +91,9 @@ bool rack_inventory_set_preheat_target(rack_inventory_t *inv, uint8_t tool_id, u
     if (!rack_inventory_find_tool(inv, tool_id, &slot)) {
         return false;
     }
+    if (target_temp_c > tool_limits_max_preheat_c(tool_id)) {
+        return false; // above what this tool accepts (0 when it has no heater)
+    }
     inv->slots[slot].target_temp_c = target_temp_c;
     return true;
 }
@@ -88,6 +101,9 @@ bool rack_inventory_set_preheat_target(rack_inventory_t *inv, uint8_t tool_id, u
 uint8_t rack_inventory_occupied_count(const rack_inventory_t *inv)
 {
     uint8_t count = 0;
+    if (inv == NULL) {
+        return 0;
+    }
     for (uint8_t i = 0; i < RACK_INVENTORY_MAX_SLOTS; i++) {
         if (inv->slots[i].occupied) {
             count++;
@@ -99,7 +115,10 @@ uint8_t rack_inventory_occupied_count(const rack_inventory_t *inv)
 rack_reconcile_report_t rack_inventory_reconcile(rack_inventory_t *inv, uint8_t presence_mask)
 {
     rack_reconcile_report_t report = {0u, 0u};
-    for (uint8_t i = 0; i < RACK_INVENTORY_MAX_SLOTS && i < 8u; i++) {
+    if (inv == NULL) {
+        return report;
+    }
+    for (uint8_t i = 0; i < RACK_INVENTORY_MAX_SLOTS; i++) {
         const uint8_t bit = (uint8_t)(1u << i);
         const bool sensed = (presence_mask & bit) != 0u;
         if (inv->slots[i].occupied && !sensed) {

@@ -29,6 +29,13 @@ typedef struct {
     uint8_t acknowledge;    // 1 when the sender should be told the frame arrived (a command applied, or a retransmission of one that already was); 0 otherwise
 } rack_decision_t;
 
+// Execution context: the watchdog state is plain, non-atomic memory. Call this
+// function and every link_watchdog_* function from ONE context - the main loop.
+// A receive interrupt must only copy the received bytes into a single-producer
+// ring buffer (volatile indices, a memory barrier between the data and the index
+// that publishes it); two interrupts of different priority, or an interrupt and
+// the main loop, must never touch the same link_watchdog_t.
+//
 // The decision for one incoming buffer. `lw` is mutated exactly as a real receive interrupt handler's own watchdog state would be. A link that the watchdog already considers
 // lost is handled by the caller's own periodic check (link_watchdog_is_link_lost() -> safe state for every tool): a frame arriving does not hide that.
 void rack_link_decide(link_watchdog_t *lw, const uint8_t *buf, uint8_t buf_len, uint32_t now_ms, rack_decision_t *out);

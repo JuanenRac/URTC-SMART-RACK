@@ -7,6 +7,7 @@ name: URTC CI baseline
 
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -105,7 +106,7 @@ jobs:
       - name: Validate Android or Wear OS project without a version bump
         if: ${{ hashFiles('gradlew') != '' }}
         env:
-          HYDRA_UMC_CI: "1"
+          URTC_CI: "1"
         shell: bash
         run: |
           chmod +x gradlew
@@ -118,7 +119,8 @@ jobs:
       - name: Compile firmware without a version bump
         if: ${{ hashFiles('build_firmware.sh') != '' }}
         env:
-          HYDRA_UMC_CI: "1"
+          URTC_CI: "1"
+          URTC_SANITIZE: "1"
         shell: bash
         run: |
           chmod +x build_firmware.sh

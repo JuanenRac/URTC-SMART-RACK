@@ -5,6 +5,7 @@
 // =============================================================================
 #include "rack_link.h"
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "preheat.h"
@@ -32,6 +33,7 @@ void rack_link_decide(link_watchdog_t *lw, const uint8_t *buf, uint8_t buf_len, 
     // A link the watchdog already considers lost (never proven alive, or `timeout_ms` really elapsed since the last real frame) means every previously tracked per-tool sequence
     // number is stale evidence from a session that is over - the tool board on the other end may itself have rebooted and restarted its own counter low. Reset before evaluating
     // THIS frame so its sequence is never mistaken for a stale replay of an old session's value.
+    link_watchdog_tick(lw, now_ms);
     if (link_watchdog_is_link_lost(lw, now_ms)) {
         link_watchdog_reset_all_sequences(lw);
     }
@@ -46,13 +48,16 @@ void rack_link_decide(link_watchdog_t *lw, const uint8_t *buf, uint8_t buf_len, 
     if (frame.len < 1u) {
         return;
     }
-    const uint8_t tool = tool_id_decode(frame.payload[0]);
+    // The tool byte of a command is a plain 5-bit value naming a tool profile (see tool_id.h). A byte that is not, or names no tool, leaves nobody to act on: the frame changes
+    // nothing (it is not evidence that any heater should be switched off).
+    const uint8_t tool = frame.payload[0];
+    const bool tool_readable = tool_id_is_wire_byte_valid(tool) && tool_id_is_present(tool) && tool_id_is_valid_urtc(tool);
 
     // The command is checked BEFORE its sequence number is spent: a frame with a valid CRC but a refused command (out of range, wrong length) must not advance the anti-replay
     // counter of the tool, or the sender's next good frame with that same sequence number would be thrown away as a duplicate.
     rack_set_preheat_t command;
     if (rack_command_validate_set_preheat(frame.payload, frame.len, &command) != RACK_CMD_OK) {
-        if (tool_id_is_present(tool)) {
+        if (tool_readable) {
             out->action = RACK_ACT_SAFE_STATE; // out-of-range/malformed command -> that tool's safe state, not a guess
             out->tool_id = tool;
             out->temp_c = preheat_safe_state_temp_c();

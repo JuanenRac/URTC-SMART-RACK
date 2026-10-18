@@ -13,7 +13,7 @@ void link_watchdog_init(link_watchdog_t *lw, uint32_t timeout_ms)
         return;
     }
     lw->last_rx_ms = 0;
-    lw->timeout_ms = timeout_ms;
+    lw->timeout_ms = (timeout_ms == 0u) ? LINK_WATCHDOG_DEFAULT_TIMEOUT_MS : timeout_ms;
     lw->has_received_any_frame = false;
     for (uint8_t i = 0; i < LINK_WATCHDOG_TOOL_SLOTS; i++) {
         lw->last_seq_by_tool_id[i] = 0;
@@ -41,6 +41,17 @@ bool link_watchdog_is_link_lost(const link_watchdog_t *lw, uint32_t now_ms)
     // Unsigned subtraction wraps correctly even across a real uint32_t
     // millisecond-counter rollover - no special-casing needed.
     return (now_ms - lw->last_rx_ms) >= lw->timeout_ms;
+}
+
+void link_watchdog_tick(link_watchdog_t *lw, uint32_t now_ms)
+{
+    if (lw == NULL) {
+        return;
+    }
+    if (lw->has_received_any_frame && link_watchdog_is_link_lost(lw, now_ms)) {
+        lw->has_received_any_frame = false;
+        link_watchdog_reset_all_sequences(lw);
+    }
 }
 
 bool link_watchdog_accept_sequence(link_watchdog_t *lw, uint8_t tool_id, uint8_t seq)

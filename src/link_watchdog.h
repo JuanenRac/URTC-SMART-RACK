@@ -14,10 +14,18 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "tool_id.h"
+
 // One idempotency slot per possible tool ID (see tool_id.h's
 // TOOL_ID_BITS) - TOOL_ID_NONE (all tool IDs decode to at most this many
 // values) is never actually tracked, see link_watchdog_accept_sequence().
-#define LINK_WATCHDOG_TOOL_SLOTS 32u
+#define LINK_WATCHDOG_TOOL_SLOTS (1u << TOOL_ID_BITS)
+
+// Timeout used when link_watchdog_init() is given 0: a zero timeout would make
+// the link look lost at every instant (and wipe the idempotency state on every
+// frame), so it is not a configuration that can be honoured. 250 ms is the
+// communication watchdog of the URTC tool heads.
+#define LINK_WATCHDOG_DEFAULT_TIMEOUT_MS 250u
 
 typedef struct {
     uint32_t last_rx_ms;
@@ -27,6 +35,7 @@ typedef struct {
     bool has_seq_by_tool_id[LINK_WATCHDOG_TOOL_SLOTS];
 } link_watchdog_t;
 
+// A `timeout_ms` of 0 is replaced by LINK_WATCHDOG_DEFAULT_TIMEOUT_MS.
 void link_watchdog_init(link_watchdog_t *lw, uint32_t timeout_ms);
 
 // Must be called once for every real, CRC-valid frame received (see
@@ -40,6 +49,14 @@ void link_watchdog_note_frame_received(link_watchdog_t *lw, uint32_t now_ms);
 // A caller must treat true here as "drop every actuator to its safe
 // state", not "keep whatever was last commanded".
 bool link_watchdog_is_link_lost(const link_watchdog_t *lw, uint32_t now_ms);
+
+// Latches a link loss: once `timeout_ms` has elapsed since the last real
+// frame, the link is marked as never proven alive again and every tracked
+// sequence is forgotten. Call it from the main loop at least once per timeout.
+// Without it a rack that heard nothing for more than 2^32 ms (about 49.7 days)
+// would see its millisecond difference wrap around and the link would look
+// alive again until the timeout passed a second time.
+void link_watchdog_tick(link_watchdog_t *lw, uint32_t now_ms);
 
 // Real idempotency/anti-reorder check for one continuous session: a
 // sequence number that is not genuinely newer than the last one accepted

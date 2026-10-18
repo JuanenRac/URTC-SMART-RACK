@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Feature-Smart%20Idle-green.svg" alt="Smart Idle">
 </p>
 
-**诚实核查 - 今天真正能运行的部分：** `tool_id.c`、`lifecycle.c`、`preheat.c`、`protocol.c`、`rack_command.c`、`link_watchdog.c`、`rack_link.c` 和 `rack_inventory.c` 都是真实、纯粹的 C 代码，由 138 个通过的 `TEST_ASSERT` 检查支撑（`tests/test_*.c`，使用宿主机自身的 C 编译器而非 `arm-none-eabi-gcc` 编译并运行）——通过实际编译并运行这套宿主测试套件加以确认。这覆盖了 ID 解码、使用/生命周期跟踪、预热激活与目标温度、CRC8 分帧协议解析、命令范围校验、链路超时/幂等性处理，以及多槽位工具库存跟踪(哪个工具放在哪个槽位、同一把真实工具绝不会同时出现在两个槽位)——全部都是逻辑，没有任何硬件。正如 README 自己的介绍已经说明的那样：这块板子目前还没有 PCB/原理图，所以这里的任何代码都从未驱动过真实的 GPIO 引脚、F-RAM 芯片、加热元件或 CAN 收发器——`main.c`/`startup_stm32g4_minimal.c` 只是证明了针对 Cortex-M4F 的交叉编译和链接能够在一个占位链接脚本上成功完成，并不能证明其中任何部分真的运行在真实芯片上。具体已经交付了什么，请参见 `CHANGELOG.md`。
+**诚实核查 - 今天真正能运行的部分：** `tool_id.c`、`lifecycle.c`、`preheat.c`、`protocol.c`、`rack_command.c`、`link_watchdog.c`、`tool_limits.c`、`rack_app.c`、`rack_link.c` 和 `rack_inventory.c` 都是真实、纯粹的 C 代码，由 290 个通过的 `TEST_ASSERT` 检查支撑（`tests/test_*.c`，使用宿主机自身的 C 编译器而非 `arm-none-eabi-gcc` 编译并运行）——通过实际编译并运行这套宿主测试套件加以确认。这覆盖了 ID 解码、使用/生命周期跟踪、预热激活与目标温度、CRC8 分帧协议解析、命令范围校验、链路超时/幂等性处理，以及多槽位工具库存跟踪(哪个工具放在哪个槽位、同一把真实工具绝不会同时出现在两个槽位)——全部都是逻辑，没有任何硬件。正如 README 自己的介绍已经说明的那样：这块板子目前还没有 PCB/原理图，所以这里的任何代码都从未驱动过真实的 GPIO 引脚、F-RAM 芯片、加热元件或 CAN 收发器——`main.c`/`startup_stm32g4_minimal.c` 只是证明了针对 Cortex-M4F 的交叉编译和链接能够在一个占位链接脚本上成功完成，并不能证明其中任何部分真的运行在真实芯片上。具体已经交付了什么，请参见 `CHANGELOG.md`。
 
 ---
 
@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| 版本 | `0.1.5` |
+| 版本 | `0.1.6` |
 | 成熟度 | 可用 |
 | 技术栈 | C / STM32G4 / arm-none-eabi-gcc |
 | 目标 | 微控制器板（固件）；在电脑上构建 |
@@ -37,7 +37,7 @@
 基于 STM32G4 微控制器，它在工具未安装到机器人上时对其进行监控和预处理。
 
 它支持"智能待机"模式，例如在换刀前预热 T12 烙铁头，并跟踪每个 URTC
-刀头的电子 ID、固件版本和总使用周期数，确保最佳维护和零延迟部署。
+刀头的电子 ID 和总使用周期数（读取每个刀头的固件版本已列入计划，尚未实现），确保最佳维护和零延迟部署。
 
 该板卡目前尚不存在 PCB/原理图（见 `hardware/`），因此下面的功能都无法驱动
 真实的 GPIO/F-RAM/CAN 硬件——但这些功能所归结的*逻辑*（解码 ID、追踪使用
@@ -45,7 +45,7 @@
 单元测试。
 
 ### 关键特性：
-* ✅ **真实 v0 —— ID、生命周期与预热逻辑：** `tool_id.c` 将原始 5 位 ID 读数解码为工具身份；`lifecycle.c` 追踪使用周期/时间并标记到期维护；`preheat.c` 决定智能待机预热应何时启动以及目标温度。使用宿主机自身的 C 编译器完成 138 个测试断言——无需 PCB、GPIO 驱动或 F-RAM 即可运行或测试这一切。
+* ✅ **真实 v0 —— ID、生命周期与预热逻辑：** `tool_id.c` 将原始 5 位 ID 读数解码为工具身份；`lifecycle.c` 追踪使用周期/时间并标记到期维护；`preheat.c` 决定智能待机预热应何时启动以及目标温度。使用宿主机自身的 C 编译器完成 290 个测试断言——无需 PCB、GPIO 驱动或 F-RAM 即可运行或测试这一切。
 * 🗄️ **工具追踪** —— 通过 5 位 ID 跳线或 F-RAM 自动识别 URTC 刀头。*（ID 解码逻辑本身是真实的——见上文；读取真实跳线/F-RAM 需要 PCB。）*
 * 🗂️ **多槽位库存** —— `rack_inventory.c` 跟踪哪个工具放在哪个槽位，确保同一把真实工具始终只处于一个槽位(把它移到别的槽位会自动清空原槽位，而不是同时声称它在两个地方)，并按工具身份维护每个槽位各自的预热目标。启动时，`rack_inventory_reconcile()` 会将其与每个槽位的在位传感器核对：机架断电期间被取走的工具会被清除（包括预热目标），手动放入的工具会被标记为待识别。 *（库存逻辑本身是真实的——见上文；接入真实的按槽位在位传感器需要 PCB。）*
 * 🌡️ **预热逻辑** —— 针对焊接和热风工具的智能热管理。*（激活决策和目标温度是真实的——见上文；驱动真实加热器需要 PCB。）*
@@ -72,10 +72,10 @@ flowchart TB
 ## 3. 🧱 架构与设计决策
 
 * **为什么该板卡尚未定义真实的引脚布局/硬件 ID。** 该板卡目前尚无 PCB——`src/firmware_common.h` 携带一个没有硬件 ID 的版本标识，启动文件/链接脚本是手写的占位符，暂时代替 ST 自身的 CMSIS/HAL 启动代码，直到确定真实的 STM32G4 型号。
-* **为什么它不是 URTC 自身的子项目。** URTC-SMART-RACK 是一个配套工具，而非 URTC 系列的子项目——它是一块独立的物理板卡（工具存储架，而非刀头本身），恰好共享 URTC 自身的 CAN 总线和固件惯例，而非其集成层级结构。
+* **为什么它不是 URTC 自身的子项目。** URTC-SMART-RACK 是一个配套工具，而非 URTC 系列的子项目——它是一块独立的物理板卡（工具存储架，而非刀头本身），恰好共享 URTC 自身的工具 ID 空间和固件惯例，而非其集成层级结构。
 * **为什么 `bump_version.py` 直接复制自 URTC 自身。** 相同的里程表版本规则，相同的固件头格式——直接复用同一脚本而非重新发明，可以通过构造方式使两者天然保持同步。
 * **为什么 `tool_id.c`/`lifecycle.c`/`preheat.c` 先于任何 GPIO/F-RAM/CAN 驱动交付。** 解码 ID、累积使用情况、决定何时预热，都是对已有数据的纯函数运算——无需 PCB 即可编写或测试，因此 v0 首先交付这部分逻辑，使用宿主机自身的 C 编译器而非 `arm-none-eabi-gcc` 进行宿主测试。真正从真实硬件获取这些数据的驱动程序，将在 PCB 存在后到来。
-* **这如何融入生态系统的其余部分。** 共享 URTC 自身的 CAN 总线/工具生态系统，并与 HYDRA-UMC-DETECTION-HEF 自然搭配，用于视觉识别实际存放在架上的工具。
+* **这如何融入生态系统的其余部分。** 使用 URTC 自身的工具生态系统（相同的工具 ID；机架的帧目前还不是 CAN 帧，见 `docs/OPERATIONS.md`），并与 HYDRA-UMC-DETECTION-HEF 自然搭配，用于视觉识别实际存放在架上的工具。
 * **为什么协议、命令验证与链路看门狗是三个独立的模块。** `protocol.c` 只了解字节、帧格式和 CRC，它并不知道什么样的温度才算“安全”。`rack_command.c` 拥有那份判断，它解码并对一个真实的命令进行范围检查，而不关心它是如何在总线上到达的。`link_watchdog.c` 独立于二者追踪超时/幂等性——一个损坏的帧甚至不应该到达它（参见 `test_rack_link_scenarios.c` 自身的真实断言：一个 CRC 错误的帧永远不会让看门狗复活）。保持它们分离使得每一个都能在宿主机上独立测试，并让未来的 CAN 接收处理函数保持精简——它只需按顺序调用每一层，而不需要重新实现它们任何一个的判断。
 * **为什么未经验证的链路会被当作已断开的链路处理。** `link_watchdog_is_link_lost()` 在真正超时之后为真，在第一个帧还从未到达之前也为真——正如诊断笔记自身所说的“estado seguro al arrancar”。一个开机时还没有主机连接的机架，必须以安全状态启动，而不是在未经证实之前默默假定“没问题”。
 
@@ -95,12 +95,14 @@ URTC-SMART-RACK/
 │   ├── link_watchdog.h / .c        # 真实：链路超时 + 命令幂等性
 │   ├── rack_link.h / .c            # 真实：连接 protocol/rack_command/link_watchdog/preheat 的帧分发决策
 │   ├── rack_inventory.h / .c       # 真实：多槽位工具库存——哪个工具放在哪个槽位，同一工具绝不会同时出现在两个槽位
+│   ├── tool_limits.h / .c          # 真实：每种工具配置的预热目标上限（0 = 无加热器）
+│   ├── rack_app.h / .c             # 真实：将接收路径的决定应用到库存；链路丢失时保持安全状态
 │   ├── main.c                      # 最小入口点（存活证明心跳循环）
 │   ├── startup_stm32g4_minimal.c   # 向量表 + Reset_Handler（暂无 ST HAL，见文件头说明）
 │   └── STM32G4_MINIMAL.ld          # 占位链接脚本（128K FLASH / 32K RAM 下限）
-├── tests/                          # 真实的宿主机原生测试工具集（tool_id、lifecycle、preheat、protocol、rack_command、link_watchdog、机架链路场景、机架库存）
-├── docs/                           # 文档与用户手册 —— 目前为空，尚未创建
-├── hardware/                       # 硬件设计文件（PCB、3D）—— 目前为空，尚无原理图
+├── tests/                          # 真实的宿主机原生测试工具集（tool_id、工具上限、lifecycle、preheat、protocol、rack_command、link_watchdog、机架链路场景、机架库存、健壮性、rack_app），以及校验构建脚本与已公布测试数量一致的 Python 检查
+├── docs/                           # 运行指南（docs/OPERATIONS.md）：逻辑做什么、拒绝什么、哪些尚未验证
+├── hardware/                       # 硬件说明（README.md）—— 尚无设计文件（没有原理图，也没有 PCB）
 ├── firmware/                       # 构建输出（.bin/.elf/.hex），被 git 忽略——仅作为 GitHub 发布的资源发布
 ├── build/                          # 中间构建对象（已被 gitignore）
 ├── images/                         # 媒体与图表
@@ -139,7 +141,9 @@ build_firmware.bat
 `STM32G4_MINIMAL.ld` 内存映射进行链接，并将版本化的 `.elf`/`.bin`/`.hex`
 文件发布到 `firmware/`。
 
-固件映像（`.bin`、`.hex`、`.elf`）不纳入 git 版本管理：发布构建会写入 `firmware/URTC_SMART_RACK_FIRMWARE_v<版本>.*`（已被 git 忽略；CI 模式即 `HYDRA_UMC_CI=1` 时写入 `build/firmware`），它们仅作为每个版本的 GitHub 发布资源发布。`python tools/publish_release_assets.py` 会检查这些文件、补写缺失的 `.sha256` 文件，并输出带有待附加文件的准确 `gh release create` 命令。
+`src/` 下的每个模块也会针对 Cortex-M4F 编译，并作为检查一并链接在一起（目标上没有 C 库），尽管目前映像中只包含 `main.c` 和启动文件。如果在版本号递增之后构建失败，版本号、清单和变更日志会恢复原状。使用 `URTC_CI=1` 时不会改动任何受版本控制的文件。
+
+固件映像（`.bin`、`.hex`、`.elf`）不纳入 git 版本管理：发布构建会写入 `firmware/URTC_SMART_RACK_FIRMWARE_v<版本>.*`（已被 git 忽略；CI 模式即 `URTC_CI=1` 时写入 `build/firmware`），它们仅作为每个版本的 GitHub 发布资源发布。`python tools/publish_release_assets.py` 会检查这些文件、补写缺失的 `.sha256` 文件，并输出带有待附加文件的准确 `gh release create` 命令。
 
 目前尚无内容可刷写到真实硬件——因为没有 PCB 可以确认目标 STM32G4 型号、
 引脚布局或其真实的 flash/RAM 容量。链接脚本的内存映射是一个保守的占位符
@@ -154,9 +158,9 @@ build_firmware.bat
 cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
   tests/test_main.c tests/test_tool_id.c tests/test_lifecycle.c tests/test_preheat.c \
   tests/test_protocol.c tests/test_rack_command.c tests/test_link_watchdog.c tests/test_rack_link_scenarios.c \
-  tests/test_rack_inventory.c \
-  src/tool_id.c src/lifecycle.c src/preheat.c src/protocol.c src/rack_command.c src/link_watchdog.c src/rack_link.c \
-  src/rack_inventory.c
+  tests/test_rack_inventory.c tests/test_robustness.c tests/test_rack_app.c \
+  src/tool_id.c src/tool_limits.c src/lifecycle.c src/preheat.c src/protocol.c src/rack_command.c src/link_watchdog.c src/rack_link.c \
+  src/rack_inventory.c src/rack_app.c
 ./build/host_tests
 # All tests passed.
 ```

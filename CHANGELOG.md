@@ -7,8 +7,9 @@ This file intentionally omits calendar dates from individual entries.
 
 `src/firmware_common.h`'s `FIRMWARE_VERSION_MAJOR`/`_MINOR`/`_PATCH` bump
 automatically on every real build (`build_firmware.sh` / `.bat` - see
-`bump_version.py`, run as the first real step of both scripts, the same
-generic script sibling repo URTC uses). It follows the ecosystem-wide
+`bump_version.py`, run as the third step of both scripts - after the
+toolchain check and the host tests - and undone if a later step fails, the
+same generic script sibling repo URTC uses). It follows the ecosystem-wide
 base-10 "odometer" rule rather than semantic-versioning judgment calls:
 
 - `PATCH` +1 on every build
@@ -16,6 +17,18 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
 - the same carry cascades into `MAJOR` if `MINOR` would exceed 9
 
 ---
+
+## [0.1.6] - Tool IDs, per-tool limits, safe link handling and builds that undo their version bump
+
+- The tool ID space follows the URTC tool heads: 0 to 24 are tool profiles, 25 to 30 are refused, 31 (free configuration on a head, and this firmware's marker for an empty slot) is never heated, and a tool byte with any upper bit set is corruption and is refused instead of being read as another tool. A command that names nobody now changes nothing. The polarity of the ID bits is documented.
+- New per-tool pre-heat limits (`tool_limits`): the 3D printer hotend is held to 310 C, a tool without a heater accepts only a target of 0, the soldering iron and hot-air head keep the 400 C ceiling, and the inventory enforces the same limit itself instead of trusting the caller.
+- New `rack_app` module connects the decision of the receive path to the inventory: a target lands on the slot that holds the named tool, a refused command puts only that tool in the safe state, and a tick keeps every slot in the safe state while the link is lost or was never proven alive.
+- The link watchdog replaces a timeout of 0 by 250 ms (it used to make every resend look new), latches a loss so that a silence of more than 49 days no longer looks like a living link when the millisecond counter wraps, and sizes its table from the tool ID width. The inventory refuses missing pointers and unknown tools, lifecycle counters stop at their maximum instead of wrapping to zero, and no C library function is needed any more.
+- The firmware image carries its version word in a dedicated section that the linker keeps, right after the vector table; start-up enables the FPU before the first floating-point instruction and records the context of a hard fault in RAM that survives a reset.
+- Build scripts: they work from any directory; every module is compiled for the Cortex-M4F target with function sections and conversion warnings, and all of them are linked together as a check; the Windows script honours URTC_CI and no longer raises the version in a validation build; a build that fails after the version was raised puts version, manifest and changelog back; CI runs the host tests with AddressSanitizer and UBSan and no longer runs twice for a pull request from the same repository.
+- tools/build_test.py selects the WSL distribution with URTC_WSL_DISTRO (default distribution otherwise) and says clearly when WSL or the ARM toolchain is missing. The CRC routine no longer raises conversion warnings.
+- Documentation: hardware/README.md says what is undecided, the operations guide covers the tool ID space, the per-tool limits, the link frame (not a CAN frame yet), the execution context and the new modules, CONTRIBUTING lists the target and interfaces as planned and not confirmed, SECURITY and the issue form point to this repository's own policy, and the README (all eight languages) no longer claims that the firmware version of each head is read.
+- Published numbers: the README, the manifest and the tests agree on 290 test assertions, and a new check (tests/test_project_consistency.py) fails when the number, the host test sources of the two build scripts or the list of modules drift apart.
 
 ## [0.1.5] - Claims aligned with what has been tested
 
@@ -32,7 +45,7 @@ base-10 "odometer" rule rather than semantic-versioning judgment calls:
 ## [0.1.3] - Firmware version boundaries and side-effect-free CI builds
 
 - The firmware version scripts keep their own three-component odometer (0.7.9 -> 0.8.0, 0.9.9 -> 1.0.0, 9.9.9 -> 10.0.0) and no longer hand over to the shared manifest utility, which broke the build at the boundary versions; the successor rule is now a pure function covered by boundary tests that run in CI and as a step of the build script.
-- CI builds (HYDRA_UMC_CI=1) publish firmware images under build/firmware instead of firmware/, so a validation build leaves the tracked images untouched.
+- CI builds (URTC_CI=1) publish firmware images under build/firmware instead of firmware/, so a validation build leaves the tracked images untouched.
 - Verified: unit tests and shell syntax checks only; the ARM firmware build itself was not run.
 
 ## [0.1.2] - A frame that is not a command changes nothing, and every decision names its tool

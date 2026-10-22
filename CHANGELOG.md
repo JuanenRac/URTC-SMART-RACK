@@ -1,7 +1,6 @@
 # Changelog
 
-All notable work on **URTC-SMART-RACK** is summarized here, newest first.
-This file intentionally omits calendar dates from individual entries.
+All notable changes to this project are documented here.
 
 ## [0.1.8] - A serial receive path, the CAN route, a limit on pre-heat and a CI that also builds on Windows
 
@@ -18,19 +17,6 @@ This file intentionally omits calendar dates from individual entries.
 - The manifest notes are shorter.
 - The CI workflow no longer carries the steps for languages the repository does not use, and installs the newlib packages the firmware build needs.
 - The README of each language lists URTC-UPDATER among the related projects.
-
-## Versioning scheme
-
-`src/firmware_common.h`'s `FIRMWARE_VERSION_MAJOR`/`_MINOR`/`_PATCH` are raised
-only by the explicit `python bump.py` step (`build_firmware.sh` / `.bat` only read
-them; `bump.py` runs `bump_version.py`, the same generic script sibling repo URTC uses). It follows the ecosystem-wide
-base-10 "odometer" rule rather than semantic-versioning judgment calls:
-
-- `PATCH` +1 on every build
-- when `PATCH` would exceed 9, it resets to 0 and `MINOR` +1 instead (e.g. `0.0.9` -> `0.1.0`, never `0.0.10`)
-- the same carry cascades into `MAJOR` if `MINOR` would exceed 9
-
----
 
 ## [0.1.7] - An explicit bump command: building never changes the version
 

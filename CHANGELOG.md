@@ -5,6 +5,7 @@ This file intentionally omits calendar dates from individual entries.
 
 ## [Unreleased]
 
+- The banner follows the animated style of the ecosystem banners, with the name, the kind and the technologies of the project.
 - The manifest declares how far the project has been shown to work (`evidence`: host-test) and `tools/ci_validate.py` checks the value.
 - The manifest notes are shorter.
 - The CI workflow no longer carries the steps for languages the repository does not use, and installs the newlib packages the firmware build needs.

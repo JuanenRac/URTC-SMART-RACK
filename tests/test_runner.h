@@ -31,5 +31,8 @@ void run_rack_link_scenario_tests(int *failures);
 void run_rack_inventory_tests(int *failures);
 void run_robustness_tests(int *failures);
 void run_rack_app_tests(int *failures);
+void run_rack_deframer_tests(int *failures);
+void run_rack_can_tests(int *failures);
+void run_preheat_limit_tests(int *failures);
 
 #endif // TEST_RUNNER_H

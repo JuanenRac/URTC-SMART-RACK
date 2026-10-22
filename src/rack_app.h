@@ -23,6 +23,7 @@
 #include <stdint.h>
 
 #include "link_watchdog.h"
+#include "preheat_limit.h"
 #include "rack_inventory.h"
 #include "rack_link.h"
 
@@ -40,5 +41,11 @@ uint8_t rack_app_enter_safe_state(rack_inventory_t *inv);
 // link is lost (or was never proven alive), keeps every slot in the safe state.
 // Returns true while the link is lost.
 bool rack_app_tick(rack_inventory_t *inv, link_watchdog_t *lw, uint32_t now_ms);
+
+// The same two calls with the longest pre-heat without a swap (preheat_limit.h): a target above 0 is refused while its slot is latched after
+// running out its time, and the tick switches a slot off when its limit is reached even though the link is alive. `limit` may be NULL (no limit,
+// which is what the two functions above do).
+bool rack_app_apply_decision_limited(rack_inventory_t *inv, preheat_limit_t *limit, const rack_decision_t *decision, uint32_t now_ms);
+bool rack_app_tick_limited(rack_inventory_t *inv, link_watchdog_t *lw, preheat_limit_t *limit, uint32_t now_ms);
 
 #endif // RACK_APP_H

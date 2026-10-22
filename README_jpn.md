@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Feature-Smart%20Idle-green.svg" alt="Smart Idle">
 </p>
 
-**正直な現状確認 - 実際に今動くもの:** `tool_id.c`、`lifecycle.c`、`preheat.c`、`protocol.c`、`rack_command.c`、`link_watchdog.c`、`tool_limits.c`、`rack_app.c`、`rack_link.c`、そして `rack_inventory.c` は本物の純粋な C コードであり、290件の通過している `TEST_ASSERT` チェック（`tests/test_*.c`、`arm-none-eabi-gcc` ではなくホスト自身の C コンパイラでコンパイル・実行）に裏付けられている——実際にこのホストテストスイートをコンパイルして実行し確認済みだ。これは ID デコード、使用状況/ライフサイクルの追跡、予熱の起動判断と目標温度、CRC8 フレーミングのプロトコル解析、コマンドの範囲検証、リンクタイムアウト/冪等性の処理、そしてマルチスロット工具インベントリの追跡(どの工具がどのスロットに収納されているか、実物の工具が同時に2つのスロットに存在することはない)をカバーしている——すべてロジックであり、ハードウェアは一切含まれない。README 自身の冒頭がすでに述べている通り、このボード用の PCB/回路図はまだ存在しないため、ここにあるものはいずれも実際の GPIO ピン、F-RAM チップ、ヒーター、CAN トランシーバーを一度も駆動したことがない——`main.c`/`startup_stm32g4_minimal.c` は、Cortex-M4F 向けのクロスコンパイルとリンクがプレースホルダーのリンカスクリプトに対して成功することを示すだけであり、これらが実際のシリコン上で動くことを示すものではない。これまでに実際に出荷されたものの詳細は `CHANGELOG.md` を参照。
+**正直な現状確認 - 実際に今動くもの:** `tool_id.c`、`lifecycle.c`、`preheat.c`、`protocol.c`、`rack_command.c`、`link_watchdog.c`、`tool_limits.c`、`rack_app.c`、`rack_link.c`、`rack_deframer.c`、`rack_can.c`、`preheat_limit.c`、そして `rack_inventory.c` は本物の純粋な C コードであり、365件の通過している `TEST_ASSERT` チェック（`tests/test_*.c`、`arm-none-eabi-gcc` ではなくホスト自身の C コンパイラでコンパイル・実行）に裏付けられている——実際にこのホストテストスイートをコンパイルして実行し確認済みだ。これは ID デコード、使用状況/ライフサイクルの追跡、予熱の起動判断と目標温度、CRC8 フレーミングのプロトコル解析、コマンドの範囲検証、リンクタイムアウト/冪等性の処理、そしてマルチスロット工具インベントリの追跡(どの工具がどのスロットに収納されているか、実物の工具が同時に2つのスロットに存在することはない)をカバーしている——すべてロジックであり、ハードウェアは一切含まれない。README 自身の冒頭がすでに述べている通り、このボード用の PCB/回路図はまだ存在しないため、ここにあるものはいずれも実際の GPIO ピン、F-RAM チップ、ヒーター、CAN トランシーバーを一度も駆動したことがない——`main.c`/`startup_stm32g4_minimal.c` は、Cortex-M4F 向けのクロスコンパイルとリンクがプレースホルダーのリンカスクリプトに対して成功することを示すだけであり、これらが実際のシリコン上で動くことを示すものではない。これまでに実際に出荷されたものの詳細は `CHANGELOG.md` を参照。
 
 ---
 
@@ -49,7 +49,7 @@
 すでに単体テスト済みです。
 
 ### 主な機能：
-* ✅ **本物の v0 —— ID・ライフサイクル・予熱ロジック：** `tool_id.c` は生の 5 ビット ID 読み取り値を工具の識別情報にデコードします。`lifecycle.c` は使用サイクル/時間を追跡し、メンテナンス期限を通知します。`preheat.c` はスマートアイドル予熱をいつ開始すべきか、目標温度は何度かを決定します。ホスト自身の C コンパイラで 290 件のテストアサーションを実施——これらすべての実行・テストに PCB、GPIO ドライバー、F-RAM は不要です。
+* ✅ **本物の v0 —— ID・ライフサイクル・予熱ロジック：** `tool_id.c` は生の 5 ビット ID 読み取り値を工具の識別情報にデコードします。`lifecycle.c` は使用サイクル/時間を追跡し、メンテナンス期限を通知します。`preheat.c` はスマートアイドル予熱をいつ開始すべきか、目標温度は何度かを決定します。ホスト自身の C コンパイラで 365 件のテストアサーションを実施——これらすべての実行・テストに PCB、GPIO ドライバー、F-RAM は不要です。また実装済み：シリアルリンク用のストリーム・デフレーマ（`rack_deframer.c`：開始バイトを探し、バイト欠落後に再同期し、タイムアウト後に途中のフレームを破棄）、コマンドの CAN 形式（`rack_can.c`：データ 8 バイト、ビッグエンディアンの温度。これを載せる基板はまだありません）、工具交換なしで予熱を続けられる時間の上限（`preheat_limit.c`：既定 10 分、設定可能）。
 * 🗄️ **工具追跡** — 5 ビット ID ジャンパーまたは F-RAM 経由での URTC ヘッドの自動識別。*（ID デコードロジック自体は本物です——上記参照。実際のジャンパー/F-RAM の読み取りには PCB が必要です。）*
 * 🗂️ **マルチスロット・インベントリ** — `rack_inventory.c` はどの工具がどのスロットに収納されているかを追跡し、実物の工具を常に1つのスロットにのみ保持します(別のスロットへ移すと元のスロットは自動的に空になり、2箇所に同時に存在すると主張することはありません)。予熱目標は工具の識別情報で参照されるスロットごとの設定です。起動時に `rack_inventory_reconcile()` がスロットごとの在席センサーと照合します：ラックの電源オフ中に抜かれたツールは（予熱目標を含めて）クリアされ、手で差し込まれたツールは識別が必要なものとして報告されます。 *(インベントリロジック自体は本物です——上記参照。実際のスロットごとの検知センサーへの接続には PCB が必要です。)*
 * 🌡️ **予熱ロジック** — はんだ付けおよび熱風工具向けのインテリジェントな温度管理。*（起動判断と目標温度は本物です——上記参照。実際のヒーターの駆動には PCB が必要です。）*
@@ -168,8 +168,9 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
   tests/test_main.c tests/test_tool_id.c tests/test_lifecycle.c tests/test_preheat.c \
   tests/test_protocol.c tests/test_rack_command.c tests/test_link_watchdog.c tests/test_rack_link_scenarios.c \
   tests/test_rack_inventory.c tests/test_robustness.c tests/test_rack_app.c \
+  tests/test_rack_deframer.c tests/test_rack_can.c tests/test_preheat_limit.c \
   src/tool_id.c src/tool_limits.c src/lifecycle.c src/preheat.c src/protocol.c src/rack_command.c src/link_watchdog.c src/rack_link.c \
-  src/rack_inventory.c src/rack_app.c
+  src/rack_inventory.c src/rack_app.c src/rack_deframer.c src/rack_can.c src/preheat_limit.c
 ./build/host_tests
 # All tests passed.
 ```

@@ -14,7 +14,10 @@
 
 #include <stdint.h>
 
+#include <stdbool.h>
+
 #include "link_watchdog.h"
+#include "rack_deframer.h"
 
 typedef enum {
     RACK_ACT_NONE = 0,      // keep every target as it is: a corrupt frame, a retransmission already applied, a command this rack does not act on
@@ -39,5 +42,14 @@ typedef struct {
 // The decision for one incoming buffer. `lw` is mutated exactly as a real receive interrupt handler's own watchdog state would be. A link that the watchdog already considers
 // lost is handled by the caller's own periodic check (link_watchdog_is_link_lost() -> safe state for every tool): a frame arriving does not hide that.
 void rack_link_decide(link_watchdog_t *lw, const uint8_t *buf, uint8_t buf_len, uint32_t now_ms, rack_decision_t *out);
+
+// The same decision for a command that arrived as a CAN frame (see rack_can.h: identifier, 8 data bytes, big-endian temperature). It shares every rule with the serial path: the
+// watchdog bookkeeping, the validation of the command, the anti-replay sequence. A frame with another identifier or another length is not ours and changes nothing.
+void rack_link_decide_can(link_watchdog_t *lw, uint32_t can_id, const uint8_t *data, uint8_t dlc, uint32_t now_ms, rack_decision_t *out);
+
+// Serial receive path: feeds one received byte to the deframer and, when that completes a frame, fills `out` with its decision and returns true. A byte that completes nothing
+// returns false and leaves `out` untouched. After a true return call rack_link_rx_next() until it returns false: after a resynchronisation the deframer can hold a second frame.
+bool rack_link_rx_byte(rack_deframer_t *rx, link_watchdog_t *lw, uint8_t byte, uint32_t now_ms, rack_decision_t *out);
+bool rack_link_rx_next(rack_deframer_t *rx, link_watchdog_t *lw, uint32_t now_ms, rack_decision_t *out);
 
 #endif // RACK_LINK_H

@@ -23,6 +23,8 @@ the logic decides", not "what a real rack does".
 | Hard upper bound on any commanded pre-heat | 400 °C | `rack_command.h` |
 | Upper bound per tool | soldering iron and hot-air head 400 °C, 3D printer hotend 310 °C, every other profile has no heater (only 0 is accepted) | `tool_limits.c` |
 | Link timeout when none (0) is configured | 250 ms | `link_watchdog.h` |
+| Longest pre-heat without a tool swap | 10 minutes (`RACK_PREHEAT_MAX_MS`, a build option; `preheat_limit_init()` takes the value at run time; `PREHEAT_LIMIT_OFF` disables the limit) | `preheat_limit.h` |
+| Silence that ends a half frame on the serial link | 20 ms (`RACK_DEFRAMER_DEFAULT_TIMEOUT_MS`; `rack_deframer_init()` takes the value at run time) | `rack_deframer.h` |
 
 ## Tool presence and inventory
 
@@ -67,6 +69,19 @@ lead time and has not already begun. Generic tools (grippers, no-contact
 tools) have no pre-heat target. The decision and temperatures are real; the
 heater control loop is not implemented - no PWM, no ADC, no closed loop.
 
+### Longest pre-heat without a swap
+
+A live link used to be able to keep a heater on for ever: the watchdog only catches a
+dead one. `preheat_limit.c` bounds it. Per slot, the clock starts when the target goes
+from 0 to something above 0; resending the target or raising it does not restart it.
+When the limit (10 minutes unless configured) is reached, the target goes to 0 and the slot
+is latched: a target above 0 is refused until the host sends a target of 0 or the tool in
+the slot is replaced (a swap). A lost link, an emptied slot or another tool in the slot end
+the pre-heat without a latch. The limit is part of the configuration table above and can be
+turned off (`PREHEAT_LIMIT_OFF`), in which case only the link watchdog and the per-tool
+ceilings bound the heater. `rack_app_apply_decision_limited()` and
+`rack_app_tick_limited()` use it; the two functions without "limited" apply no limit.
+
 ## Lifecycle
 
 Each tool has two counters, `total_cycles` and `total_seconds`. A tool is
@@ -89,12 +104,47 @@ target is above 0 for a tool that has no heater, or the temperature exceeds the
 limit of that tool (never more than 400 °C). A target of 0 (off) is accepted for
 any tool.
 
-This frame format is not a CAN frame. It can be up to 22 bytes long, a classic CAN
-frame carries 8, and the temperature is little-endian while the URTC bus sends its
-temperatures big-endian. No CAN identifiers are assigned to the rack. Until a
-transport is designed, treat the format as the protocol of a serial link; mapping it
-onto the bus means choosing identifiers, an 8-byte payload and a byte order, and
-documenting them next to the CAN documentation of the URTC project.
+### Transport
+
+The transport that is implemented is a **serial link** with the frame above. It can be up
+to 22 bytes long, so it is not a CAN frame, and its temperature is little-endian. A serial
+link delivers bytes, not frames, so `rack_deframer.c` finds them in the stream:
+
+- it waits for the start byte and collects the bytes the header announces (the header is
+  checked as soon as it is complete: an unsupported version or a length above 16 is refused
+  without waiting for the rest);
+- it hands over a frame only when the CRC is right;
+- after a bad candidate it drops the first byte and starts again from the next start byte it
+  already holds, so a byte lost inside a frame costs that frame and not the next one, and a
+  start byte inside a payload does not make it give up;
+- a half frame is dropped after 20 ms of silence (configurable), so a start byte that was
+  noise cannot swallow the next real frame; the comparison is correct across the wrap of the
+  millisecond counter;
+- it counts good frames, CRC errors, bad headers, resynchronisations, timeouts and dropped
+  bytes, so a bench can tell a noisy line from a quiet one.
+
+`rack_link_rx_byte()` takes one received byte and, when it completes a frame, gives the
+decision about the heater; `rack_link_rx_next()` is called afterwards until it returns false,
+because after a resynchronisation the deframer can hold a second frame.
+
+### CAN route (when a board exists)
+
+No board with a CAN transceiver exists, so nothing below has been on a bus. The mapping is
+decided now (`rack_can.c`, tested on the host) so the byte order and the size are not chosen
+after the hardware. A classic CAN frame carries 8 bytes and has its own hardware CRC, so the
+start byte, version, length and CRC-8 of the serial frame are not repeated, and every
+multi-byte value is **big-endian**, like every temperature on the URTC bus.
+
+| Frame | Direction | Identifier | DLC | Data |
+| --- | --- | --- | --- | --- |
+| `SET_PREHEAT` | host to rack | `0x260` | 8 | byte 0: tool ID; bytes 1-2: target in whole degrees C, big-endian; byte 3: sequence number; bytes 4-7: reserved, sent as 0, ignored on receipt |
+| status | rack to host | `0x261` | - | reserved; not defined yet |
+
+The identifiers `0x260`..`0x26F` are the block the URTC CAN documentation keeps for the
+rack. A command that arrives this way goes through the same rules as a serial one
+(`rack_link_decide_can()`): the same range checks, the same per-tool anti-replay sequence, the
+same safe state for a refused value. A frame with another identifier or another length is not
+ours and changes nothing, not even the link watchdog.
 
 Execution context: the watchdog state is plain memory with no locking. Call
 `rack_link_decide()` and every `link_watchdog_*` function from one context, the main
@@ -136,7 +186,8 @@ every physical behaviour as unproven until a bench test exists.
 
 | Symptom | Likely cause |
 | --- | --- |
-| Command ignored | CRC mismatch, wrong version, a replayed sequence (the sender is acknowledged), or a tool byte that names nobody. Only a refused value for a known tool, or a lost link, switches a heater off |
+| Command ignored | Bytes lost on the line (the deframer counts CRC errors, bad headers and timeouts), CRC mismatch, wrong version, a replayed sequence (the sender is acknowledged), or a tool byte that names nobody. Only a refused value for a known tool, or a lost link, switches a heater off |
 | Pre-heat request refused | Tool not racked, tool byte with upper bits set or ID `25`..`31`, a target above 0 for a tool without a heater, or a target above the limit of that tool (400 °C at most) |
+| Pre-heat switched off while the link is alive | The slot ran out its pre-heat (10 minutes unless configured); send a target of 0, or swap the tool, before heating it again |
 | Slot write returns false | Slot index outside 0-7, or a tool ID above 24 |
 | Same tool reported in two places | Cannot happen: re-racking moves it and clears the old slot |

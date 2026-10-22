@@ -5,6 +5,13 @@ This file intentionally omits calendar dates from individual entries.
 
 ## [Unreleased]
 
+- The `build-test` scripts use the interpreter named by `URTC_PYTHON` (which URTC-UPDATER sets to its own) and, without it, the first `python3` or `py -3` found, so a build check runs with a Python whose packages are known.
+- **Serial receive path**: `rack_deframer.c` turns the byte stream of the serial link into frames. It looks for the start byte, collects the bytes the header announces, hands over a frame only when its CRC is right, resynchronises from the next start byte it already holds after a bad candidate (a byte lost inside a frame costs that frame, not the next one) and drops a half frame after an inter-byte timeout (20 ms by default, across the wrap of the clock). `rack_link_rx_byte()` and `rack_link_rx_next()` go from received bytes to the decision about the heater, and the deframer counts good frames, CRC errors, bad headers, resynchronisations, timeouts and dropped bytes.
+- **CAN route, decided before the board**: `rack_can.c` fixes how the command will look on the URTC bus when a board with a transceiver exists - identifier `0x260`, eight data bytes, the temperature big-endian like every temperature on that bus, no repeated CRC - and `rack_link_decide_can()` applies the same validation, anti-replay and safe-state rules as the serial path. Nothing carries it yet; `docs/OPERATIONS.md` has the table.
+- **Longest pre-heat without a tool swap**: `preheat_limit.c` ends the pre-heat of a slot after 10 minutes (build option `RACK_PREHEAT_MAX_MS`, run-time value of `preheat_limit_init()`, `PREHEAT_LIMIT_OFF` to disable) even though the host link is alive. Resending or raising the target does not restart the clock; after the limit the slot is latched until the host sends a target of 0 or the tool in the slot is replaced. `rack_app_apply_decision_limited()` and `rack_app_tick_limited()` apply it; the old functions keep working with no limit.
+- The host tests run 365 assertions (new suites for the deframer, the CAN mapping and the pre-heat limit, run under the address and undefined-behaviour sanitizers in CI).
+- The CI workflow also builds and tests on Windows (the `.bat` script with the ARM toolchain) and keeps the firmware images of both builds as workflow artifacts; its actions are pinned to a commit.
+- The dashboard notice is sent only after the CI of the push finished green.
 - The banner follows the animated style of the ecosystem banners, with the name, the kind and the technologies of the project.
 - The manifest declares how far the project has been shown to work (`evidence`: host-test) and `tools/ci_validate.py` checks the value.
 - The manifest notes are shorter.

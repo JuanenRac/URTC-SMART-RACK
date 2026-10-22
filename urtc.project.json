@@ -12,10 +12,11 @@
   ],
   "deployment_target": "user-pc",
   "maturity": "functional",
+  "evidence": "host-test",
   "family": "URTC Tool Platform",
   "parent": null,
   "build": "bash build_firmware.sh. Real host-native unit tests run before the arm-none-eabi-gcc cross-compile.",
-  "notes": "Real, hardware-independent pure-C logic (tool_id.c ID decoding, lifecycle.c usage/maintenance tracking, preheat.c Smart Idle activation + target temperature + real safe-state target), a real rack command protocol (protocol.c: versioned framing + CRC8; rack_command.c: real actuation-limit validation; link_watchdog.c: real timeout + idempotency), a real multi-slot tool inventory (rack_inventory.c: which tool is racked in which slot, a real tool never in two slots at once, per-slot pre-heat target by tool identity - I57), and a real host-side scenario harness playing valid/CRC-corrupted/out-of-range/timed-out/duplicate frames through the whole pipeline, per-tool pre-heat limits (tool_limits.c) and the layer that applies a decision to the inventory and holds every slot in the safe state while the link is lost (rack_app.c) - 290 host-native test assertions total, plus the verified cross-compile toolchain (arm-none-eabi-gcc -> .bin/.hex with a real size report). link_watchdog.c's sequence check is now a real wraparound-aware \"genuinely newer\" comparison (not just \"different from the last one seen\"), with a real session/epoch reset on link-loss recovery. Real CAN/F-RAM/GPIO I/O to actually drive tool tracking and pre-heating needs a real PCB, which doesn't exist yet.",
+  "notes": "Hardware-independent pure-C logic, host-tested on a PC only: tool-ID decoding, usage and maintenance tracking, the Smart Idle pre-heat target with a safe-state target, a versioned rack command protocol (framing with CRC8, actuation-limit validation, a link watchdog with a wraparound-aware sequence check and a session reset on recovery), a multi-slot inventory (a tool is never in two slots at once, per-slot pre-heat target by tool identity), per-tool limits, and the layer that applies a decision to the inventory and holds every slot in the safe state while the link is lost. A host-side scenario harness plays valid, corrupted, out-of-range, timed-out and duplicate frames through the whole pipeline, 290 host-native test assertions in all, and the ARM cross-compile is verified with a size report. Real CAN/F-RAM/GPIO I/O to drive tool tracking and pre-heating needs a real PCB, which does not exist yet.",
   "native_version": {
     "file": "src/firmware_common.h",
     "pattern": {

@@ -3,6 +3,13 @@
 All notable work on **URTC-SMART-RACK** is summarized here, newest first.
 This file intentionally omits calendar dates from individual entries.
 
+## [Unreleased]
+
+- The manifest declares how far the project has been shown to work (`evidence`: host-test) and `tools/ci_validate.py` checks the value.
+- The manifest notes are shorter.
+- The CI workflow no longer carries the steps for languages the repository does not use, and installs the newlib packages the firmware build needs.
+- The README of each language lists URTC-UPDATER among the related projects.
+
 ## Versioning scheme
 
 `src/firmware_common.h`'s `FIRMWARE_VERSION_MAJOR`/`_MINOR`/`_PATCH` are raised

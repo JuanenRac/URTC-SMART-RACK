@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **Each head is a unit**: `rack_inventory.c` can key a slot by the type plus the serial number of the head (`rack_inventory_set_slot_unit()`), and `rack_units.c` keeps the use, the heater time and the thermal faults of each physical head, taken from its own counters (`0x1AA` / `0x1AB`), counting only the growth since the last reading and never a counter that went down.
+- **Thermal check of a slot** (`slot_verify.c`): what a thermal reading of a slot says about the pre-heat that was ordered (reached, heating, too slow, overshoot, still hot, a heater on in an empty slot, no reading). The limits are estimates for a soldering tip.
+- **Predictive pre-heat** (`preheat_plan.c`): turns the job queue into pre-heat orders using an estimate of the heating time of each tool plus a margin; switched off by default; it only suggests orders, which go through the normal command path and its limits.
+- The rack model of URTC-COMMON (`conformance/rack_vectors.json`, `tests/vectors/rack_vectors.h`) is reproduced by the real code of the rack: frames, command checks, CAN data, link scenarios and thermal verdicts.
+- The host tests run 439 assertions (new suites for the vectors and for the heads, the thermal check and the predictive pre-heat).
+- The README lists URTC-GATEWAY, the new gateway in front of the CAN bus, among the related projects.
+
 ## [0.1.8] - A serial receive path, the CAN route, a limit on pre-heat and a CI that also builds on Windows
 
 - `tools/ci_validate.py` fails when a versioned file has the name of a Windows path (a colon, the character a file system uses to store one, or a first folder named like a drive or a user profile): a path handed to WSL without translation once put build output inside a repository. The same check (`tools/_tracked_names.py`) is in every URTC repository.

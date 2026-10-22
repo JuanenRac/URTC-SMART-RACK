@@ -22,6 +22,8 @@ int main(void)
     run_rack_deframer_tests(&failures);
     run_rack_can_tests(&failures);
     run_preheat_limit_tests(&failures);
+    run_rack_vectors_tests(&failures);
+    run_rack_units_tests(&failures);
 
     if (failures == 0) {
         printf("All tests passed.\n");

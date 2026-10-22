@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Feature-Smart%20Idle-green.svg" alt="Smart Idle">
 </p>
 
-**诚实核查 - 今天真正能运行的部分：** `tool_id.c`、`lifecycle.c`、`preheat.c`、`protocol.c`、`rack_command.c`、`link_watchdog.c`、`tool_limits.c`、`rack_app.c`、`rack_link.c`、`rack_deframer.c`、`rack_can.c`、`preheat_limit.c` 和 `rack_inventory.c` 都是真实、纯粹的 C 代码，由 365 个通过的 `TEST_ASSERT` 检查支撑（`tests/test_*.c`，使用宿主机自身的 C 编译器而非 `arm-none-eabi-gcc` 编译并运行）——通过实际编译并运行这套宿主测试套件加以确认。这覆盖了 ID 解码、使用/生命周期跟踪、预热激活与目标温度、CRC8 分帧协议解析、命令范围校验、链路超时/幂等性处理，以及多槽位工具库存跟踪(哪个工具放在哪个槽位、同一把真实工具绝不会同时出现在两个槽位)——全部都是逻辑，没有任何硬件。正如 README 自己的介绍已经说明的那样：这块板子目前还没有 PCB/原理图，所以这里的任何代码都从未驱动过真实的 GPIO 引脚、F-RAM 芯片、加热元件或 CAN 收发器——`main.c`/`startup_stm32g4_minimal.c` 只是证明了针对 Cortex-M4F 的交叉编译和链接能够在一个占位链接脚本上成功完成，并不能证明其中任何部分真的运行在真实芯片上。具体已经交付了什么，请参见 `CHANGELOG.md`。
+**诚实核查 - 今天真正能运行的部分：** `tool_id.c`、`lifecycle.c`、`preheat.c`、`protocol.c`、`rack_command.c`、`link_watchdog.c`、`tool_limits.c`、`rack_app.c`、`rack_link.c`、`rack_deframer.c`、`rack_can.c`、`preheat_limit.c` 和 `rack_inventory.c` 都是真实、纯粹的 C 代码，由 439 个通过的 `TEST_ASSERT` 检查支撑（`tests/test_*.c`，使用宿主机自身的 C 编译器而非 `arm-none-eabi-gcc` 编译并运行）——通过实际编译并运行这套宿主测试套件加以确认。这覆盖了 ID 解码、使用/生命周期跟踪、预热激活与目标温度、CRC8 分帧协议解析、命令范围校验、链路超时/幂等性处理，以及多槽位工具库存跟踪(哪个工具放在哪个槽位、同一把真实工具绝不会同时出现在两个槽位)——全部都是逻辑，没有任何硬件。正如 README 自己的介绍已经说明的那样：这块板子目前还没有 PCB/原理图，所以这里的任何代码都从未驱动过真实的 GPIO 引脚、F-RAM 芯片、加热元件或 CAN 收发器——`main.c`/`startup_stm32g4_minimal.c` 只是证明了针对 Cortex-M4F 的交叉编译和链接能够在一个占位链接脚本上成功完成，并不能证明其中任何部分真的运行在真实芯片上。具体已经交付了什么，请参见 `CHANGELOG.md`。
 
 ---
 
@@ -45,7 +45,8 @@
 单元测试。
 
 ### 关键特性：
-* ✅ **真实 v0 —— ID、生命周期与预热逻辑：** `tool_id.c` 将原始 5 位 ID 读数解码为工具身份；`lifecycle.c` 追踪使用周期/时间并标记到期维护；`preheat.c` 决定智能待机预热应何时启动以及目标温度。使用宿主机自身的 C 编译器完成 365 个测试断言——无需 PCB、GPIO 驱动或 F-RAM 即可运行或测试这一切。同样已实现：串行链路的流式拆帧器（`rack_deframer.c`：查找起始字节，丢字节后重新同步，超时后丢弃半帧）、命令的 CAN 形式（`rack_can.c`：八个数据字节，温度为大端序；目前还没有板子承载它）以及预热在不换工具时可持续时间的上限（`preheat_limit.c`：默认 10 分钟，可配置）。
+* ✅ **真实 v0 —— ID、生命周期与预热逻辑：** `tool_id.c` 将原始 5 位 ID 读数解码为工具身份；`lifecycle.c` 追踪使用周期/时间并标记到期维护；`preheat.c` 决定智能待机预热应何时启动以及目标温度。使用宿主机自身的 C 编译器完成 439 个测试断言——无需 PCB、GPIO 驱动或 F-RAM 即可运行或测试这一切。同样已实现：串行链路的流式拆帧器（`rack_deframer.c`：查找起始字节，丢字节后重新同步，超时后丢弃半帧）、命令的 CAN 形式（`rack_can.c`：八个数据字节，温度为大端序；目前还没有板子承载它）以及预热在不换工具时可持续时间的上限（`preheat_limit.c`：默认 10 分钟，可配置）。
+* ✅ **把工具头当作单个个体、热检查与预测性预热（已在主机上测试）：** `rack_inventory.c` 可以用类型加工具头序列号来标识一个槽位，`rack_units.c` 记录每个实体工具头的使用次数、加热时间和热故障（来自其自身计数器，`0x1AA` / `0x1AB`），因此磨损跟随工具头而不是类型；`slot_verify.c` 说明槽位的热读数对已下达的预热意味着什么（已达到、太慢、过冲、空槽位中有加热器在工作）；`preheat_plan.c` 把作业队列转换为预热指令，默认关闭。读数和队列来自其他程序，这些都没有在电路板上运行过，加热时间只是估计值。
 * 🗄️ **工具追踪** —— 通过 5 位 ID 跳线或 F-RAM 自动识别 URTC 刀头。*（ID 解码逻辑本身是真实的——见上文；读取真实跳线/F-RAM 需要 PCB。）*
 * 🗂️ **多槽位库存** —— `rack_inventory.c` 跟踪哪个工具放在哪个槽位，确保同一把真实工具始终只处于一个槽位(把它移到别的槽位会自动清空原槽位，而不是同时声称它在两个地方)，并按工具身份维护每个槽位各自的预热目标。启动时，`rack_inventory_reconcile()` 会将其与每个槽位的在位传感器核对：机架断电期间被取走的工具会被清除（包括预热目标），手动放入的工具会被标记为待识别。 *（库存逻辑本身是真实的——见上文；接入真实的按槽位在位传感器需要 PCB。）*
 * 🌡️ **预热逻辑** —— 针对焊接和热风工具的智能热管理。*（激活决策和目标温度是真实的——见上文；驱动真实加热器需要 PCB。）*
@@ -211,6 +212,7 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 
 *URTC 工具平台*
 - **[URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER)** — 面向 URTC 板卡的桌面图形烧录工具，支持 CAN-OTA 以及全芯片 SWD/JTAG。
+- **[URTC-GATEWAY](https://github.com/JuanenRac/URTC-GATEWAY)** — 位于 CAN 总线前的网关，只放行列表中的标识符，限制其速率，并要求会话密钥。
 - **[URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER)** — 面向 URTC 板卡的桌面实时 CAN 总线诊断工具，每种工具配置对应一个面板。
 - **[URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO)** — 通过 Web Serial API 实现的浏览器版 URTC-TESTER 替代方案，无需本地安装。
 

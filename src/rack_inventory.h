@@ -31,6 +31,7 @@ _Static_assert(RACK_INVENTORY_MAX_SLOTS <= 8u, "rack_inventory_reconcile() masks
 typedef struct {
     bool occupied;
     uint8_t tool_id;         // valid only while occupied is true
+    uint8_t serial;          // serial number of the head (CAN 0x1A5), 0 = unknown; valid only while occupied is true
     uint16_t target_temp_c;  // this slot's last commanded pre-heat target, 0 = none/off
 } rack_slot_t;
 
@@ -52,6 +53,16 @@ void rack_inventory_init(rack_inventory_t *inv);
 // Returns false (no-op) for an out-of-range slot, a missing inventory, or a tool
 // ID that names no tool profile (see tool_id.h: only 0..24 can be racked).
 bool rack_inventory_set_slot_tool(rack_inventory_t *inv, uint8_t slot, uint8_t tool_id);
+
+// Same, for a head whose serial number is known. The identity of a head is its type plus its serial number, so the same type with
+// another serial number is another head and stays where it is; the same head (or a head of that type of unknown serial) racked
+// elsewhere is moved. With serial 0 this is rack_inventory_set_slot_tool(): the type alone is the identity.
+bool rack_inventory_set_slot_unit(rack_inventory_t *inv, uint8_t slot, uint8_t tool_id, uint8_t serial);
+
+// Same, for a head whose serial number is known. The identity of a head is its type plus its serial number, so the same type with
+// another serial number is another head and stays where it is; the same head (or a head of that type of unknown serial) racked
+// elsewhere is moved. With serial 0 this is rack_inventory_set_slot_tool(): the type alone is the identity.
+bool rack_inventory_set_slot_unit(rack_inventory_t *inv, uint8_t slot, uint8_t tool_id, uint8_t serial);
 
 // Real, range-checked read - an out-of-range slot returns false rather
 // than reading past the array (fail closed, matching this project's own

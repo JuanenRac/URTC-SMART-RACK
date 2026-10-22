@@ -18,11 +18,17 @@ void rack_inventory_init(rack_inventory_t *inv)
     for (uint8_t i = 0; i < RACK_INVENTORY_MAX_SLOTS; i++) {
         inv->slots[i].occupied = false;
         inv->slots[i].tool_id = TOOL_ID_NONE;
+        inv->slots[i].serial = 0u;
         inv->slots[i].target_temp_c = 0;
     }
 }
 
 bool rack_inventory_set_slot_tool(rack_inventory_t *inv, uint8_t slot, uint8_t tool_id)
+{
+    return rack_inventory_set_slot_unit(inv, slot, tool_id, 0u);
+}
+
+bool rack_inventory_set_slot_unit(rack_inventory_t *inv, uint8_t slot, uint8_t tool_id, uint8_t serial)
 {
     if (inv == NULL || slot >= RACK_INVENTORY_MAX_SLOTS) {
         return false;
@@ -35,6 +41,7 @@ bool rack_inventory_set_slot_tool(rack_inventory_t *inv, uint8_t slot, uint8_t t
     if (!tool_id_is_present(tool_id)) {
         inv->slots[slot].occupied = false;
         inv->slots[slot].tool_id = TOOL_ID_NONE;
+        inv->slots[slot].serial = 0u;
         inv->slots[slot].target_temp_c = 0;
         return true;
     }
@@ -45,15 +52,20 @@ bool rack_inventory_set_slot_tool(rack_inventory_t *inv, uint8_t slot, uint8_t t
     // its old slot rather than letting the inventory claim it's in both
     // places simultaneously.
     for (uint8_t i = 0; i < RACK_INVENTORY_MAX_SLOTS; i++) {
-        if (i != slot && inv->slots[i].occupied && inv->slots[i].tool_id == tool_id) {
+        const bool same_type = i != slot && inv->slots[i].occupied && inv->slots[i].tool_id == tool_id;
+        // Another serial number of the same type is another physical head and stays where it is; an unknown serial on
+        // either side cannot be told apart, so it counts as the same head.
+        if (same_type && (serial == 0u || inv->slots[i].serial == 0u || inv->slots[i].serial == serial)) {
             inv->slots[i].occupied = false;
             inv->slots[i].tool_id = TOOL_ID_NONE;
+            inv->slots[i].serial = 0u;
             inv->slots[i].target_temp_c = 0;
         }
     }
 
     inv->slots[slot].occupied = true;
     inv->slots[slot].tool_id = tool_id;
+    inv->slots[slot].serial = serial;
     // A tool freshly racked (or re-racked into a new slot) has no
     // pre-heat target carried over from wherever it was before - a stale
     // target must never keep heating a tool that just moved without a
@@ -124,6 +136,7 @@ rack_reconcile_report_t rack_inventory_reconcile(rack_inventory_t *inv, uint8_t 
         if (inv->slots[i].occupied && !sensed) {
             inv->slots[i].occupied = false;
             inv->slots[i].tool_id = TOOL_ID_NONE;
+            inv->slots[i].serial = 0u;
             inv->slots[i].target_temp_c = 0;
             report.removed_mask |= bit;
         } else if (!inv->slots[i].occupied && sensed) {

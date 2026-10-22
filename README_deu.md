@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| Version | `0.1.8` |
+| Version | `0.1.9` |
 | Reifegrad | Funktionsfähig |
 | Technik | C / STM32G4 / arm-none-eabi-gcc |
 | Ziel | Eine Mikrocontroller-Platine (die Firmware); wird auf einem PC gebaut |

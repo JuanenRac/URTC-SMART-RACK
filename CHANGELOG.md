@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.1.9] - Head units, thermal check of a slot and predictive pre-heat
 
 - **Each head is a unit**: `rack_inventory.c` can key a slot by the type plus the serial number of the head (`rack_inventory_set_slot_unit()`), and `rack_units.c` keeps the use, the heater time and the thermal faults of each physical head, taken from its own counters (`0x1AA` / `0x1AB`), counting only the growth since the last reading and never a counter that went down.
 - **Thermal check of a slot** (`slot_verify.c`): what a thermal reading of a slot says about the pre-heat that was ordered (reached, heating, too slow, overshoot, still hot, a heater on in an empty slot, no reading). The limits are estimates for a soldering tip.

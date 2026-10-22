@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| Version | `0.1.8` |
+| Version | `0.1.9` |
 | Maturity | Functional |
 | Stack | C / STM32G4 / arm-none-eabi-gcc |
 | Target | A microcontroller board (the firmware); built on a PC |

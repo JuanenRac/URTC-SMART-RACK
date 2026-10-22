@@ -3,7 +3,7 @@
 All notable work on **URTC-SMART-RACK** is summarized here, newest first.
 This file intentionally omits calendar dates from individual entries.
 
-## [Unreleased]
+## [0.1.8] - A serial receive path, the CAN route, a limit on pre-heat and a CI that also builds on Windows
 
 - `tools/ci_validate.py` fails when a versioned file has the name of a Windows path (a colon, the character a file system uses to store one, or a first folder named like a drive or a user profile): a path handed to WSL without translation once put build output inside a repository. The same check (`tools/_tracked_names.py`) is in every URTC repository.
 - The `build-test` scripts use the interpreter named by `URTC_PYTHON` (which URTC-UPDATER sets to its own) and, without it, the first `python3` or `py -3` found, so a build check runs with a Python whose packages are known.

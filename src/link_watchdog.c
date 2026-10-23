@@ -18,6 +18,7 @@ void link_watchdog_init(link_watchdog_t *lw, uint32_t timeout_ms)
     for (uint8_t i = 0; i < LINK_WATCHDOG_TOOL_SLOTS; i++) {
         lw->last_seq_by_tool_id[i] = 0;
         lw->has_seq_by_tool_id[i] = false;
+        urtc_rate_limiter_init(&lw->command_rate_by_tool_id[i], RACK_COMMAND_MIN_INTERVAL_MS);
     }
 }
 
@@ -52,6 +53,17 @@ void link_watchdog_tick(link_watchdog_t *lw, uint32_t now_ms)
         lw->has_received_any_frame = false;
         link_watchdog_reset_all_sequences(lw);
     }
+}
+
+bool link_watchdog_is_sequence_new(const link_watchdog_t *lw, uint8_t tool_id, uint8_t seq)
+{
+    if (lw == NULL || !tool_id_is_present(tool_id) || tool_id >= LINK_WATCHDOG_TOOL_SLOTS) {
+        return false;
+    }
+    if (!lw->has_seq_by_tool_id[tool_id]) {
+        return true;
+    }
+    return (int8_t)(uint8_t)(seq - lw->last_seq_by_tool_id[tool_id]) > 0;
 }
 
 bool link_watchdog_accept_sequence(link_watchdog_t *lw, uint8_t tool_id, uint8_t seq)
@@ -100,5 +112,29 @@ void link_watchdog_reset_all_sequences(link_watchdog_t *lw)
     // new session is never mistaken for a stale replay of an old one.
     for (uint8_t i = 0; i < LINK_WATCHDOG_TOOL_SLOTS; i++) {
         lw->has_seq_by_tool_id[i] = false;
+        lw->command_rate_by_tool_id[i].has_accepted_any = false; // a new session starts with no command counted against the interval
     }
+}
+
+void link_watchdog_set_command_interval(link_watchdog_t *lw, uint32_t min_interval_ms)
+{
+    if (lw == NULL) {
+        return;
+    }
+    for (uint8_t i = 0; i < LINK_WATCHDOG_TOOL_SLOTS; i++) {
+        urtc_rate_limiter_init(&lw->command_rate_by_tool_id[i], min_interval_ms);
+    }
+}
+
+uint32_t link_watchdog_command_interval(const link_watchdog_t *lw)
+{
+    return (lw == NULL) ? 0u : lw->command_rate_by_tool_id[0].min_interval_ms;
+}
+
+bool link_watchdog_allow_command(link_watchdog_t *lw, uint8_t tool_id, uint32_t now_ms)
+{
+    if (lw == NULL || !tool_id_is_present(tool_id) || tool_id >= LINK_WATCHDOG_TOOL_SLOTS) {
+        return false;
+    }
+    return urtc_rate_limiter_allow(&lw->command_rate_by_tool_id[tool_id], now_ms);
 }

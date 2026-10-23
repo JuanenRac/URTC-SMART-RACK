@@ -15,6 +15,7 @@
 #include <stdint.h>
 
 #include "tool_id.h"
+#include "urtc_rate_limiter.h" // the minimum interval between accepted messages shared with the vision sensor link (copied from URTC-COMMON)
 
 // One idempotency slot per possible tool ID (see tool_id.h's
 // TOOL_ID_BITS) - TOOL_ID_NONE (all tool IDs decode to at most this many
@@ -27,12 +28,20 @@
 // communication watchdog of the URTC tool heads.
 #define LINK_WATCHDOG_DEFAULT_TIMEOUT_MS 250u
 
+// The least time between two commands accepted for the same tool: a sender that floods the link is throttled instead of obeyed at whatever rate it sends. 20 ms is far
+// below how often a real sender repeats a command (a few times a second) and far above a flood. A build can change it with -DRACK_COMMAND_MIN_INTERVAL_MS=...; at run time
+// link_watchdog_set_command_interval() takes the value, and 0 switches the limit off.
+#ifndef RACK_COMMAND_MIN_INTERVAL_MS
+#define RACK_COMMAND_MIN_INTERVAL_MS 20u
+#endif
+
 typedef struct {
     uint32_t last_rx_ms;
     uint32_t timeout_ms;
     bool has_received_any_frame;
     uint8_t last_seq_by_tool_id[LINK_WATCHDOG_TOOL_SLOTS];
     bool has_seq_by_tool_id[LINK_WATCHDOG_TOOL_SLOTS];
+    urtc_rate_limiter_t command_rate_by_tool_id[LINK_WATCHDOG_TOOL_SLOTS];
 } link_watchdog_t;
 
 // A `timeout_ms` of 0 is replaced by LINK_WATCHDOG_DEFAULT_TIMEOUT_MS.
@@ -71,6 +80,9 @@ void link_watchdog_tick(link_watchdog_t *lw, uint32_t now_ms);
 // handling a bare sequence counter cannot provide by itself.
 bool link_watchdog_accept_sequence(link_watchdog_t *lw, uint8_t tool_id, uint8_t seq);
 
+// The same decision as link_watchdog_accept_sequence() without recording anything: true when `seq` is genuinely newer than the last one accepted for the tool (or none was).
+bool link_watchdog_is_sequence_new(const link_watchdog_t *lw, uint8_t tool_id, uint8_t seq);
+
 // clears every per-tool "last sequence seen" slot - call this
 // whenever a real, independent signal (link_watchdog_is_link_lost()
 // having been true just before this frame) means the previous session's
@@ -80,5 +92,16 @@ bool link_watchdog_accept_sequence(link_watchdog_t *lw, uint8_t tool_id, uint8_t
 // signal (e.g. a future protocol revision with an explicit boot/session
 // counter).
 void link_watchdog_reset_all_sequences(link_watchdog_t *lw);
+
+// Sets the least time (ms) between two accepted commands for one tool, for every tool; 0 switches the limit off. The time already counted is forgotten.
+void link_watchdog_set_command_interval(link_watchdog_t *lw, uint32_t min_interval_ms);
+
+// The interval in force (0 = no limit); 0 too for a missing watchdog.
+uint32_t link_watchdog_command_interval(const link_watchdog_t *lw);
+
+// True when a command for `tool_id` may be acted on now: none was accepted for it before, or at least the interval has passed since the last one (across the wrap of the
+// millisecond counter). It records the time when it answers true. A tool that is not tracked, or a missing watchdog, is refused. Only a command that would be applied
+// should ask: a refusal of the rack (a value outside the limits) is never held back by it.
+bool link_watchdog_allow_command(link_watchdog_t *lw, uint8_t tool_id, uint32_t now_ms);
 
 #endif // LINK_WATCHDOG_H

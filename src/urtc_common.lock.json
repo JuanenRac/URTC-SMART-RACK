@@ -9,6 +9,10 @@
     "urtc_frame.h": {
       "from": "firmware_base/urtc_frame.h",
       "sha256": "608b5c6213f4dfb49ff2350a9e6d6ff9f240663f3db2f3136082ac0ad3b11bd1"
+    },
+    "urtc_rate_limiter.h": {
+      "from": "firmware_base/urtc_rate_limiter.h",
+      "sha256": "85643d90b09c2e6eccfe6da2af257fc3d34e779f291a5ab98fc4e13a1ace5b3b"
     }
   }
 }

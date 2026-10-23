@@ -152,4 +152,27 @@ void run_rack_link_scenario_tests(int *failures)
         TEST_ASSERT(resend.action == RACK_ACT_NONE, "the resend changes nothing");
         TEST_ASSERT(link_watchdog_is_link_lost(&lw, 1899) == false, "a real (if duplicate) frame at t=900 keeps the link alive up to just before a fresh 1000ms timeout from THAT frame");
     }
+
+    // --- a flood from the sender is throttled; a safe state and a retransmission are not ---
+    {
+        link_watchdog_t lw;
+        link_watchdog_init(&lw, 1000);
+        link_watchdog_set_command_interval(&lw, 100);
+        rack_decision_t d = decide(&lw, 1, 0, 200, 1000);
+        TEST_ASSERT(d.action == RACK_ACT_SET_TARGET && d.acknowledge == 1, "the first command is applied");
+        d = decide(&lw, 2, 0, 210, 1050);
+        TEST_ASSERT(d.action == RACK_ACT_NONE && d.acknowledge == 0, "a newer command 50 ms later is held back and not acknowledged");
+        TEST_ASSERT(link_watchdog_is_link_lost(&lw, 1500) == false, "but it proved the link alive");
+        d = decide(&lw, 2, 0, 210, 1100);
+        TEST_ASSERT(d.action == RACK_ACT_SET_TARGET && d.temp_c == 210 && d.acknowledge == 1, "the same sequence sent again after the interval is applied: the held-back one did not spend it");
+        d = decide(&lw, 2, 0, 210, 1110);
+        TEST_ASSERT(d.action == RACK_ACT_NONE && d.acknowledge == 1, "a retransmission of what was applied is acknowledged even inside the interval");
+        d = decide(&lw, 3, 0, 5000, 1120);
+        TEST_ASSERT(d.action == RACK_ACT_SAFE_STATE && d.tool_id == 0, "a refused value asks for the safe state inside the interval: it is never throttled");
+        d = decide(&lw, 1, 19, 300, 1121);
+        TEST_ASSERT(d.action == RACK_ACT_SET_TARGET && d.tool_id == 19, "another tool is not throttled by the first");
+        link_watchdog_set_command_interval(&lw, 0);
+        d = decide(&lw, 3, 0, 220, 1122);
+        TEST_ASSERT(d.action == RACK_ACT_SET_TARGET, "with the limit off, commands are applied at any rate");
+    }
 }

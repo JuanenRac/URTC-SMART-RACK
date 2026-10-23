@@ -24,6 +24,7 @@ the logic decides", not "what a real rack does".
 | Upper bound per tool | soldering iron and hot-air head 400 °C, 3D printer hotend 310 °C, every other profile has no heater (only 0 is accepted) | `tool_limits.c` |
 | Link timeout when none (0) is configured | 250 ms | `link_watchdog.h` |
 | Longest pre-heat without a tool swap | 10 minutes (`RACK_PREHEAT_MAX_MS`, a build option; `preheat_limit_init()` takes the value at run time; `PREHEAT_LIMIT_OFF` disables the limit) | `preheat_limit.h` |
+| Least time between two commands accepted for one tool | 20 ms (`RACK_COMMAND_MIN_INTERVAL_MS`, a build option; `link_watchdog_set_command_interval()` takes the value at run time, 0 = no limit). A command held back is not acknowledged and does not spend its sequence number; a safe state and a retransmission are never held back | `link_watchdog.h` |
 | Silence that ends a half frame on the serial link | 20 ms (`RACK_DEFRAMER_DEFAULT_TIMEOUT_MS`; `rack_deframer_init()` takes the value at run time) | `rack_deframer.h` |
 
 ## Tool presence and inventory

@@ -92,4 +92,33 @@ void run_link_watchdog_tests(int *failures)
         TEST_ASSERT(link_watchdog_accept_sequence(&lw, 6, 5) == true, "after a real reset (a new session/epoch), a low sequence number for tool 6 is accepted again, not rejected as 'behind' the old session's 200");
         TEST_ASSERT(link_watchdog_accept_sequence(&lw, 7, 1) == true, "the reset applies to every tracked tool slot, not just the one that triggered it");
     }
+
+    // --- the minimum interval between commands of one tool ---
+    {
+        link_watchdog_t lw;
+        link_watchdog_init(&lw, 1000);
+        TEST_ASSERT(link_watchdog_command_interval(&lw) == RACK_COMMAND_MIN_INTERVAL_MS && RACK_COMMAND_MIN_INTERVAL_MS > 0u, "the limit is on by default, with the conservative interval of the build");
+        TEST_ASSERT(link_watchdog_allow_command(&lw, 4, 1000) == true, "the first command of a tool is allowed");
+        TEST_ASSERT(link_watchdog_allow_command(&lw, 4, 1000 + RACK_COMMAND_MIN_INTERVAL_MS - 1u) == false, "a second one inside the interval is held back");
+        TEST_ASSERT(link_watchdog_allow_command(&lw, 5, 1001) == true, "another tool has its own count: a flood on one does not throttle the other");
+        TEST_ASSERT(link_watchdog_allow_command(&lw, 4, 1000 + RACK_COMMAND_MIN_INTERVAL_MS) == true, "at the interval it is allowed again");
+        TEST_ASSERT(link_watchdog_allow_command(&lw, TOOL_ID_NONE, 5000) == false && link_watchdog_allow_command(NULL, 4, 5000) == false, "an empty slot or a missing watchdog is refused");
+        link_watchdog_set_command_interval(&lw, 500);
+        TEST_ASSERT(link_watchdog_command_interval(&lw) == 500 && link_watchdog_allow_command(&lw, 4, 6000) == true && link_watchdog_allow_command(&lw, 4, 6499) == false && link_watchdog_allow_command(&lw, 4, 6500) == true, "a configured interval replaces the default");
+        link_watchdog_set_command_interval(&lw, 0);
+        TEST_ASSERT(link_watchdog_command_interval(&lw) == 0 && link_watchdog_allow_command(&lw, 4, 7000) == true && link_watchdog_allow_command(&lw, 4, 7000) == true, "an interval of 0 switches the limit off");
+        link_watchdog_set_command_interval(&lw, 100);
+        TEST_ASSERT(link_watchdog_allow_command(&lw, 4, 8000) == true && link_watchdog_allow_command(&lw, 4, 8050) == false, "a held-back command is counted from the last accepted one");
+        link_watchdog_reset_all_sequences(&lw);
+        TEST_ASSERT(link_watchdog_allow_command(&lw, 4, 8060) == true, "a new session starts with no command counted against the interval");
+        TEST_ASSERT(link_watchdog_allow_command(&lw, 4, 0xFFFFFFF0u) == true && link_watchdog_allow_command(&lw, 4, 0xFFFFFFF0u + 99u) == false && link_watchdog_allow_command(&lw, 4, 0xFFFFFFF0u + 100u) == true, "the interval is right across the wrap of the millisecond counter");
+    }
+    {
+        link_watchdog_t lw;
+        link_watchdog_init(&lw, 1000);
+        TEST_ASSERT(link_watchdog_is_sequence_new(&lw, 4, 10) == true, "a first sequence is new");
+        TEST_ASSERT(link_watchdog_accept_sequence(&lw, 4, 10) == true && link_watchdog_is_sequence_new(&lw, 4, 10) == false && link_watchdog_is_sequence_new(&lw, 4, 11) == true, "the check agrees with the recording one and does not record");
+        TEST_ASSERT(link_watchdog_is_sequence_new(&lw, 4, 11) == true && link_watchdog_is_sequence_new(&lw, 4, 11) == true, "asking twice changes nothing");
+        TEST_ASSERT(link_watchdog_is_sequence_new(NULL, 4, 1) == false && link_watchdog_is_sequence_new(&lw, TOOL_ID_NONE, 1) == false, "a missing watchdog or an empty slot is never new");
+    }
 }

@@ -29,7 +29,7 @@ static void note_valid_frame(link_watchdog_t *lw, uint32_t now_ms)
 }
 
 // The decision for a SET_PREHEAT whose tool byte is `tool`, whose validation gave `status` (and `command` when it was OK), carried by a frame with sequence `seq`.
-static void decide_set_preheat(link_watchdog_t *lw, uint8_t seq, uint8_t tool, rack_command_status_t status, const rack_set_preheat_t *command, rack_decision_t *out)
+static void decide_set_preheat(link_watchdog_t *lw, uint8_t seq, uint8_t tool, rack_command_status_t status, const rack_set_preheat_t *command, uint32_t now_ms, rack_decision_t *out)
 {
     // The tool byte of a command is a plain 5-bit value naming a tool profile (see tool_id.h). A byte that is not, or names no tool, leaves nobody to act on: the frame changes
     // nothing (it is not evidence that any heater should be switched off).
@@ -45,9 +45,20 @@ static void decide_set_preheat(link_watchdog_t *lw, uint8_t seq, uint8_t tool, r
         }
         return;
     }
-    if (!link_watchdog_accept_sequence(lw, tool, seq)) {
-        out->acknowledge = 1; // a retransmission of what was already applied (or a stale/reordered frame): nothing to apply again, and the sender may stop resending
+    // A repeat of what was already applied (or a stale or reordered frame) is acknowledged without spending the interval: nothing to apply again, and the sender may stop
+    // resending.
+    if (!link_watchdog_is_sequence_new(lw, tool, seq)) {
+        out->acknowledge = 1;
         return;
+    }
+    // A command that would be applied is held back when the same tool had one accepted less than the configured interval ago (a flood). It changes nothing and is not
+    // acknowledged: the frame still proved the link alive (noted before), its sequence is not spent, and the sender's next frame after the interval is obeyed. The refusals
+    // above are never throttled: a safe state is always applied.
+    if (!link_watchdog_allow_command(lw, tool, now_ms)) {
+        return;
+    }
+    if (!link_watchdog_accept_sequence(lw, tool, seq)) {
+        return; // not reachable after the check above; if it ever were, a stale command is still never applied
     }
     out->action = RACK_ACT_SET_TARGET;
     out->tool_id = tool;
@@ -88,7 +99,7 @@ void rack_link_decide(link_watchdog_t *lw, const uint8_t *buf, uint8_t buf_len, 
     }
     rack_set_preheat_t command = {0, 0};
     const rack_command_status_t status = rack_command_validate_set_preheat(frame.payload, frame.len, &command);
-    decide_set_preheat(lw, frame.seq, frame.payload[0], status, &command, out);
+    decide_set_preheat(lw, frame.seq, frame.payload[0], status, &command, now_ms, out);
 }
 
 void rack_link_decide_can(link_watchdog_t *lw, uint32_t can_id, const uint8_t *data, uint8_t dlc, uint32_t now_ms, rack_decision_t *out)
@@ -107,7 +118,7 @@ void rack_link_decide_can(link_watchdog_t *lw, uint32_t can_id, const uint8_t *d
     if (status != RACK_CMD_OK) {
         seq = data[3];
     }
-    decide_set_preheat(lw, seq, data[0], status, &command, out);
+    decide_set_preheat(lw, seq, data[0], status, &command, now_ms, out);
 }
 
 bool rack_link_rx_byte(rack_deframer_t *rx, link_watchdog_t *lw, uint8_t byte, uint32_t now_ms, rack_decision_t *out)

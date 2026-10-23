@@ -112,7 +112,7 @@ URTC-SMART-RACK/
 ├── bump.py                         # Comando esplicito per alzare la versione (compilare non la alza mai)
 ├── bump_version.py                 # Incremento versione stile contachilometri (generico, condiviso con URTC)
 ├── bump_manifest_version.py        # Sincronizza la versione di urtc.project.json con quella nativa (--sync)
-├── build_firmware.sh / .bat        # Build reale: test host + incrementa versione + compila + collega + pubblica
+├── build_firmware.sh / .bat        # Build reale: test host + compila + collega + pubblica (non cambia mai la versione)
 ├── build-test.sh / .bat            # Controllo build/compilazione senza incremento di versione
 └── README.md
 ```
@@ -158,7 +158,7 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 
 ## 5. 📋 CHANGELOG
 
-Consulta [`CHANGELOG.md`](CHANGELOG.md) per la cronologia completa delle versioni — ogni build reale incrementa automaticamente la versione di `src/firmware_common.h` (regola del contachilometri, vedi COMPILAZIONE sopra), e ogni incremento ha lì la propria voce.
+Consulta [`CHANGELOG.md`](CHANGELOG.md) per la cronologia completa delle versioni — `python bump.py` aumenta di un passo del contachilometri la versione di `src/firmware_common.h` (compilare non lo fa mai), e ogni aumento ha lì la propria voce.
 
 ---
 

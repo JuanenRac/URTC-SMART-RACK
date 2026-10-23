@@ -31,7 +31,7 @@ void run_rack_can_tests(int *failures)
     (void)rack_can_encode_set_preheat(42, 19, 350, data);
     TEST_ASSERT(rack_can_decode_set_preheat(RACK_CAN_ID_SET_PREHEAT, data, 8, &seq, &command) == RACK_CMD_OK && seq == 42 && command.tool_id == 19 && command.target_temp_c == 350, "a hot-air head at 350 C is decoded");
 
-    // A little-endian temperature is read as the number it really is, not as a valid one by luck: 200 C sent the serial way is 0xC800.
+    // A temperature in the old little-endian order is read as the number it really is, not as a valid one by luck: 200 C written that way is 0xC800.
     const uint8_t little_endian_by_mistake[8] = {0, 0xC8, 0x00, 1, 0, 0, 0, 0};
     TEST_ASSERT(rack_can_decode_set_preheat(RACK_CAN_ID_SET_PREHEAT, little_endian_by_mistake, 8, &seq, &command) == RACK_CMD_ERR_TEMP_OUT_OF_RANGE, "200 C written little-endian is 51200 C and is refused");
 

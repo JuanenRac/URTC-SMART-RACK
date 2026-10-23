@@ -47,7 +47,7 @@ No PCB/schematic exists for this board yet (see `hardware/`), so nothing below c
 * 🌡️ **Pre-Heating Logic** — intelligent thermal management for soldering and hot-air tools. *(the activation decision and target temperatures are real - see above; driving a real heater needs the PCB.)*
 * 📈 **Lifecycle Logs** — records total actuation cycles and hours of use into the tool's F-RAM. *(the counters and maintenance-due logic are real - see above; persisting them to real F-RAM needs the PCB.)*
 * 📡 **CAN Integration** — meant to communicate with the HYDRA-UMC Kinematic Brain for coordinated ATC (Auto Tool Change); this has never run, because no CAN driver or board exists. *(the wire protocol itself - framing, CRC, command validation - is real and host-tested, see below; a real CAN transceiver to actually carry it is still needed.)*
-* 🔒 **Protocol Range Checks** — versioned framing with a CRC8 checksum, actuation-range validation and a link-timeout/idempotency watchdog with a defined safe state. *(implemented as pure C and tested on a PC only; never run on a board, and not a certified safety function)*
+* 🔒 **Protocol Range Checks** — versioned framing with a CRC8 checksum, actuation-range validation and a link-timeout/idempotency watchdog with a defined safe state. Frame version 2: every multi-byte value is big-endian, like the bus, and a version 1 frame is refused. *(implemented as pure C and tested on a PC only; never run on a board, and not a certified safety function)*
 * ✅ **Cortex-M4F firmware toolchain** — a real bare-metal image (startup + linker + `main.c`) that cross-compiles and links with `arm-none-eabi-gcc`, the same toolchain sibling repo URTC uses. *(implemented — see BUILD below)*
 
 ---

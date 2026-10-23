@@ -44,7 +44,7 @@ static void null_guards(int *failures)
     TEST_ASSERT(protocol_encode_frame(1, 1, buf, PROTOCOL_MAX_PAYLOAD + 1, buf) == 0, "encode of an oversized payload produces nothing");
 
     rack_set_preheat_t command;
-    uint8_t payload[3] = { 1, 100, 0 };
+    uint8_t payload[3] = { 1, 0, 100 };
     TEST_ASSERT(rack_command_validate_set_preheat(NULL, 3, &command) == RACK_CMD_ERR_WRONG_PAYLOAD_LEN, "a missing payload is not a command");
     TEST_ASSERT(rack_command_validate_set_preheat(payload, 3, NULL) == RACK_CMD_ERR_WRONG_PAYLOAD_LEN, "a missing output is refused");
 
@@ -59,7 +59,7 @@ static void null_guards(int *failures)
 
 static void frame_sweeps(int *failures)
 {
-    uint8_t payload[3] = { 0, 0xC8, 0x00 };
+    uint8_t payload[3] = { 0, 0x00, 0xC8 };
     uint8_t buf[PROTOCOL_MAX_FRAME_SIZE];
     uint8_t n = protocol_encode_frame(9, RACK_CMD_SET_PREHEAT, payload, 3, buf);
     protocol_frame_t frame;
@@ -109,11 +109,11 @@ static void frame_sweeps(int *failures)
 static void command_edges(int *failures)
 {
     rack_set_preheat_t c;
-    uint8_t ok400[3] = { 0, 0x90, 0x01 };     // 400
-    uint8_t over[3] = { 0, 0x91, 0x01 };      // 401
+    uint8_t ok400[3] = { 0, 0x01, 0x90 };     // 400
+    uint8_t over[3] = { 0, 0x01, 0x91 };      // 401
     uint8_t huge[3] = { 0, 0xFF, 0xFF };
-    uint8_t absent[3] = { 0x1F, 0x64, 0x00 };
-    uint8_t high_bits[3] = { 0xE0, 0x64, 0x00 }; // the upper three bits are not part of the id
+    uint8_t absent[3] = { 0x1F, 0x00, 0x64 };
+    uint8_t high_bits[3] = { 0xE0, 0x00, 0x64 }; // the upper three bits are not part of the id
     TEST_ASSERT(rack_command_validate_set_preheat(ok400, 3, &c) == RACK_CMD_OK && c.target_temp_c == 400 && c.tool_id == 0, "400 degrees is the highest accepted target");
     TEST_ASSERT(rack_command_validate_set_preheat(over, 3, &c) == RACK_CMD_ERR_TEMP_OUT_OF_RANGE, "401 degrees is refused");
     TEST_ASSERT(rack_command_validate_set_preheat(huge, 3, &c) == RACK_CMD_ERR_TEMP_OUT_OF_RANGE, "65535 degrees is refused");
@@ -161,8 +161,8 @@ static void link_scenarios(int *failures)
     rack_decision_t d;
     uint8_t buf[PROTOCOL_MAX_FRAME_SIZE];
     uint8_t n;
-    uint8_t set100[3] = { 0, 100, 0 };
-    uint8_t set500[3] = { 0, 0xF4, 0x01 };
+    uint8_t set100[3] = { 0, 0, 100 };
+    uint8_t set500[3] = { 0, 0x01, 0xF4 };
 
     link_watchdog_init(&lw, 100);
     n = build(buf, 10, RACK_CMD_SET_PREHEAT, set100, 3);
@@ -209,7 +209,7 @@ static void link_scenarios(int *failures)
     n = build(buf, 1, RACK_CMD_SET_PREHEAT, two, 2);
     rack_link_decide(&lw, buf, n, 1000, &d);
     TEST_ASSERT(d.action == RACK_ACT_SAFE_STATE && d.tool_id == 7, "a malformed command for a known tool sends it to its safe state");
-    uint8_t none_tool[3] = { 0x1F, 50, 0 };
+    uint8_t none_tool[3] = { 0x1F, 0, 50 };
     n = build(buf, 2, RACK_CMD_SET_PREHEAT, none_tool, 3);
     rack_link_decide(&lw, buf, n, 1010, &d);
     TEST_ASSERT(d.action == RACK_ACT_NONE && d.acknowledge == 0, "a command for the no-tool id has nobody to act on");
@@ -283,7 +283,7 @@ static void hardening_edges(int *failures)
     TEST_ASSERT(lw.timeout_ms == LINK_WATCHDOG_DEFAULT_TIMEOUT_MS, "a zero timeout is replaced by the default one");
     link_watchdog_note_frame_received(&lw, 1000);
     TEST_ASSERT(!link_watchdog_is_link_lost(&lw, 1000), "with the default timeout a frame keeps the link alive");
-    uint8_t payload[3] = { 0, 100, 0 };
+    uint8_t payload[3] = { 0, 0, 100 };
     uint8_t buf[PROTOCOL_MAX_FRAME_SIZE];
     uint8_t n = protocol_encode_frame(7, RACK_CMD_SET_PREHEAT, payload, 3, buf);
     rack_decision_t d;
@@ -325,12 +325,12 @@ static void hardening_edges(int *failures)
     link_watchdog_init(&lw, 1000);
     uint8_t bad_ids[4] = { 25, 30, 0x20, 0xFF };
     for (uint8_t i = 0; i < 4; i++) {
-        uint8_t p[3] = { bad_ids[i], 100, 0 };
+        uint8_t p[3] = { bad_ids[i], 0, 100 };
         n = protocol_encode_frame((uint8_t)(i + 1), RACK_CMD_SET_PREHEAT, p, 3, buf);
         rack_link_decide(&lw, buf, n, 100, &d);
         TEST_ASSERT(d.action == RACK_ACT_NONE && d.acknowledge == 0, "a tool byte that names no tool leaves the heaters as they are");
     }
-    uint8_t gripper[3] = { 7, 100, 0 };
+    uint8_t gripper[3] = { 7, 0, 100 };
     n = protocol_encode_frame(9, RACK_CMD_SET_PREHEAT, gripper, 3, buf);
     rack_link_decide(&lw, buf, n, 110, &d);
     TEST_ASSERT(d.action == RACK_ACT_SAFE_STATE && d.tool_id == 7, "a heat request for a tool without a heater puts that tool in the safe state");

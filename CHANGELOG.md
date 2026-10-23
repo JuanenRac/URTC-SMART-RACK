@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **The serial frame is big-endian, version 2:** the temperature of `SET_PREHEAT` was the one multi-byte value of the family that travelled little-endian. `PROTOCOL_VERSION` is now 2 and `rack_command_validate_set_preheat()` reads the two temperature bytes big-endian, so the serial payload and the first three data bytes of the CAN form (`rack_can.c`) are the same bytes and go through the same validation without being reordered. A frame of version 1 is refused as an unsupported version instead of being read as another temperature. The tests, the serial payload builders and the vectors copied from URTC-COMMON follow (the frames, their checksums and the link scenarios are new), and `docs/OPERATIONS.md` and the README of every language say so.
+
 ## [0.2.0] - Rack frames use the CRC-8 shared with the vision link and checked against the shared vectors
 
 - **One checksum for the rack and the vision link:** `protocol_crc8()` now calls `urtc_crc8()` of `src/urtc_crc8.h`, the header that URTC-COMMON keeps for the repositories that frame their data with CRC-8 (copied with `vendor_copy.py`, locked in `src/urtc_common.lock.json`); the test checks it against the check values URTC-COMMON computes on its own, among them the CRC-8 check value `0xF4` of the text `123456789`. The host tests run 441 assertions.

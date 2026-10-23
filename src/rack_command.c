@@ -32,8 +32,8 @@ rack_command_status_t rack_command_validate_set_preheat(const uint8_t *payload, 
         return RACK_CMD_ERR_TOOL_ID_INVALID;
     }
 
-    // Little-endian, matching protocol.h's own wire convention.
-    uint16_t target_temp_c = (uint16_t)(payload[1] | ((uint16_t)payload[2] << 8));
+    // Big-endian, like every multi-byte value of the URTC bus and of the CAN form of this command.
+    uint16_t target_temp_c = (uint16_t)(((uint16_t)payload[1] << 8) | payload[2]);
     if (target_temp_c > RACK_COMMAND_MAX_TEMP_C) {
         return RACK_CMD_ERR_TEMP_OUT_OF_RANGE;
     }

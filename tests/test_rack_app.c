@@ -23,7 +23,7 @@ static uint16_t target_of(const rack_inventory_t *inv, uint8_t tool)
 
 static void deliver(rack_inventory_t *inv, link_watchdog_t *lw, uint8_t seq, uint8_t tool, uint16_t temp, uint32_t now_ms)
 {
-    uint8_t payload[3] = {tool, (uint8_t)(temp & 0xFFu), (uint8_t)(temp >> 8)};
+    uint8_t payload[3] = {tool, (uint8_t)(temp >> 8), (uint8_t)(temp & 0xFFu)};
     uint8_t buf[PROTOCOL_MAX_FRAME_SIZE];
     uint8_t len = protocol_encode_frame(seq, RACK_CMD_SET_PREHEAT, payload, 3, buf);
     rack_decision_t d;

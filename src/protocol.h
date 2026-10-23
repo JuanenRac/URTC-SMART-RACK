@@ -14,13 +14,18 @@
 //         [SOF][VERSION] [SEQ] [CMD] [LEN] [PAYLOAD...]     [CRC8]
 //
 // CRC8 covers everything from SOF through the last payload byte.
+//
+// Every multi-byte value of a payload is BIG-ENDIAN, like every value of the URTC bus.
+// Version 1 of this frame carried the temperature of SET_PREHEAT little-endian; a frame
+// of that version is refused as PROTOCOL_ERR_UNSUPPORTED_VERSION instead of being read
+// as a different temperature.
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
 #include <stdint.h>
 
 #define PROTOCOL_SOF 0xA5u
-#define PROTOCOL_VERSION 1u
+#define PROTOCOL_VERSION 2u
 #define PROTOCOL_MAX_PAYLOAD 16u
 // SOF + VERSION + SEQ + CMD + LEN + payload + CRC
 #define PROTOCOL_MAX_FRAME_SIZE (5u + PROTOCOL_MAX_PAYLOAD + 1u)

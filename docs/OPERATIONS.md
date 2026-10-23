@@ -91,13 +91,16 @@ not hardcoded). Persisting the counters to F-RAM is not implemented yet.
 
 ## Link protocol
 
-Frame: `SOF(0xA5) | VERSION(1) | SEQ | CMD | LEN | PAYLOAD (max 16) | CRC8`.
+Frame: `SOF(0xA5) | VERSION(2) | SEQ | CMD | LEN | PAYLOAD (max 16) | CRC8`.
 CRC-8 (polynomial `0x07`) covers everything from SOF to the last payload
 byte. A frame is accepted only if SOF, version, declared length and CRC are
 all consistent; anything else is dropped whole and never partially trusted.
+Version 2 is the big-endian layout: version 1 sent the temperature little-endian, and a
+frame of that version is refused as an unsupported version instead of being read as
+another temperature.
 
 The only command today is `SET_PREHEAT` (`0x01`, payload: tool ID + target
-temperature as 16-bit little-endian). It is rejected when the payload length
+temperature as 16-bit big-endian). It is rejected when the payload length
 is wrong, the tool byte is not a plain 5-bit value (any of the three upper bits
 set is corruption, not "the same tool"), the tool is `25`..`30` or `31`, the
 target is above 0 for a tool that has no heater, or the temperature exceeds the
@@ -107,7 +110,7 @@ any tool.
 ### Transport
 
 The transport that is implemented is a **serial link** with the frame above. It can be up
-to 22 bytes long, so it is not a CAN frame, and its temperature is little-endian. A serial
+to 22 bytes long, so it is not a CAN frame, and its temperature is big-endian, like the CAN form below. A serial
 link delivers bytes, not frames, so `rack_deframer.c` finds them in the stream:
 
 - it waits for the start byte and collects the bytes the header announces (the header is

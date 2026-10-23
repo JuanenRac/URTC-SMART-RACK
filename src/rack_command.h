@@ -41,7 +41,7 @@ typedef struct {
 } rack_set_preheat_t;
 
 // Decodes and range-checks a RACK_CMD_SET_PREHEAT payload
-// (tool_id: 1 byte, target_temp_c: 2 bytes little-endian - 3 bytes total).
+// (tool_id: 1 byte, target_temp_c: 2 bytes big-endian - 3 bytes total).
 // Rejects a payload of the wrong length, a tool byte that is not a plain 5-bit
 // value or names no tool profile (RACK_CMD_ERR_TOOL_ID_INVALID), an absent tool
 // slot (see tool_id.h's TOOL_ID_NONE), a target above 0 for a tool without a

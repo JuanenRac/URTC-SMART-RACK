@@ -24,7 +24,7 @@ void run_protocol_tests(int *failures)
 
     // --- Real round trip: encode then parse gives back the exact same frame ---
     {
-        uint8_t payload[3] = {5, 0xC8, 0x00}; // tool_id=5, target_temp_c=200 (little-endian)
+        uint8_t payload[3] = {5, 0x00, 0xC8}; // tool_id=5, target_temp_c=200 (big-endian)
         uint8_t buf[PROTOCOL_MAX_FRAME_SIZE];
         uint8_t written = protocol_encode_frame(7, 0x01, payload, sizeof(payload), buf);
         TEST_ASSERT(written == 5 + 3 + 1, "encode writes header + payload + CRC bytes");

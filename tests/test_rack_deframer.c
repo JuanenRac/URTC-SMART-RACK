@@ -16,7 +16,7 @@
 
 static uint8_t encode_preheat(uint8_t seq, uint8_t tool, uint16_t temp, uint8_t *out)
 {
-    uint8_t payload[3] = {tool, (uint8_t)(temp & 0xFFu), (uint8_t)(temp >> 8)};
+    uint8_t payload[3] = {tool, (uint8_t)(temp >> 8), (uint8_t)(temp & 0xFFu)};
     return protocol_encode_frame(seq, RACK_CMD_SET_PREHEAT, payload, 3, out);
 }
 

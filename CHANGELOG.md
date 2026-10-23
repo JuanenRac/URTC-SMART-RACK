@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The README files carry sections written once in URTC-COMMON:** "Compatibility", in the eight languages, between marker comments before the license heading (`tools/readme_sections.py` of URTC-COMMON writes and checks them; the rest of each README is hand-written as before).
 - **A static check on every push:** `ruff.toml` (unused names, exception chaining and syntax errors, the rules the flasher and the tester already ran) and a step of the CI that runs `ruff check .` with a pinned ruff; nothing to fix.
 - **The frame layer comes from URTC-COMMON:** `protocol_parse_frame` and `protocol_encode_frame` use `src/urtc_frame.h` (copied with `vendor_copy.py --set firmware_frame --only urtc_frame.h`) instead of their own checks of the start byte, the version, the length and the CRC, shared with the vision sensor link; the order of the checks and every status are unchanged (a compile-time check holds the order of the statuses) and the host tests, the rack vectors and the parse vectors pass with the sanitizers. The rack keeps no rate limiter of its own: the link watchdog and the anti-replay sequence are what bound the commands it accepts.
 - The `TEST_ASSERT` macro of the host tests comes from URTC-COMMON (`tests/vectors/urtc_test.h`, copied with `vendor_copy.py --set firmware_test`) instead of being written again in `tests/test_runner.h`; the suites are unchanged.

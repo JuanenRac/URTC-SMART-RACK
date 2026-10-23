@@ -97,6 +97,7 @@ URTC-SMART-RACK/
 │   ├── preheat.h / .c              # 本物：スマートアイドル起動 + 目標温度 + 安全状態ターゲット
 │   ├── protocol.h / .c             # 本物：バージョン化されたフレーム形式 + CRC8 パース/エンコード
 │   ├── urtc_crc8.h                 # 本物：ビジョンセンサーリンクと共有する CRC-8（URTC-COMMON からコピー）
+│   ├── urtc_frame.h                # 本物：ビジョンセンサーリンクと共有するフレーム層（開始バイト、バージョン、長さ、CRC。URTC-COMMON からコピー）
 │   ├── rack_command.h / .c         # 本物：コマンドデコード + アクチュエーション限界検証
 │   ├── link_watchdog.h / .c        # 本物：リンクタイムアウト + コマンド冪等性
 │   ├── rack_link.h / .c            # 本物：protocol/rack_command/link_watchdog/preheat を結びつけるフレームディスパッチの判断

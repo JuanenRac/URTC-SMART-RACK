@@ -5,7 +5,19 @@
 // =============================================================================
 #include "protocol.h"
 #include "urtc_crc8.h"   // the checksum shared with the vision sensor link (copied from URTC-COMMON)
+#include "urtc_frame.h"  // the frame layer shared with the vision sensor link (copied from URTC-COMMON)
 #include <stddef.h>
+
+// The rack frame is the shared layer with the length byte at index 4 (SEQ and CMD sit before it).
+static const urtc_frame_format_t RACK_FRAME = { PROTOCOL_SOF, PROTOCOL_VERSION, 4u, PROTOCOL_MAX_PAYLOAD };
+
+// The statuses of the shared layer have the same order as ours; the cast below relies on it.
+_Static_assert((int)URTC_FRAME_OK == (int)PROTOCOL_OK, "status order: ok");
+_Static_assert((int)URTC_FRAME_INCOMPLETE == (int)PROTOCOL_ERR_INCOMPLETE, "status order: incomplete");
+_Static_assert((int)URTC_FRAME_BAD_SOF == (int)PROTOCOL_ERR_BAD_SOF, "status order: bad start byte");
+_Static_assert((int)URTC_FRAME_UNSUPPORTED_VERSION == (int)PROTOCOL_ERR_UNSUPPORTED_VERSION, "status order: unsupported version");
+_Static_assert((int)URTC_FRAME_LENGTH_OUT_OF_RANGE == (int)PROTOCOL_ERR_LENGTH_OUT_OF_RANGE, "status order: length out of range");
+_Static_assert((int)URTC_FRAME_CRC_MISMATCH == (int)PROTOCOL_ERR_CRC_MISMATCH, "status order: CRC mismatch");
 
 uint8_t protocol_crc8(const uint8_t *data, uint8_t len)
 {
@@ -17,31 +29,14 @@ protocol_status_t protocol_parse_frame(const uint8_t *buf, uint8_t buf_len, prot
     if (buf == NULL || out_frame == NULL) {
         return PROTOCOL_ERR_INCOMPLETE;
     }
-    // Smallest real frame is a zero-payload one: SOF+VERSION+SEQ+CMD+LEN+CRC.
-    if (buf_len < 6u) {
-        return PROTOCOL_ERR_INCOMPLETE;
+    // Start byte, version, length, completeness and CRC are decided by the shared frame layer, in that order.
+    uint8_t total_len = 0;
+    const urtc_frame_status_t status = urtc_frame_validate(&RACK_FRAME, buf, buf_len, &total_len);
+    if (status != URTC_FRAME_OK) {
+        return (protocol_status_t)status;
     }
-    if (buf[0] != PROTOCOL_SOF) {
-        return PROTOCOL_ERR_BAD_SOF;
-    }
-    uint8_t version = buf[1];
-    if (version != PROTOCOL_VERSION) {
-        return PROTOCOL_ERR_UNSUPPORTED_VERSION;
-    }
-    uint8_t len = buf[4];
-    if (len > PROTOCOL_MAX_PAYLOAD) {
-        return PROTOCOL_ERR_LENGTH_OUT_OF_RANGE;
-    }
-    uint8_t header_and_payload_len = (uint8_t)(5u + len);
-    uint8_t total_len = (uint8_t)(header_and_payload_len + 1u);
-    if (buf_len < total_len) {
-        return PROTOCOL_ERR_INCOMPLETE;
-    }
-    uint8_t computed_crc = protocol_crc8(buf, header_and_payload_len);
-    uint8_t received_crc = buf[header_and_payload_len];
-    if (computed_crc != received_crc) {
-        return PROTOCOL_ERR_CRC_MISMATCH;
-    }
+    const uint8_t version = buf[1];
+    const uint8_t len = buf[4];
 
     out_frame->version = version;
     out_frame->seq = buf[2];
@@ -78,15 +73,11 @@ uint8_t protocol_encode_frame(uint8_t seq, uint8_t cmd, const uint8_t *payload, 
     if (payload_len > 0u && payload == NULL) {
         return 0;
     }
-    out_buf[0] = PROTOCOL_SOF;
-    out_buf[1] = PROTOCOL_VERSION;
+    urtc_frame_start(&RACK_FRAME, out_buf, payload_len);
     out_buf[2] = seq;
     out_buf[3] = cmd;
-    out_buf[4] = payload_len;
     for (uint8_t i = 0; i < payload_len; i++) {
         out_buf[5u + i] = payload[i];
     }
-    uint8_t header_and_payload_len = (uint8_t)(5u + payload_len);
-    out_buf[header_and_payload_len] = protocol_crc8(out_buf, header_and_payload_len);
-    return (uint8_t)(header_and_payload_len + 1u);
+    return urtc_frame_seal(&RACK_FRAME, out_buf, payload_len);
 }

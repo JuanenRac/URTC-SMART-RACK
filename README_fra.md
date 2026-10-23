@@ -88,6 +88,7 @@ URTC-SMART-RACK/
 │   ├── preheat.h / .c              # Réel : activation Smart Idle + température cible + cible d'état sûr
 │   ├── protocol.h / .c             # Réel : format de trame versionné + parsing/encodage CRC8
 │   ├── urtc_crc8.h                 # Réel : CRC-8 partagé avec la liaison du capteur de vision (copié depuis URTC-COMMON)
+│   ├── urtc_frame.h                # Réel : couche de trame (octet de départ, version, longueur, CRC) partagée avec la liaison du capteur de vision (copiée depuis URTC-COMMON)
 │   ├── rack_command.h / .c         # Réel : décodage de commande + validation des limites d'actionnement
 │   ├── link_watchdog.h / .c        # Réel : timeout de liaison + idempotence des commandes
 │   ├── rack_link.h / .c            # Réel : décision de dispatch de trame reliant protocol/rack_command/link_watchdog/preheat

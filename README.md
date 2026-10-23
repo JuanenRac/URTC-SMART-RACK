@@ -88,6 +88,7 @@ URTC-SMART-RACK/
 │   ├── preheat.h / .c              # Real: Smart Idle activation + target temperature + safe-state target
 │   ├── protocol.h / .c             # Real: versioned frame format + CRC8 parse/encode
 │   ├── urtc_crc8.h                 # Real: CRC-8 shared with the vision sensor link (copied from URTC-COMMON)
+│   ├── urtc_frame.h                # Real: frame layer (start byte, version, length, CRC) shared with the vision sensor link (copied from URTC-COMMON)
 │   ├── rack_command.h / .c         # Real: command decode + actuation-limit validation
 │   ├── link_watchdog.h / .c        # Real: link timeout + command idempotency
 │   ├── rack_link.h / .c            # Real: frame-dispatch decision (rack_link_decide) tying protocol/rack_command/link_watchdog/preheat together

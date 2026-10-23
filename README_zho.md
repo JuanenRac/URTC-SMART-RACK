@@ -93,6 +93,7 @@ URTC-SMART-RACK/
 │   ├── preheat.h / .c              # 真实：智能待机激活 + 目标温度 + 安全状态目标
 │   ├── protocol.h / .c             # 真实：版本化帧格式 + CRC8 解析/编码
 │   ├── urtc_crc8.h                 # 真实：与视觉传感器链路共用的 CRC-8（复制自 URTC-COMMON）
+│   ├── urtc_frame.h                # 真实：与视觉传感器链路共用的帧层（起始字节、版本、长度、CRC；复制自 URTC-COMMON）
 │   ├── rack_command.h / .c         # 真实：命令解码 + 执行限制验证
 │   ├── link_watchdog.h / .c        # 真实：链路超时 + 命令幂等性
 │   ├── rack_link.h / .c            # 真实：连接 protocol/rack_command/link_watchdog/preheat 的帧分发决策

@@ -88,6 +88,7 @@ URTC-SMART-RACK/
 │   ├── preheat.h / .c              # Echt: Smart-Idle-Aktivierung + Zieltemperatur + Ziel für sicheren Zustand
 │   ├── protocol.h / .c             # Echt: versioniertes Frame-Format + CRC8-Parsing/-Kodierung
 │   ├── urtc_crc8.h                 # Echt: CRC-8, gemeinsam mit der Vision-Sensorverbindung (aus URTC-COMMON kopiert)
+│   ├── urtc_frame.h                # Echt: Rahmenschicht (Startbyte, Version, Länge, CRC), gemeinsam mit der Vision-Sensorverbindung (aus URTC-COMMON kopiert)
 │   ├── rack_command.h / .c         # Echt: Befehlsdekodierung + Aktuierungsgrenzen-Validierung
 │   ├── link_watchdog.h / .c        # Echt: Link-Timeout + Befehls-Idempotenz
 │   ├── rack_link.h / .c            # Echt: Frame-Dispatch-Entscheidung, die protocol/rack_command/link_watchdog/preheat verbindet

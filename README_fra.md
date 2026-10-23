@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| Version | `0.1.9` |
+| Version | `0.2.0` |
 | Maturité | Fonctionnel |
 | Technologie | C / STM32G4 / arm-none-eabi-gcc |
 | Cible | Une carte à microcontrôleur (le firmware) ; compilé sur un PC |

@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The host tests are held to a coverage floor:** the CI builds them with gcov counters (`URTC_COVERAGE_FLOOR` in `build_firmware.sh`) and `tools/gcov_floor.py` fails the build when they execute less than 90 percent of the lines of `src/` (98 percent today).
 - **The serial frame is big-endian, version 2:** the temperature of `SET_PREHEAT` was the one multi-byte value of the family that travelled little-endian. `PROTOCOL_VERSION` is now 2 and `rack_command_validate_set_preheat()` reads the two temperature bytes big-endian, so the serial payload and the first three data bytes of the CAN form (`rack_can.c`) are the same bytes and go through the same validation without being reordered. A frame of version 1 is refused as an unsupported version instead of being read as another temperature. The tests, the serial payload builders and the vectors copied from URTC-COMMON follow (the frames, their checksums and the link scenarios are new), and `docs/OPERATIONS.md` and the README of every language say so.
 
 ## [0.2.0] - Rack frames use the CRC-8 shared with the vision link and checked against the shared vectors

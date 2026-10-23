@@ -104,7 +104,12 @@ SANITIZE_FLAGS=""
 if [ "${URTC_SANITIZE:-0}" = "1" ]; then
     SANITIZE_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=undefined"
 fi
-"$HOST_CC" -std=c11 -Wall -Wextra -Wconversion -Isrc -Itests $SANITIZE_FLAGS \
+# URTC_COVERAGE_FLOOR=<percent> (set by CI) also builds them with gcov counters and fails under that share of executed lines.
+COVERAGE_FLAGS=""
+if [ -n "${URTC_COVERAGE_FLOOR:-}" ]; then
+    COVERAGE_FLAGS="--coverage -O0"
+fi
+"$HOST_CC" -std=c11 -Wall -Wextra -Wconversion -Isrc -Itests $SANITIZE_FLAGS $COVERAGE_FLAGS \
     -o "$BUILD/host_tests" \
     tests/test_main.c tests/test_tool_id.c tests/test_lifecycle.c tests/test_preheat.c \
     tests/test_protocol.c tests/test_rack_command.c tests/test_link_watchdog.c tests/test_rack_link_scenarios.c \
@@ -113,6 +118,9 @@ fi
     src/tool_id.c src/tool_limits.c src/lifecycle.c src/preheat.c src/protocol.c src/rack_command.c src/link_watchdog.c src/rack_link.c \
     src/rack_inventory.c src/rack_app.c src/rack_deframer.c src/rack_can.c src/preheat_limit.c src/slot_verify.c src/rack_units.c src/preheat_plan.c
 "$BUILD/host_tests"
+if [ -n "${URTC_COVERAGE_FLOOR:-}" ]; then
+    python3 tools/gcov_floor.py "$URTC_COVERAGE_FLOOR" "$BUILD"
+fi
 echo "  OK   tool_id.c / tool_limits.c / lifecycle.c / preheat.c / protocol.c / rack_command.c / link_watchdog.c / rack_link.c / rack_inventory.c / rack_deframer.c / rack_can.c / preheat_limit.c / slot_verify.c / rack_units.c / preheat_plan.c pure-logic tests passed"
 
 echo ""

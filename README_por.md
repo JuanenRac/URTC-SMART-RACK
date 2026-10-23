@@ -105,6 +105,7 @@ URTC-SMART-RACK/
 ├── images/                         # Media and diagrams
 ├── tools/
 │   ├── build_test.py               # Non-versioning build/compile check
+│   ├── gcov_floor.py               # Falha se os testes de host executarem menos de src/ do que um mínimo (gcov)
 │   ├── publish_release_assets.py   # Lista os assets da release e imprime o comando gh
 │   └── ci_validate.py              # Manifest/CHANGELOG/docs validation used by CI
 ├── bump.py                         # Comando explícito para subir a versão (compilar nunca a sobe)

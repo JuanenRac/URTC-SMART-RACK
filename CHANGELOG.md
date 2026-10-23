@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **One checksum for the rack and the vision link:** `protocol_crc8()` now calls `urtc_crc8()` of `src/urtc_crc8.h`, the header that URTC-COMMON keeps for the repositories that frame their data with CRC-8 (copied with `vendor_copy.py`, locked in `src/urtc_common.lock.json`); the test checks it against the check values URTC-COMMON computes on its own, among them the CRC-8 check value `0xF4` of the text `123456789`. The host tests run 441 assertions.
+
 ## [0.1.9] - Head units, thermal check of a slot and predictive pre-heat
 
 - **Each head is a unit**: `rack_inventory.c` can key a slot by the type plus the serial number of the head (`rack_inventory_set_slot_unit()`), and `rack_units.c` keeps the use, the heater time and the thermal faults of each physical head, taken from its own counters (`0x1AA` / `0x1AB`), counting only the growth since the last reading and never a counter that went down.

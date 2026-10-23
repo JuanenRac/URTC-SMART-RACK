@@ -5,6 +5,10 @@
     "rack_vectors.h": {
       "from": "generated/rack_vectors.h",
       "sha256": "4e59427469173cf55a2d938e9ad241e634058b9f059faf4060080f7b4198ba54"
+    },
+    "urtc_fw_vectors.h": {
+      "from": "generated/urtc_fw_vectors.h",
+      "sha256": "c2ad884b439c1eab4b2bc30cc1c2f1b00bc998cd9bf1e8da73d62155878cae70"
     }
   }
 }

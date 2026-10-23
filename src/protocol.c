@@ -4,22 +4,12 @@
 // GPL-3.0-or-later - see LICENSE
 // =============================================================================
 #include "protocol.h"
+#include "urtc_crc8.h"   // the checksum shared with the vision sensor link (copied from URTC-COMMON)
 #include <stddef.h>
 
 uint8_t protocol_crc8(const uint8_t *data, uint8_t len)
 {
-    uint8_t crc = 0x00u;
-    for (uint8_t i = 0; i < len; i++) {
-        crc ^= data[i];
-        for (uint8_t bit = 0; bit < 8u; bit++) {
-            if (crc & 0x80u) {
-                crc = (uint8_t)(((unsigned)crc << 1) ^ 0x07u);
-            } else {
-                crc = (uint8_t)(crc << 1);
-            }
-        }
-    }
-    return crc;
+    return urtc_crc8(data, len);
 }
 
 protocol_status_t protocol_parse_frame(const uint8_t *buf, uint8_t buf_len, protocol_frame_t *out_frame)

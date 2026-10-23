@@ -5,10 +5,23 @@
 // =============================================================================
 #include "test_runner.h"
 #include "../src/protocol.h"
+#include "vectors/urtc_fw_vectors.h"
 #include <string.h>
 
 void run_protocol_tests(int *failures)
 {
+    // --- The shared checksum (urtc_crc8.h, copied from URTC-COMMON) gives the values URTC-COMMON computes on its own ---
+    {
+        int mismatches = 0;
+        for (int i = 0; i < URTC_VEC_COUNT(URTC_VEC_CRC8); i++) {
+            if (protocol_crc8(URTC_VEC_CRC8[i].data, URTC_VEC_CRC8[i].len) != URTC_VEC_CRC8[i].crc) {
+                mismatches++;
+            }
+        }
+        TEST_ASSERT(mismatches == 0, "protocol_crc8 gives every check value of URTC-COMMON");
+        TEST_ASSERT(protocol_crc8((const uint8_t *)"123456789", 9) == 0xF4, "the check text gives the CRC-8 check value 0xF4");
+    }
+
     // --- Real round trip: encode then parse gives back the exact same frame ---
     {
         uint8_t payload[3] = {5, 0xC8, 0x00}; // tool_id=5, target_temp_c=200 (little-endian)

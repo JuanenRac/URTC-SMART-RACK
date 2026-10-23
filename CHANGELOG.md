@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **A static check on every push:** `ruff.toml` (unused names, exception chaining and syntax errors, the rules the flasher and the tester already ran) and a step of the CI that runs `ruff check .` with a pinned ruff; nothing to fix.
 - **The frame layer comes from URTC-COMMON:** `protocol_parse_frame` and `protocol_encode_frame` use `src/urtc_frame.h` (copied with `vendor_copy.py --set firmware_frame --only urtc_frame.h`) instead of their own checks of the start byte, the version, the length and the CRC, shared with the vision sensor link; the order of the checks and every status are unchanged (a compile-time check holds the order of the statuses) and the host tests, the rack vectors and the parse vectors pass with the sanitizers. The rack keeps no rate limiter of its own: the link watchdog and the anti-replay sequence are what bound the commands it accepts.
 - The `TEST_ASSERT` macro of the host tests comes from URTC-COMMON (`tests/vectors/urtc_test.h`, copied with `vendor_copy.py --set firmware_test`) instead of being written again in `tests/test_runner.h`; the suites are unchanged.
 - **The host tests are held to a coverage floor:** the CI builds them with gcov counters (`URTC_COVERAGE_FLOOR` in `build_firmware.sh`) and `tools/gcov_floor.py` fails the build when they execute less than 90 percent of the lines of `src/` (98 percent today).

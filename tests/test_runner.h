@@ -11,15 +11,8 @@
 #ifndef TEST_RUNNER_H
 #define TEST_RUNNER_H
 
-#include <stdio.h>
-
-#define TEST_ASSERT(cond, msg) \
-    do { \
-        if (!(cond)) { \
-            printf("  FAIL: %s (%s:%d)\n", (msg), __FILE__, __LINE__); \
-            (*failures)++; \
-        } \
-    } while (0)
+// TEST_ASSERT comes from URTC-COMMON (vendor_copy.py --set firmware_test).
+#include "vectors/urtc_test.h"
 
 void run_tool_id_tests(int *failures);
 void run_lifecycle_tests(int *failures);

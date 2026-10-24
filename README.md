@@ -90,12 +90,20 @@ URTC-SMART-RACK/
 │   ├── protocol.h / .c             # Real: versioned frame format + CRC8 parse/encode
 │   ├── urtc_crc8.h                 # Real: CRC-8 shared with the vision sensor link (copied from URTC-COMMON)
 │   ├── urtc_frame.h                # Real: frame layer (start byte, version, length, CRC) shared with the vision sensor link (copied from URTC-COMMON)
+│   ├── urtc_rate_limiter.h         # Real: minimum-interval limiter of the commands of a tool (copied from URTC-COMMON)
+│   ├── urtc_common.lock.json       # Lock of the files copied from URTC-COMMON
 │   ├── rack_command.h / .c         # Real: command decode + actuation-limit validation
 │   ├── link_watchdog.h / .c        # Real: link timeout + command idempotency
 │   ├── rack_link.h / .c            # Real: frame-dispatch decision (rack_link_decide) tying protocol/rack_command/link_watchdog/preheat together
 │   ├── rack_inventory.h / .c       # Real: multi-slot tool inventory - which tool is racked where, one tool never in two slots at once
 │   ├── tool_limits.h / .c          # Real: highest pre-heat target per tool profile (0 = no heater)
 │   ├── rack_app.h / .c             # Real: applies the receive-path decision to the inventory; safe state while the link is lost
+│   ├── rack_deframer.h / .c        # Real: finds the frames in the byte stream of the serial link (resynchronisation, silence timeout)
+│   ├── rack_can.h / .c             # Real: how the rack command will travel on CAN once a board with a transceiver exists
+│   ├── preheat_limit.h / .c        # Real: the longest pre-heat without a tool swap
+│   ├── preheat_plan.h / .c         # Real: predictive pre-heat from the job queue
+│   ├── slot_verify.h / .c          # Real: what a thermal reading of a slot says about it
+│   ├── rack_units.h / .c           # Real: identity and wear of each physical tool head
 │   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
 │   ├── startup_stm32g4_minimal.c   # Vector table + Reset_Handler (no ST HAL yet, see file header)
 │   └── STM32G4_MINIMAL.ld          # Placeholder linker script (128K FLASH / 32K RAM floor)

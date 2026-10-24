@@ -90,12 +90,20 @@ URTC-SMART-RACK/
 │   ├── protocol.h / .c             # Réel : format de trame versionné + parsing/encodage CRC8
 │   ├── urtc_crc8.h                 # Réel : CRC-8 partagé avec la liaison du capteur de vision (copié depuis URTC-COMMON)
 │   ├── urtc_frame.h                # Réel : couche de trame (octet de départ, version, longueur, CRC) partagée avec la liaison du capteur de vision (copiée depuis URTC-COMMON)
+│   ├── urtc_rate_limiter.h         # Réel : limiteur d'intervalle minimal des ordres d'un outil (copié de URTC-COMMON)
+│   ├── urtc_common.lock.json       # Verrou des fichiers copiés de URTC-COMMON
 │   ├── rack_command.h / .c         # Réel : décodage de commande + validation des limites d'actionnement
 │   ├── link_watchdog.h / .c        # Réel : timeout de liaison + idempotence des commandes
 │   ├── rack_link.h / .c            # Réel : décision de dispatch de trame reliant protocol/rack_command/link_watchdog/preheat
 │   ├── rack_inventory.h / .c       # Réel : inventaire multi-emplacements d'outils - quel outil est rangé où, jamais dans deux emplacements à la fois
 │   ├── tool_limits.h / .c          # Réel : consigne de préchauffage maximale par profil d'outil (0 = pas de chauffage)
 │   ├── rack_app.h / .c             # Réel : applique la décision de la voie de réception à l'inventaire ; état sûr tant que la liaison est perdue
+│   ├── rack_deframer.h / .c        # Réel : trouve les trames dans le flux d'octets de la liaison série (resynchronisation, délai de silence)
+│   ├── rack_can.h / .c             # Réel : comment l'ordre du rack voyagera sur le CAN quand une carte avec transceiver existera
+│   ├── preheat_limit.h / .c        # Réel : le préchauffage le plus long sans échange d'outil
+│   ├── preheat_plan.h / .c         # Réel : préchauffage prédictif à partir de la file de travaux
+│   ├── slot_verify.h / .c          # Réel : ce qu'une mesure thermique dit d'un emplacement
+│   ├── rack_units.h / .c           # Réel : identité et usure de chaque tête physique
 │   ├── main.c                      # Point d'entrée minimal (boucle de battement de vie)
 │   ├── startup_stm32g4_minimal.c   # Table des vecteurs + Reset_Handler (pas de HAL ST pour l'instant, voir l'en-tête du fichier)
 │   └── STM32G4_MINIMAL.ld          # Script de liaison provisoire (plancher 128K FLASH / 32K RAM)

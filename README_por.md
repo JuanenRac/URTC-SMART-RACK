@@ -90,12 +90,20 @@ URTC-SMART-RACK/
 │   ├── protocol.h / .c             # Real: versioned frame format + CRC8 parse/encode
 │   ├── urtc_crc8.h                 # Real: CRC-8 partilhado com a ligação do sensor de visão (copiado de URTC-COMMON)
 │   ├── urtc_frame.h                # Real: camada de trama (byte inicial, versão, comprimento, CRC) partilhada com a ligação do sensor de visão (copiada de URTC-COMMON)
+│   ├── urtc_rate_limiter.h         # Real: limitador de intervalo mínimo das ordens a uma ferramenta (copiado de URTC-COMMON)
+│   ├── urtc_common.lock.json       # Bloqueio dos ficheiros copiados de URTC-COMMON
 │   ├── rack_command.h / .c         # Real: command decode + actuation-limit validation
 │   ├── link_watchdog.h / .c        # Real: link timeout + command idempotency
 │   ├── rack_link.h / .c            # Real: frame-dispatch decision (rack_link_decide) tying protocol/rack_command/link_watchdog/preheat together
 │   ├── rack_inventory.h / .c       # Real: multi-slot tool inventory - which tool is racked where, one tool never in two slots at once
 │   ├── tool_limits.h / .c          # Real: temperatura máxima de pré-aquecimento por perfil de ferramenta (0 = sem aquecedor)
 │   ├── rack_app.h / .c             # Real: aplica a decisão do caminho de receção ao inventário; estado seguro enquanto a ligação está perdida
+│   ├── rack_deframer.h / .c        # Real: encontra as tramas no fluxo de bytes da ligação série (ressincronização, tempo de silêncio)
+│   ├── rack_can.h / .c             # Real: como a ordem do rack viajará no CAN quando existir uma placa com transcetor
+│   ├── preheat_limit.h / .c        # Real: o pré-aquecimento mais longo sem troca de ferramenta
+│   ├── preheat_plan.h / .c         # Real: pré-aquecimento preditivo a partir da fila de trabalhos
+│   ├── slot_verify.h / .c          # Real: o que uma leitura térmica diz de uma ranhura
+│   ├── rack_units.h / .c           # Real: identidade e desgaste de cada cabeça física
 │   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
 │   ├── startup_stm32g4_minimal.c   # Vector table + Reset_Handler (no ST HAL yet, see file header)
 │   └── STM32G4_MINIMAL.ld          # Placeholder linker script (128K FLASH / 32K RAM floor)

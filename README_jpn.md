@@ -99,12 +99,20 @@ URTC-SMART-RACK/
 │   ├── protocol.h / .c             # 本物：バージョン化されたフレーム形式 + CRC8 パース/エンコード
 │   ├── urtc_crc8.h                 # 本物：ビジョンセンサーリンクと共有する CRC-8（URTC-COMMON からコピー）
 │   ├── urtc_frame.h                # 本物：ビジョンセンサーリンクと共有するフレーム層（開始バイト、バージョン、長さ、CRC。URTC-COMMON からコピー）
+│   ├── urtc_rate_limiter.h         # 本物：工具へのコマンドの最小間隔リミッター（URTC-COMMON からコピー）
+│   ├── urtc_common.lock.json       # URTC-COMMON からコピーしたファイルのロックファイル
 │   ├── rack_command.h / .c         # 本物：コマンドデコード + アクチュエーション限界検証
 │   ├── link_watchdog.h / .c        # 本物：リンクタイムアウト + コマンド冪等性
 │   ├── rack_link.h / .c            # 本物：protocol/rack_command/link_watchdog/preheat を結びつけるフレームディスパッチの判断
 │   ├── rack_inventory.h / .c       # 本物：マルチスロット工具インベントリ——どの工具がどのスロットにあるか、2つのスロットに同時に存在することはない
 │   ├── tool_limits.h / .c          # 本物：工具プロファイルごとの予熱目標の上限（0 = ヒーターなし）
 │   ├── rack_app.h / .c             # 本物：受信パスの判断をインベントリに適用。リンク喪失中は安全状態
+│   ├── rack_deframer.h / .c        # 本物：シリアルリンクのバイトストリームからフレームを見つける（再同期、無通信タイムアウト）
+│   ├── rack_can.h / .c             # 本物：トランシーバー付きの基板ができたときにラックのコマンドが CAN をどう通るか
+│   ├── preheat_limit.h / .c        # 本物：ツール交換なしで許される最長の予熱
+│   ├── preheat_plan.h / .c         # 本物：ジョブキューに基づく予測予熱
+│   ├── slot_verify.h / .c          # 本物：スロットの熱読み取りが何を意味するか
+│   ├── rack_units.h / .c           # 本物：各ツールヘッドの個体識別と摩耗
 │   ├── main.c                      # 最小限のエントリポイント（生存証明のハートビートループ）
 │   ├── startup_stm32g4_minimal.c   # ベクターテーブル + Reset_Handler（ST HAL はまだなし、ファイルヘッダー参照）
 │   └── STM32G4_MINIMAL.ld          # プレースホルダーリンカスクリプト（128K FLASH / 32K RAM の下限）

@@ -90,12 +90,20 @@ URTC-SMART-RACK/
 │   ├── protocol.h / .c             # Real: formato de trama versionado + parseo/codificacion CRC8
 │   ├── urtc_crc8.h                 # Real: CRC-8 compartido con el enlace del sensor de visión (copiado de URTC-COMMON)
 │   ├── urtc_frame.h                # Real: capa de trama (byte inicial, versión, longitud, CRC) compartida con el enlace del sensor de visión (copiada de URTC-COMMON)
+│   ├── urtc_rate_limiter.h         # Real: limitador de intervalo mínimo de las órdenes a una herramienta (copiado de URTC-COMMON)
+│   ├── urtc_common.lock.json       # Bloqueo de los ficheros copiados de URTC-COMMON
 │   ├── rack_command.h / .c         # Real: decodificación de comandos + validación de límites de actuación
 │   ├── link_watchdog.h / .c        # Real: timeout de enlace + idempotencia de comandos
 │   ├── rack_link.h / .c            # Real: decisión de despacho de tramas que enlaza protocol/rack_command/link_watchdog/preheat
 │   ├── rack_inventory.h / .c       # Real: inventario multi-slot de herramientas - qué herramienta está guardada en qué slot, nunca en dos slots a la vez
 │   ├── tool_limits.h / .c          # Real: temperatura máxima de precalentamiento por perfil de herramienta (0 = sin calentador)
 │   ├── rack_app.h / .c             # Real: aplica la decisión del enlace al inventario; estado seguro mientras el enlace está perdido
+│   ├── rack_deframer.h / .c        # Real: encuentra las tramas en el flujo de bytes del enlace serie (resincronización, tiempo de silencio)
+│   ├── rack_can.h / .c             # Real: cómo viajará la orden del rack por CAN cuando exista una placa con transceptor
+│   ├── preheat_limit.h / .c        # Real: el precalentamiento más largo sin cambio de herramienta
+│   ├── preheat_plan.h / .c         # Real: precalentamiento predictivo a partir de la cola de trabajos
+│   ├── slot_verify.h / .c          # Real: lo que dice de una ranura una lectura térmica
+│   ├── rack_units.h / .c           # Real: identidad y desgaste de cada cabezal físico
 │   ├── main.c                      # Punto de entrada mínimo (bucle de latido de vida)
 │   ├── startup_stm32g4_minimal.c   # Tabla de vectores + Reset_Handler (sin HAL de ST todavía, ver cabecera del archivo)
 │   └── STM32G4_MINIMAL.ld          # Linker script placeholder (suelo de 128K FLASH / 32K RAM)

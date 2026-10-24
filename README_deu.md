@@ -90,12 +90,20 @@ URTC-SMART-RACK/
 │   ├── protocol.h / .c             # Echt: versioniertes Frame-Format + CRC8-Parsing/-Kodierung
 │   ├── urtc_crc8.h                 # Echt: CRC-8, gemeinsam mit der Vision-Sensorverbindung (aus URTC-COMMON kopiert)
 │   ├── urtc_frame.h                # Echt: Rahmenschicht (Startbyte, Version, Länge, CRC), gemeinsam mit der Vision-Sensorverbindung (aus URTC-COMMON kopiert)
+│   ├── urtc_rate_limiter.h         # Echt: Begrenzer des Mindestabstands der Befehle an ein Werkzeug (aus URTC-COMMON kopiert)
+│   ├── urtc_common.lock.json       # Sperrdatei der aus URTC-COMMON kopierten Dateien
 │   ├── rack_command.h / .c         # Echt: Befehlsdekodierung + Aktuierungsgrenzen-Validierung
 │   ├── link_watchdog.h / .c        # Echt: Link-Timeout + Befehls-Idempotenz
 │   ├── rack_link.h / .c            # Echt: Frame-Dispatch-Entscheidung, die protocol/rack_command/link_watchdog/preheat verbindet
 │   ├── rack_inventory.h / .c       # Echt: Mehrplatz-Werkzeuginventar - welches Werkzeug wo eingelagert ist, nie in zwei Plätzen zugleich
 │   ├── tool_limits.h / .c          # Echt: höchstes Vorheizziel je Werkzeugprofil (0 = kein Heizer)
 │   ├── rack_app.h / .c             # Echt: wendet die Entscheidung des Empfangspfads auf das Inventar an; sicherer Zustand bei verlorener Verbindung
+│   ├── rack_deframer.h / .c        # Echt: findet die Rahmen im Bytestrom der seriellen Verbindung (Neusynchronisation, Ruhezeit)
+│   ├── rack_can.h / .c             # Echt: wie der Rack-Befehl über CAN laufen wird, sobald eine Platine mit Transceiver existiert
+│   ├── preheat_limit.h / .c        # Echt: das längste Vorheizen ohne Werkzeugwechsel
+│   ├── preheat_plan.h / .c         # Echt: vorausschauendes Vorheizen aus der Auftragswarteschlange
+│   ├── slot_verify.h / .c          # Echt: was eine thermische Messung über einen Slot aussagt
+│   ├── rack_units.h / .c           # Echt: Identität und Verschleiß jedes physischen Werkzeugkopfs
 │   ├── main.c                      # Minimaler Einstiegspunkt (Lebenszeichen-Schleife)
 │   ├── startup_stm32g4_minimal.c   # Vektortabelle + Reset_Handler (noch keine ST-HAL, siehe Datei-Header)
 │   └── STM32G4_MINIMAL.ld          # Platzhalter-Linkerskript (Untergrenze 128K FLASH / 32K RAM)

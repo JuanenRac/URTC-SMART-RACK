@@ -90,12 +90,20 @@ URTC-SMART-RACK/
 │   ├── protocol.h / .c             # Reale: formato di frame versionato + parsing/codifica CRC8
 │   ├── urtc_crc8.h                 # Reale: CRC-8 condiviso con il collegamento del sensore di visione (copiato da URTC-COMMON)
 │   ├── urtc_frame.h                # Reale: livello di trama (byte iniziale, versione, lunghezza, CRC) condiviso con il collegamento del sensore di visione (copiato da URTC-COMMON)
+│   ├── urtc_rate_limiter.h         # Reale: limitatore di intervallo minimo dei comandi di un utensile (copiato da URTC-COMMON)
+│   ├── urtc_common.lock.json       # Lock dei file copiati da URTC-COMMON
 │   ├── rack_command.h / .c         # Reale: decodifica comandi + validazione dei limiti di attuazione
 │   ├── link_watchdog.h / .c        # Reale: timeout del collegamento + idempotenza dei comandi
 │   ├── rack_link.h / .c            # Reale: decisione di dispatch dei frame che collega protocol/rack_command/link_watchdog/preheat
 │   ├── rack_inventory.h / .c       # Reale: inventario multi-slot degli utensili - quale utensile è riposto dove, mai in due slot contemporaneamente
 │   ├── tool_limits.h / .c          # Reale: temperatura massima di preriscaldamento per profilo utensile (0 = nessun riscaldatore)
 │   ├── rack_app.h / .c             # Reale: applica la decisione del percorso di ricezione all'inventario; stato sicuro finché il collegamento è perso
+│   ├── rack_deframer.h / .c        # Reale: trova i frame nel flusso di byte del collegamento seriale (risincronizzazione, tempo di silenzio)
+│   ├── rack_can.h / .c             # Reale: come viaggerà il comando del rack sul CAN quando esisterà una scheda con transceiver
+│   ├── preheat_limit.h / .c        # Reale: il preriscaldamento più lungo senza cambio di utensile
+│   ├── preheat_plan.h / .c         # Reale: preriscaldamento predittivo dalla coda dei lavori
+│   ├── slot_verify.h / .c          # Reale: cosa dice di uno slot una lettura termica
+│   ├── rack_units.h / .c           # Reale: identità e usura di ogni testa fisica
 │   ├── main.c                      # Punto di ingresso minimo (ciclo di battito di vita)
 │   ├── startup_stm32g4_minimal.c   # Tabella dei vettori + Reset_Handler (ancora senza HAL ST, vedi intestazione del file)
 │   └── STM32G4_MINIMAL.ld          # Linker script placeholder (base 128K FLASH / 32K RAM)

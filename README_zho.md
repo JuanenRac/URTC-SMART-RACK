@@ -95,12 +95,20 @@ URTC-SMART-RACK/
 │   ├── protocol.h / .c             # 真实：版本化帧格式 + CRC8 解析/编码
 │   ├── urtc_crc8.h                 # 真实：与视觉传感器链路共用的 CRC-8（复制自 URTC-COMMON）
 │   ├── urtc_frame.h                # 真实：与视觉传感器链路共用的帧层（起始字节、版本、长度、CRC；复制自 URTC-COMMON）
+│   ├── urtc_rate_limiter.h         # 真实：工具命令的最小间隔限制器（复制自 URTC-COMMON）
+│   ├── urtc_common.lock.json       # 复制自 URTC-COMMON 的文件的锁定文件
 │   ├── rack_command.h / .c         # 真实：命令解码 + 执行限制验证
 │   ├── link_watchdog.h / .c        # 真实：链路超时 + 命令幂等性
 │   ├── rack_link.h / .c            # 真实：连接 protocol/rack_command/link_watchdog/preheat 的帧分发决策
 │   ├── rack_inventory.h / .c       # 真实：多槽位工具库存——哪个工具放在哪个槽位，同一工具绝不会同时出现在两个槽位
 │   ├── tool_limits.h / .c          # 真实：每种工具配置的预热目标上限（0 = 无加热器）
 │   ├── rack_app.h / .c             # 真实：将接收路径的决定应用到库存；链路丢失时保持安全状态
+│   ├── rack_deframer.h / .c        # 真实：在串行链路的字节流中找出帧（重新同步、静默超时）
+│   ├── rack_can.h / .c             # 真实：有带收发器的板子之后，机架命令将如何在 CAN 上传输
+│   ├── preheat_limit.h / .c        # 真实：不更换工具时最长的预热时间
+│   ├── preheat_plan.h / .c         # 真实：根据作业队列的预测性预热
+│   ├── slot_verify.h / .c          # 真实：对槽位的热读数说明了什么
+│   ├── rack_units.h / .c           # 真实：每个实体工具头的身份与磨损
 │   ├── main.c                      # 最小入口点（存活证明心跳循环）
 │   ├── startup_stm32g4_minimal.c   # 向量表 + Reset_Handler（暂无 ST HAL，见文件头说明）
 │   └── STM32G4_MINIMAL.ld          # 占位链接脚本（128K FLASH / 32K RAM 下限）

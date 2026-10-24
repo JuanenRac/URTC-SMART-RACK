@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| Versión | `0.2.0` |
+| Versión | `0.2.1` |
 | Madurez | Funcional |
 | Tecnología | C / STM32G4 / arm-none-eabi-gcc |
 | Destino | Una placa con microcontrolador (el firmware); se compila en un PC |

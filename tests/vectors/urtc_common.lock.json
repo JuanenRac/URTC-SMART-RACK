@@ -4,7 +4,7 @@
   "files": {
     "rack_vectors.h": {
       "from": "generated/rack_vectors.h",
-      "sha256": "9e51f2f737d420a00020dc366720b4813a1b1b946fed477fecb605a7aa8233de"
+      "sha256": "1c04e96fb17591ebc1589201609cb3659a3f7ff145b100dae6a16398732af388"
     },
     "urtc_fw_vectors.h": {
       "from": "generated/urtc_fw_vectors.h",

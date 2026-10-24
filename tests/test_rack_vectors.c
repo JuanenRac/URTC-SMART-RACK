@@ -12,6 +12,7 @@
 #include "../src/protocol.h"
 #include "../src/rack_can.h"
 #include "../src/rack_command.h"
+#include "../src/rack_deframer.h"
 #include "../src/rack_link.h"
 #include "../src/link_watchdog.h"
 #include "../src/slot_verify.h"
@@ -72,4 +73,52 @@ void run_rack_vectors_tests(int *failures)
         const rack_vec_verify_t *v = &RACK_VEC_VERIFY[i];
         TEST_ASSERT((int)slot_verify(v->occupied != 0, (uint16_t)v->commanded_c, v->measured_c, v->ambient_c, v->elapsed_ms) == v->verdict, v->name);
     }
+
+    // The serial line: every stream of bytes goes through the real deframer, byte by byte with the time of its burst, and the frames that
+    // come out and the counters are the ones the model of URTC-COMMON wrote down.
+    int next_frame = 0;
+    for (int s = 0; s < RACK_VEC_COUNT(RACK_VEC_STREAMS); s++) {
+        const rack_vec_stream_t *st = &RACK_VEC_STREAMS[s];
+        rack_deframer_t rx;
+        rack_deframer_init(&rx, st->timeout_ms);
+        int delivered = 0;
+        int order_ok = 1;
+        for (int e = 0; e < RACK_VEC_COUNT(RACK_VEC_STREAM_EVENTS); e++) {
+            const rack_vec_stream_event_t *ev = &RACK_VEC_STREAM_EVENTS[e];
+            if (ev->stream != s) {
+                continue;
+            }
+            for (int i = 0; i < ev->len; i++) {
+                uint8_t out[PROTOCOL_MAX_FRAME_SIZE];
+                uint8_t len = rack_deframer_push(&rx, ev->data[i], ev->time_ms, out);
+                while (len != 0u) {
+                    const rack_vec_stream_frame_t *want = NULL;
+                    int seen = 0;
+                    for (int f = 0; f < RACK_VEC_COUNT(RACK_VEC_STREAM_FRAMES); f++) {
+                        if (RACK_VEC_STREAM_FRAMES[f].stream == s) {
+                            if (seen == delivered) {
+                                want = &RACK_VEC_STREAM_FRAMES[f];
+                                break;
+                            }
+                            seen++;
+                        }
+                    }
+                    if (want == NULL || want->len != len || memcmp(want->frame, out, len) != 0) {
+                        order_ok = 0;
+                    }
+                    delivered++;
+                    len = rack_deframer_next(&rx, out);
+                }
+            }
+        }
+        int expected = 0;
+        for (int f = 0; f < RACK_VEC_COUNT(RACK_VEC_STREAM_FRAMES); f++) {
+            expected += RACK_VEC_STREAM_FRAMES[f].stream == s ? 1 : 0;
+        }
+        TEST_ASSERT(order_ok && delivered == expected, st->name);
+        TEST_ASSERT(rx.stats.frames_ok == st->frames_ok && rx.stats.crc_errors == st->crc_errors && rx.stats.bad_headers == st->bad_headers &&
+                    rx.stats.resyncs == st->resyncs && rx.stats.timeouts == st->timeouts && rx.stats.dropped_bytes == st->dropped_bytes, st->name);
+        next_frame += expected;
+    }
+    TEST_ASSERT(next_frame == RACK_VEC_COUNT(RACK_VEC_STREAM_FRAMES), "every frame of the stream vectors belongs to a stream");
 }

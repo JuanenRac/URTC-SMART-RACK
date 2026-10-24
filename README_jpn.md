@@ -130,7 +130,7 @@ URTC-SMART-RACK/
 ├── bump.py                         # 明示的なバージョン加算コマンド（コンパイルでは加算されない）
 ├── bump_version.py                 # オドメーター式バージョンインクリメント（汎用スクリプト、URTC と共有）
 ├── bump_manifest_version.py        # urtc.project.json のバージョンをネイティブ側と同期（--sync）
-├── build_firmware.sh / .bat        # 実際のビルド：ホストテスト + バージョンインクリメント + コンパイル + リンク + 公開
+├── build_firmware.sh / .bat        # 実際のビルド：ホストテスト + コンパイル + リンク + 公開（バージョンは変更しない）
 ├── build-test.sh / .bat            # バージョンを更新しないビルド/コンパイル確認
 └── README.md
 ```
@@ -232,6 +232,7 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 
 *URTC ツールプラットフォーム*
 - **[URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER)** — URTC 基板用のデスクトップ GUI 書き込みツール、CAN-OTA およびフルチップ SWD/JTAG。
+- **[URTC-COMMON](https://github.com/JuanenRac/URTC-COMMON)** — 一度だけ書かれた CAN プロトコルのデータ（仕様、生成された表、適合ベクトル）と、各プログラムが共有するコード。このリポジトリは使用する部分のコピーを含みます。
 - **[URTC-GATEWAY](https://github.com/JuanenRac/URTC-GATEWAY)** — CAN バスの手前に置き、一覧にある識別子だけを通し、レートを制限し、セッション鍵を求めるゲートウェイ。
 - **[URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER)** — URTC 基板向けのデスクトップ CAN バスライブ診断ツール、ツールプロファイルごとに 1 パネル。
 - **[URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO)** — Web Serial API を使ったブラウザベースの URTC-TESTER の代替、ローカルインストール不要。

@@ -126,7 +126,7 @@ URTC-SMART-RACK/
 ├── bump.py                         # 显式的版本递增命令（编译从不递增）
 ├── bump_version.py                 # 里程表式版本递增（通用脚本，与 URTC 共享）
 ├── bump_manifest_version.py        # 将 urtc.project.json 的版本与原生版本同步（--sync）
-├── build_firmware.sh / .bat        # 真实构建：宿主测试 + 版本递增 + 编译 + 链接 + 发布
+├── build_firmware.sh / .bat        # 真实构建：宿主测试 + 编译 + 链接 + 发布（从不更改版本）
 ├── build-test.sh / .bat            # 不递增版本号的构建/编译检查
 └── README.md
 ```
@@ -224,6 +224,7 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 
 *URTC 工具平台*
 - **[URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER)** — 面向 URTC 板卡的桌面图形烧录工具，支持 CAN-OTA 以及全芯片 SWD/JTAG。
+- **[URTC-COMMON](https://github.com/JuanenRac/URTC-COMMON)** — 只写一次的 CAN 协议数据（规范、生成的表、一致性向量）以及各程序共享的代码；本仓库带有其所用部分的副本。
 - **[URTC-GATEWAY](https://github.com/JuanenRac/URTC-GATEWAY)** — 位于 CAN 总线前的网关，只放行列表中的标识符，限制其速率，并要求会话密钥。
 - **[URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER)** — 面向 URTC 板卡的桌面实时 CAN 总线诊断工具，每种工具配置对应一个面板。
 - **[URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO)** — 通过 Web Serial API 实现的浏览器版 URTC-TESTER 替代方案，无需本地安装。

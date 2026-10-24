@@ -82,20 +82,20 @@ flowchart TB
 
 ```text
 URTC-SMART-RACK/
-├── src/                            # Firmware source
+├── src/                            # Código-fonte do firmware
 │   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
-│   ├── tool_id.h / .c              # Real: 5-bit raw reading -> tool ID decoding
-│   ├── lifecycle.h / .c            # Real: usage-cycle/time tracking, maintenance-due check
-│   ├── preheat.h / .c              # Real: Smart Idle activation + target temperature + safe-state target
-│   ├── protocol.h / .c             # Real: versioned frame format + CRC8 parse/encode
+│   ├── tool_id.h / .c              # Real: leitura bruta de 5 bits -> descodificação do ID da ferramenta
+│   ├── lifecycle.h / .c            # Real: contagem de ciclos/tempo de uso e verificação de manutenção devida
+│   ├── preheat.h / .c              # Real: ativação do Smart Idle + temperatura alvo + alvo do estado seguro
+│   ├── protocol.h / .c             # Real: formato de trama versionado + análise/codificação CRC8
 │   ├── urtc_crc8.h                 # Real: CRC-8 partilhado com a ligação do sensor de visão (copiado de URTC-COMMON)
 │   ├── urtc_frame.h                # Real: camada de trama (byte inicial, versão, comprimento, CRC) partilhada com a ligação do sensor de visão (copiada de URTC-COMMON)
 │   ├── urtc_rate_limiter.h         # Real: limitador de intervalo mínimo das ordens a uma ferramenta (copiado de URTC-COMMON)
 │   ├── urtc_common.lock.json       # Bloqueio dos ficheiros copiados de URTC-COMMON
-│   ├── rack_command.h / .c         # Real: command decode + actuation-limit validation
-│   ├── link_watchdog.h / .c        # Real: link timeout + command idempotency
-│   ├── rack_link.h / .c            # Real: frame-dispatch decision (rack_link_decide) tying protocol/rack_command/link_watchdog/preheat together
-│   ├── rack_inventory.h / .c       # Real: multi-slot tool inventory - which tool is racked where, one tool never in two slots at once
+│   ├── rack_command.h / .c         # Real: descodificação de comandos + validação dos limites de atuação
+│   ├── link_watchdog.h / .c        # Real: tempo limite da ligação + idempotência dos comandos
+│   ├── rack_link.h / .c            # Real: decisão de despacho de tramas (rack_link_decide) que liga protocol/rack_command/link_watchdog/preheat
+│   ├── rack_inventory.h / .c       # Real: inventário multi-ranhura - que ferramenta está em que ranhura, nunca uma ferramenta em duas ranhuras ao mesmo tempo
 │   ├── tool_limits.h / .c          # Real: temperatura máxima de pré-aquecimento por perfil de ferramenta (0 = sem aquecedor)
 │   ├── rack_app.h / .c             # Real: aplica a decisão do caminho de receção ao inventário; estado seguro enquanto a ligação está perdida
 │   ├── rack_deframer.h / .c        # Real: encontra as tramas no fluxo de bytes da ligação série (ressincronização, tempo de silêncio)
@@ -104,25 +104,25 @@ URTC-SMART-RACK/
 │   ├── preheat_plan.h / .c         # Real: pré-aquecimento preditivo a partir da fila de trabalhos
 │   ├── slot_verify.h / .c          # Real: o que uma leitura térmica diz de uma ranhura
 │   ├── rack_units.h / .c           # Real: identidade e desgaste de cada cabeça física
-│   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
-│   ├── startup_stm32g4_minimal.c   # Vector table + Reset_Handler (no ST HAL yet, see file header)
-│   └── STM32G4_MINIMAL.ld          # Placeholder linker script (128K FLASH / 32K RAM floor)
+│   ├── main.c                      # Ponto de entrada mínimo (ciclo de pulsação de prova de vida)
+│   ├── startup_stm32g4_minimal.c   # Tabela de vetores + Reset_Handler (ainda sem ST HAL, ver o cabeçalho do ficheiro)
+│   └── STM32G4_MINIMAL.ld          # Script de ligação provisório (mínimo de 128K FLASH / 32K RAM)
 ├── tests/                          # Harness de testes real host-native (tool_id, limites por ferramenta, lifecycle, preheat, protocol, rack_command, link_watchdog, cenários de ligação do rack, inventário do rack, robustez, rack_app) e verificações em Python de que os scripts de build e o número de testes publicado coincidem
 ├── docs/                           # Guia de operação (docs/OPERATIONS.md): o que a lógica faz, recusa e deixa por verificar
 ├── hardware/                       # Notas de hardware (README.md) - ainda sem ficheiros de projeto (sem esquema nem PCB)
 ├── firmware/                       # Saída de compilação (.bin/.elf/.hex), ignorada pelo git - publicada apenas como assets da release do GitHub
-├── build/                          # Intermediate build objects (gitignored)
-├── images/                         # Media and diagrams
+├── build/                          # Objetos intermédios da compilação (ignorados pelo git)
+├── images/                         # Multimédia e diagramas
 ├── tools/
-│   ├── build_test.py               # Non-versioning build/compile check
+│   ├── build_test.py               # Verificação de compilação sem alterar a versão
 │   ├── gcov_floor.py               # Falha se os testes de host executarem menos de src/ do que um mínimo (gcov)
 │   ├── publish_release_assets.py   # Lista os assets da release e imprime o comando gh
-│   └── ci_validate.py              # Manifest/CHANGELOG/docs validation used by CI
+│   └── ci_validate.py              # Validação de manifesto/CHANGELOG/docs usada pela CI
 ├── bump.py                         # Comando explícito para subir a versão (compilar nunca a sobe)
-├── bump_version.py                 # Odometer-style version bump (generic, shared with URTC)
-├── bump_manifest_version.py        # Syncs urtc.project.json's version to the native one (--sync)
-├── build_firmware.sh / .bat        # Real build: host tests + bump version + compile + link + publish
-├── build-test.sh / .bat            # Non-versioning build/compile check
+├── bump_version.py                 # Subida de versão tipo conta-quilómetros (genérica, partilhada com URTC)
+├── bump_manifest_version.py        # Sincroniza a versão de urtc.project.json com a nativa (--sync)
+├── build_firmware.sh / .bat        # Compilação real: testes no anfitrião + compilar + ligar + publicar (nunca altera a versão)
+├── build-test.sh / .bat            # Verificação de compilação sem alterar a versão
 └── README.md
 ```
 
@@ -207,6 +207,7 @@ Este projeto faz parte do ecossistema de robótica HYDRA-UMC do mesmo autor (Jua
 
 *Plataforma de Ferramentas URTC*
 - **[URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER)** — ferramenta de gravação com interface gráfica para desktop para placas URTC, CAN-OTA mais SWD/JTAG de chip completo.
+- **[URTC-COMMON](https://github.com/JuanenRac/URTC-COMMON)** — o protocolo CAN escrito uma só vez como dados (especificação, tabelas geradas, vetores de conformidade) e o código que os programas partilham; este repositório traz cópias das partes que usa.
 - **[URTC-GATEWAY](https://github.com/JuanenRac/URTC-GATEWAY)** — uma gateway à frente do barramento CAN que só deixa passar identificadores de uma lista, limita a sua taxa e pede uma chave de sessão.
 - **[URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER)** — ferramenta de diagnóstico em direto do barramento CAN para desktop para placas URTC, um painel por perfil de ferramenta.
 - **[URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO)** — alternativa no navegador ao URTC-TESTER através da Web Serial API, sem necessidade de instalação local.

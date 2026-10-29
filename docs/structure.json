@@ -71,6 +71,19 @@
           }
         },
         {
+          "name": "rack_ring.c  rack_persist.c",
+          "desc": {
+            "en": "interrupt-safe receive ring, state kept across power cuts",
+            "es": "el anillo de recepción seguro para interrupciones y el estado que sobrevive a un corte de corriente",
+            "de": "der interruptsichere Empfangsring und der Zustand über Stromausfälle hinweg",
+            "fr": "l'anneau de réception sûr face aux interruptions et l'état conservé malgré une coupure de courant",
+            "it": "l'anello di ricezione sicuro per gli interrupt e lo stato conservato dopo un calo di corrente",
+            "zh": "中断安全的接收环和断电后保留的状态",
+            "ja": "割り込みに安全な受信リングと、電源断を越えて保持される状態",
+            "pt": "o anel de receção seguro para interrupções e o estado que sobrevive a um corte de energia"
+          }
+        },
+        {
           "name": "main.c  STM32G4_MINIMAL.ld",
           "desc": {
             "en": "entry point, placeholder map",
@@ -90,14 +103,14 @@
       "span": 1,
       "accent": "b",
       "tree": {
-        "en": "host C tests (467 checks) and Python checks of the build scripts",
-        "es": "pruebas de host en C (467 comprobaciones) y comprobaciones en Python de los scripts de compilación",
-        "de": "C-Host-Tests (467 Prüfungen) und Python-Prüfungen der Build-Skripte",
-        "fr": "tests hôte en C (467 vérifications) et contrôles Python des scripts de compilation",
-        "it": "test host in C (467 controlli) e controlli Python degli script di compilazione",
-        "zh": "C 主机测试（467 项检查）和构建脚本的 Python 检查",
-        "ja": "C のホストテスト（467 件の検査）とビルドスクリプトの Python 検査",
-        "pt": "testes de host em C (467 verificações) e verificações em Python dos scripts de compilação"
+        "en": "host C tests (531 checks) and Python checks of the build scripts",
+        "es": "pruebas de host en C (531 comprobaciones) y comprobaciones en Python de los scripts de compilación",
+        "de": "C-Host-Tests (531 Prüfungen) und Python-Prüfungen der Build-Skripte",
+        "fr": "tests hôte en C (531 vérifications) et contrôles Python des scripts de compilation",
+        "it": "test host in C (531 controlli) e controlli Python degli script di compilazione",
+        "zh": "C 主机测试（531 项检查）和构建脚本的 Python 检查",
+        "ja": "C のホストテスト（531 件の検査）とビルドスクリプトの Python 検査",
+        "pt": "testes de host em C (531 verificações) e verificações em Python dos scripts de compilação"
       },
       "rows": [
         {

@@ -8,6 +8,7 @@ All notable changes to this project are documented here.
 - **The layout of the README is checked in the CI:** the validator runs `tools/universal_readme_check.py` and lists, as a warning, what differs from the universal layout of the README.
 - **Project status is the second section of the README,** right after At a glance, in the eight languages.
 - **The full CI runs every night:** a scheduled workflow runs the complete baseline again on the default branch and opens (or updates) one issue when it fails, so a change in a runner image, a toolchain or a pinned dependency is found the next day instead of with the next unrelated change.
+- **The receive path and the memory of the rack have their pure logic:** `rack_ring.c` is a single-producer / single-consumer byte ring (the only thing a receive interrupt may touch, so the watchdog and the deframer stay in one context), and `rack_persist.c` keeps the lifecycle and the inventory in two copies with a magic, a structure version, a sequence number and a CRC-8, published by writing the magic last, so a power cut at any byte of a save leaves the old state or the new one and never a mixture. Both are host-tested (with the sanitizers and a store that loses power after every possible byte) and compile for the target; the memory chip behind the storage is not chosen yet, so only two callbacks are missing. The test count is current (531 checks in 18 files).
 
 ## [0.2.1] - The serial line is held to shared streams of bytes and a limit on how often a tool can be commanded
 

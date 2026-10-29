@@ -26,6 +26,8 @@ URTC-SMART-RACK/
 │   ├── preheat_plan.h / .c         # Real: predictive pre-heat from the job queue
 │   ├── slot_verify.h / .c          # Real: what a thermal reading of a slot says about it
 │   ├── rack_units.h / .c           # Real: identity and wear of each physical tool head
+│   ├── rack_ring.h / .c            # Real: single-producer / single-consumer byte ring, the only thing a receive interrupt may touch
+│   ├── rack_persist.h / .c         # Real: lifecycle and inventory in two CRC-checked copies that survive a power cut at any byte
 │   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
 │   ├── startup_stm32g4_minimal.c   # Vector table + Reset_Handler (no ST HAL yet, see file header)
 │   └── STM32G4_MINIMAL.ld          # Placeholder linker script (128K FLASH / 32K RAM floor)

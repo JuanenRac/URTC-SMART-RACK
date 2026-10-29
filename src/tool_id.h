@@ -30,18 +30,20 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "urtc_tool_ids.h" // the numbering of the tool profiles, generated once for every repository that uses it
+
 #define TOOL_ID_BITS 5
-#define TOOL_ID_MASK ((1u << TOOL_ID_BITS) - 1u) // 0x1F
+#define TOOL_ID_MASK URTC_TOOL_ID_MASK // 0x1F: five bits
 
 // First and last tool profile of the URTC head catalogue.
 #define TOOL_ID_URTC_FIRST 0u
-#define TOOL_ID_URTC_LAST 24u
+#define TOOL_ID_URTC_LAST URTC_TOOL_ID_LAST
 
 // Value 31 on a URTC head means "free configuration" (the tool is read from
 // the head's F-RAM). The rack cannot pre-heat such a head by its ID alone, so
 // it is never accepted as a tool to act on; internally the same value marks
 // an empty slot.
-#define TOOL_ID_FREE_CONFIG TOOL_ID_MASK
+#define TOOL_ID_FREE_CONFIG URTC_TOOL_ID_FREE_CONFIG
 #define TOOL_ID_NONE TOOL_ID_MASK
 
 // Masks a raw GPIO/F-RAM reading down to the 5 bits that carry the tool

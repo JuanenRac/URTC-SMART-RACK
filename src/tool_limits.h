@@ -15,14 +15,16 @@
 
 #include <stdint.h>
 
+#include "urtc_tool_ids.h"
+
 // Ceiling that applies to every tool, whatever its own limit: the rack never
 // asks for more than this (same value as RACK_COMMAND_MAX_TEMP_C).
 #define TOOL_LIMITS_RACK_CEILING_C 400u
 
 // Tool profiles of the URTC catalogue that carry a heater.
-#define TOOL_ID_SOLDERING_IRON 0u
-#define TOOL_ID_3D_PRINTER 10u
-#define TOOL_ID_HOTAIR_REWORK 19u
+#define TOOL_ID_SOLDERING_IRON URTC_TOOL_ID_SOLDERING_IRON
+#define TOOL_ID_3D_PRINTER URTC_TOOL_ID_PRINTER_3D
+#define TOOL_ID_HOTAIR_REWORK URTC_TOOL_ID_HOTAIR_REWORK
 
 // Highest pre-heat target (whole degrees C) the rack accepts for the tool, or
 // 0 when the tool has no heater - and for an ID that is not a tool profile at

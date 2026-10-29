@@ -5,6 +5,14 @@
 // =============================================================================
 #include "test_runner.h"
 #include "../src/tool_id.h"
+#include "../src/tool_limits.h"
+
+// The numbering is the one generated once for every repository that uses it (urtc_tool_ids.h); a rack that drifts from it does not compile.
+_Static_assert((1u << TOOL_ID_BITS) - 1u == URTC_TOOL_ID_MASK, "five bits carry the tool identifier");
+_Static_assert(TOOL_ID_URTC_LAST == URTC_TOOL_ID_COUNT - 1u, "the last profile is the last identifier of the catalogue");
+_Static_assert(TOOL_ID_FREE_CONFIG == 31u && TOOL_ID_NONE == URTC_TOOL_ID_FREE_CONFIG, "31 is the free configuration of a head");
+_Static_assert(URTC_TOOL_ID_FIRST_INVALID == TOOL_ID_URTC_LAST + 1u, "the identifiers after the last profile are not assigned");
+_Static_assert(TOOL_ID_SOLDERING_IRON == URTC_TOOL_ID_SOLDERING_IRON && TOOL_ID_3D_PRINTER == URTC_TOOL_ID_PRINTER_3D && TOOL_ID_HOTAIR_REWORK == URTC_TOOL_ID_HOTAIR_REWORK, "the heated profiles keep their identifiers");
 
 void run_tool_id_tests(int *failures)
 {

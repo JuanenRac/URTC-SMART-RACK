@@ -17,6 +17,10 @@
     "urtc_ring.h": {
       "from": "firmware_base/urtc_ring.h",
       "sha256": "9ea1060bcc655079d203482654caf5c877d8b20a4f12d6f99b0f7f9eba80db03"
+    },
+    "urtc_tool_ids.h": {
+      "from": "generated/urtc_tool_ids.h",
+      "sha256": "90b7f22066797efb04504a0461725ee7470b1622dfac078caea7057dd11a1e71"
     }
   }
 }

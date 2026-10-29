@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The tool identifiers come from the shared header:** `src/urtc_tool_ids.h` is the file generated once from the tool profiles of the tool head, and `tool_id.h` and `tool_limits.h` take the numbering of the last profile, the free configuration, the mask and the three heated profiles from it instead of repeating the numbers; the host tests refuse to build if the rack drifts from it.
 - **Related Projects lists the URTC family:** the section names the repositories of URTC by group, each with one short line about what it is for, and, in one short line each, the sister projects (independent ecosystems of the same author that share the base and the tools), in the eight languages. It no longer says that URTC is part of another ecosystem. The opening of the README and `CONTRIBUTING.md` place the rack in the URTC ecosystem.
 - **The README follows the universal layout in the eight languages:** the sections are in the fixed order with the fixed names, the workflow diagram is drawn from `docs/architecture.json` (the Mermaid source stays in a collapsible block), the Repository Structure comes from `docs/structure.json`, and the sections for role, security, interfaces, testing and roadmap are new. The build text now says that building never changes the version.
 - **The layout of the README is checked in the CI:** the validator runs `tools/universal_readme_check.py` and lists, as a warning, what differs from the universal layout of the README.

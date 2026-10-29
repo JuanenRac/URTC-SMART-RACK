@@ -31,6 +31,20 @@
 | Destino | Uma placa com microcontrolador (o firmware); compila-se num PC |
 | Em hardware real | Ainda não: não há registo de execução em hardware real para esta versão |
 
+<!-- urtc-section:status_smart_rack -->
+## 🚦 Estado do projeto
+
+🟢 feito e verificado · 🟡 funciona, com limites conhecidos · 🟠 a meio ou por verificar · 🔴 por fazer ou a não funcionar. Nada é verde se nunca correu em hardware real.
+
+| Parte | Estado | O que o repositório consegue demonstrar |
+| --- | :---: | --- |
+| Software | 🟡 | Funciona num PC e contra o simulador; nunca foi usado com uma placa real. |
+| Testes | 🟢 | A bateria de testes passa na CI em cada envio. |
+| Hardware real | 🟠 | Ainda não correu numa placa real: o ensaio de bancada continua pendente. |
+| Documentação | 🟡 | README em oito línguas e documentos de referência; as traduções não foram revistas por falantes nativos. |
+
+<!-- /urtc-section:status_smart_rack -->
+
 ## 1. 🛠️ VISÃO TÉCNICA GERAL
 
 O **URTC-SMART-RACK** é um sistema inteligente de armazenamento de end-effectors dentro do ecossistema HYDRA-UMC. Baseado no microcontrolador STM32G4, monitoriza e prepara as ferramentas enquanto não estão acopladas a um robô.
@@ -284,20 +298,6 @@ Este projeto faz parte do ecossistema de robótica HYDRA-UMC do mesmo autor (Jua
 
 As versões dos programas URTC que funcionam em conjunto, e a versão do protocolo que cada uma fala, constam da tabela de compatibilidade que o URTC-COMMON gera: [docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md).
 <!-- /urtc-section:compatibility -->
-
-<!-- urtc-section:status_smart_rack -->
-## 💡 Estado do projeto
-
-🟢 feito e verificado · 🟡 funciona, com limites conhecidos · 🟠 a meio ou por verificar · 🔴 por fazer ou a não funcionar. Nada é verde se nunca correu em hardware real.
-
-| Parte | Estado | O que o repositório consegue demonstrar |
-| --- | :---: | --- |
-| Software | 🟡 | Funciona num PC e contra o simulador; nunca foi usado com uma placa real. |
-| Testes | 🟢 | A bateria de testes passa na CI em cada envio. |
-| Hardware real | 🟠 | Ainda não correu numa placa real: o ensaio de bancada continua pendente. |
-| Documentação | 🟡 | README em oito línguas e documentos de referência; as traduções não foram revistas por falantes nativos. |
-
-<!-- /urtc-section:status_smart_rack -->
 
 ## 📜 LICENÇA
 GPL-3.0-or-later - Consulte LICENSE para mais detalhes.

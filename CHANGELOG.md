@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **The layout of the README is checked in the CI:** the validator runs `tools/universal_readme_check.py` and lists, as a warning, what differs from the universal layout of the README.
+- **Project status is the second section of the README,** right after At a glance, in the eight languages.
+
 ## [0.2.1] - The serial line is held to shared streams of bytes and a limit on how often a tool can be commanded
 
 - **The serial line is held to shared streams of bytes:** `tests/vectors/rack_vectors.h` (written by URTC-COMMON) now carries 19 streams, each a list of bursts of bytes with the time they arrived, the frames the deframer must hand over and the six counters it must end with (frames, CRC errors, bad headers, resyncs, timeouts, dropped bytes). `test_rack_vectors.c` feeds them byte by byte to the real `rack_deframer_push` / `rack_deframer_next` and compares frames and counters: a frame in pieces and split at every byte, noise before and between frames, a silence of exactly the timeout (kept) and one millisecond more (dropped), a wrap of the millisecond clock inside a frame, a bad CRC, a version that does not fit, a length of 17, a header that hides the start of a real frame, thirty start bytes in a row, a faster 5 ms timeout. The model of URTC-COMMON (`StreamDeframer`, written from the same description) and the firmware agree on all of them. 3 more assertions (467).

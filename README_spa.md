@@ -207,6 +207,8 @@ URTC-SMART-RACK/
 
 </details>
 
+La lista anotada de cada archivo de código, una línea por archivo, está en [docs/SOURCE_MAP.md](docs/SOURCE_MAP.md).
+
 ## 🗺️ Hoja de ruta y límites conocidos
 
 **Límites conocidos hoy**

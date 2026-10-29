@@ -13,6 +13,7 @@ URTC-SMART-RACK/
 │   ├── urtc_crc8.h                 # Real: CRC-8 shared with the vision sensor link (copied from URTC-COMMON)
 │   ├── urtc_frame.h                # Real: frame layer (start byte, version, length, CRC) shared with the vision sensor link (copied from URTC-COMMON)
 │   ├── urtc_rate_limiter.h         # Real: minimum-interval limiter of the commands of a tool (copied from URTC-COMMON)
+│   ├── urtc_ring.h                 # Real: single-producer / single-consumer byte ring (copied from URTC-COMMON)
 │   ├── urtc_common.lock.json       # Lock of the files copied from URTC-COMMON
 │   ├── rack_command.h / .c         # Real: command decode + actuation-limit validation
 │   ├── link_watchdog.h / .c        # Real: link timeout + command idempotency
@@ -26,7 +27,7 @@ URTC-SMART-RACK/
 │   ├── preheat_plan.h / .c         # Real: predictive pre-heat from the job queue
 │   ├── slot_verify.h / .c          # Real: what a thermal reading of a slot says about it
 │   ├── rack_units.h / .c           # Real: identity and wear of each physical tool head
-│   ├── rack_ring.h / .c            # Real: single-producer / single-consumer byte ring, the only thing a receive interrupt may touch
+│   ├── rack_ring.h / .c            # Real: the names of the rack for that ring - the only thing a receive interrupt may touch
 │   ├── rack_persist.h / .c         # Real: lifecycle and inventory in two CRC-checked copies that survive a power cut at any byte
 │   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
 │   ├── startup_stm32g4_minimal.c   # Vector table + Reset_Handler (no ST HAL yet, see file header)

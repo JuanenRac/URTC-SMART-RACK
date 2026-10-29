@@ -1,6 +1,6 @@
 # Contributing to URTC-SMART-RACK 🦾
 
-We welcome contributions to the intelligent end-effector management system of the HYDRA-UMC platform.
+We welcome contributions to the intelligent end-effector management system of the URTC ecosystem.
 
 ## Technology Stack
 - **Language**: C11.

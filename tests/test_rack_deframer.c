@@ -184,7 +184,7 @@ void run_rack_deframer_tests(int *failures)
     link_watchdog_t lw;
     link_watchdog_init(&lw, 1000);
     rack_deframer_init(&d, 0);
-    rack_decision_t decision = {RACK_ACT_NONE, 0, 0, 0};
+    rack_decision_t decision = {RACK_ACT_NONE, 0, 0, 0, RACK_REPLY_NONE, 0, 0xFF, 0};
     bool got = false;
     clock = 100;
     for (uint8_t i = 0; i < good_len; i++) {

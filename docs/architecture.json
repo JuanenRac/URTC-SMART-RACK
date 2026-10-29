@@ -136,5 +136,5 @@
     "untested": "has not run on real hardware",
     "external": "another repository or a device"
   },
-  "footer": "531 checks pass on a computer; nothing has driven a real pin, heater or CAN transceiver."
+  "footer": "563 checks pass on a computer; nothing has driven a real pin, heater or CAN transceiver."
 }

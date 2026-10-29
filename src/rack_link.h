@@ -25,11 +25,29 @@ typedef enum {
     RACK_ACT_SAFE_STATE,    // bring the tool `tool_id` to the safe state (`temp_c` is that temperature): its command asked for something outside what the rack allows
 } rack_action_t;
 
+// Why a frame was applied or refused, in the one byte the sender is told. Zero and one are the two kinds of acknowledgement; the rest say what to change. A frame that never
+// reaches command validation (corrupt framing, not for this rack) is RACK_REPLY_NONE: nobody is told, because noise must not provoke an answer.
+typedef enum {
+    RACK_REPLY_APPLIED = 0,             // the command was applied
+    RACK_REPLY_REPEAT = 1,              // already applied (a retransmission or a stale sequence): nothing to do, stop resending
+    RACK_REPLY_WRONG_LENGTH = 2,        // the payload is not the size the command has
+    RACK_REPLY_TOOL_ABSENT = 3,         // the tool byte says the slot holds nothing
+    RACK_REPLY_TEMP_OUT_OF_RANGE = 4,   // the target is above what the rack (or that tool) accepts
+    RACK_REPLY_TOOL_INVALID = 5,        // not a plain five-bit value, or no tool profile has that number
+    RACK_REPLY_NOT_HEATABLE = 6,        // a target above zero for a tool that has no heater
+    RACK_REPLY_HELD_RATE = 7,           // too soon after the previous command accepted for that tool: send it again later
+    RACK_REPLY_UNKNOWN_COMMAND = 8,     // a well-formed frame with a command this rack does not have
+    RACK_REPLY_NONE = 0xFF              // no answer is sent
+} rack_reply_code_t;
 typedef struct {
     rack_action_t action;
     uint8_t tool_id;        // meaningful for SET_TARGET and SAFE_STATE
     uint16_t temp_c;        // meaningful for SET_TARGET (the requested target) and SAFE_STATE (the safe temperature)
     uint8_t acknowledge;    // 1 when the sender should be told the frame arrived (a command applied, or a retransmission of one that already was); 0 otherwise
+    uint8_t reply;          // rack_reply_code_t: the reason to tell the sender (RACK_REPLY_NONE when nobody is told); acknowledge is 1 exactly for APPLIED and REPEAT
+    uint8_t reply_cmd;      // the command the reply is about
+    uint8_t reply_tool;     // the tool byte the frame carried, as it was sent (0xFF when the command has none)
+    uint8_t reply_seq;      // the sequence number of the frame the reply is about
 } rack_decision_t;
 
 // Execution context: the watchdog state is plain, non-atomic memory. Call this

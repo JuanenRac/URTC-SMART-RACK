@@ -13,6 +13,7 @@ tests/test_rack_deframer.c
 tests/test_rack_inventory.c
 tests/test_rack_link_scenarios.c
 tests/test_rack_persist.c
+tests/test_rack_reply.c
 tests/test_rack_ring.c
 tests/test_rack_units.c
 tests/test_rack_vectors.c
@@ -31,6 +32,7 @@ src/rack_deframer.c
 src/rack_inventory.c
 src/rack_link.c
 src/rack_persist.c
+src/rack_reply.c
 src/rack_ring.c
 src/rack_units.c
 src/slot_verify.c

@@ -49,7 +49,7 @@ void run_rack_app_tests(int *failures)
     // A retransmission leaves both targets alone, and 'do nothing' writes nothing.
     deliver(&inv, &lw, 1, TOOL_ID_SOLDERING_IRON, 200, 120);
     TEST_ASSERT(target_of(&inv, TOOL_ID_SOLDERING_IRON) == 200 && target_of(&inv, TOOL_ID_3D_PRINTER) == 250, "a retransmission changes no target");
-    rack_decision_t none = {RACK_ACT_NONE, 0, 0, 0};
+    rack_decision_t none = {RACK_ACT_NONE, 0, 0, 0, RACK_REPLY_NONE, 0, 0xFF, 0};
     TEST_ASSERT(!rack_app_apply_decision(&inv, &none), "a decision to do nothing writes nothing");
 
     // A refused command puts only its tool in the safe state.
@@ -57,7 +57,7 @@ void run_rack_app_tests(int *failures)
     TEST_ASSERT(target_of(&inv, TOOL_ID_3D_PRINTER) == 0 && target_of(&inv, TOOL_ID_SOLDERING_IRON) == 200, "a hotend request above its limit switches the hotend off and leaves the iron heated");
 
     // A decision for a tool that is not racked writes nothing.
-    rack_decision_t ghost = {RACK_ACT_SET_TARGET, TOOL_ID_HOTAIR_REWORK, 300, 1};
+    rack_decision_t ghost = {RACK_ACT_SET_TARGET, TOOL_ID_HOTAIR_REWORK, 300, 1, RACK_REPLY_APPLIED, RACK_CMD_SET_PREHEAT, TOOL_ID_HOTAIR_REWORK, 0};
     TEST_ASSERT(!rack_app_apply_decision(&inv, &ghost), "a target for a tool that is not in the rack is not stored");
     TEST_ASSERT(!rack_app_apply_decision(NULL, &ghost) && !rack_app_apply_decision(&inv, NULL), "missing arguments are refused");
 

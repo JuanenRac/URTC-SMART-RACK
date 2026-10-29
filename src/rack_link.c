@@ -28,16 +28,33 @@ static void note_valid_frame(link_watchdog_t *lw, uint32_t now_ms)
     link_watchdog_note_frame_received(lw, now_ms);
 }
 
+// What the sender is told when the validation refused the command.
+static uint8_t reply_for(rack_command_status_t status)
+{
+    switch (status) {
+        case RACK_CMD_ERR_WRONG_PAYLOAD_LEN: return RACK_REPLY_WRONG_LENGTH;
+        case RACK_CMD_ERR_TOOL_ID_ABSENT: return RACK_REPLY_TOOL_ABSENT;
+        case RACK_CMD_ERR_TEMP_OUT_OF_RANGE: return RACK_REPLY_TEMP_OUT_OF_RANGE;
+        case RACK_CMD_ERR_TOOL_ID_INVALID: return RACK_REPLY_TOOL_INVALID;
+        case RACK_CMD_ERR_TOOL_NOT_HEATABLE: return RACK_REPLY_NOT_HEATABLE;
+        case RACK_CMD_OK: return RACK_REPLY_APPLIED;
+        default: return RACK_REPLY_NONE;
+    }
+}
 // The decision for a SET_PREHEAT whose tool byte is `tool`, whose validation gave `status` (and `command` when it was OK), carried by a frame with sequence `seq`.
 static void decide_set_preheat(link_watchdog_t *lw, uint8_t seq, uint8_t tool, rack_command_status_t status, const rack_set_preheat_t *command, uint32_t now_ms, rack_decision_t *out)
 {
     // The tool byte of a command is a plain 5-bit value naming a tool profile (see tool_id.h). A byte that is not, or names no tool, leaves nobody to act on: the frame changes
     // nothing (it is not evidence that any heater should be switched off).
+    out->reply_cmd = RACK_CMD_SET_PREHEAT;
+    out->reply_seq = seq;
+    out->reply_tool = tool;
     const bool tool_readable = tool_id_is_wire_byte_valid(tool) && tool_id_is_present(tool) && tool_id_is_valid_urtc(tool);
 
     // The command is checked BEFORE its sequence number is spent: a frame with a valid CRC but a refused command (out of range, wrong length) must not advance the anti-replay
     // counter of the tool, or the sender's next good frame with that same sequence number would be thrown away as a duplicate.
     if (status != RACK_CMD_OK) {
+        out->reply = reply_for(status);
         if (tool_readable) {
             out->action = RACK_ACT_SAFE_STATE; // out-of-range/malformed command -> that tool's safe state, not a guess
             out->tool_id = tool;
@@ -49,12 +66,14 @@ static void decide_set_preheat(link_watchdog_t *lw, uint8_t seq, uint8_t tool, r
     // resending.
     if (!link_watchdog_is_sequence_new(lw, tool, seq)) {
         out->acknowledge = 1;
+        out->reply = RACK_REPLY_REPEAT;
         return;
     }
     // A command that would be applied is held back when the same tool had one accepted less than the configured interval ago (a flood). It changes nothing and is not
     // acknowledged: the frame still proved the link alive (noted before), its sequence is not spent, and the sender's next frame after the interval is obeyed. The refusals
     // above are never throttled: a safe state is always applied.
     if (!link_watchdog_allow_command(lw, tool, now_ms)) {
+        out->reply = RACK_REPLY_HELD_RATE;
         return;
     }
     if (!link_watchdog_accept_sequence(lw, tool, seq)) {
@@ -64,6 +83,7 @@ static void decide_set_preheat(link_watchdog_t *lw, uint8_t seq, uint8_t tool, r
     out->tool_id = tool;
     out->temp_c = command->target_temp_c;
     out->acknowledge = 1;
+    out->reply = RACK_REPLY_APPLIED;
 }
 
 static void clear_decision(rack_decision_t *out)
@@ -72,6 +92,10 @@ static void clear_decision(rack_decision_t *out)
     out->tool_id = 0;
     out->temp_c = 0;
     out->acknowledge = 0;
+    out->reply = RACK_REPLY_NONE;
+    out->reply_cmd = 0;
+    out->reply_seq = 0;
+    out->reply_tool = 0xFFu;
 }
 
 void rack_link_decide(link_watchdog_t *lw, const uint8_t *buf, uint8_t buf_len, uint32_t now_ms, rack_decision_t *out)
@@ -90,11 +114,15 @@ void rack_link_decide(link_watchdog_t *lw, const uint8_t *buf, uint8_t buf_len, 
     }
     note_valid_frame(lw, now_ms);
 
+    out->reply_cmd = frame.cmd;
+    out->reply_seq = frame.seq;
     if (frame.cmd != RACK_CMD_SET_PREHEAT) {
-        return; // a command this rack does not act on: no tool_id layout to read a sequence against, and nothing to change
+        out->reply = RACK_REPLY_UNKNOWN_COMMAND; // told so, but nothing changes: no tool_id layout to read a sequence against
+        return;
     }
     // RACK_CMD_SET_PREHEAT's tool_id lives in payload[0]: it is never read from a frame that does not carry it (the rest of the fixed-size array is not the sender's).
     if (frame.len < 1u) {
+        out->reply = RACK_REPLY_WRONG_LENGTH;
         return;
     }
     rack_set_preheat_t command = {0, 0};

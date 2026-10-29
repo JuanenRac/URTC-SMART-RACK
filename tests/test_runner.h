@@ -31,5 +31,6 @@ void run_rack_vectors_tests(int *failures);
 void run_rack_units_tests(int *failures);
 void run_rack_ring_tests(int *failures);
 void run_rack_persist_tests(int *failures);
+void run_rack_reply_tests(int *failures);
 
 #endif // TEST_RUNNER_H

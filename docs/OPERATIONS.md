@@ -108,6 +108,24 @@ target is above 0 for a tool that has no heater, or the temperature exceeds the
 limit of that tool (never more than 400 °C). A target of 0 (off) is accepted for
 any tool.
 
+### Answers to the host
+
+Every frame that is well formed (framing and CRC right) gets a reason, in one byte, in the decision of `rack_link_decide()` (`reply`, with the command, the tool byte and the sequence number it is about), and `rack_reply_encode()` turns it into a frame of the same framing: command `0x81` (acknowledgement) or `0x82` (refusal), the sequence number of the frame it answers, and the payload `command answered`, `tool byte as sent` (`0xFF` when the command carries none) and the code.
+
+| Code | Name | Meaning |
+|---:|---|---|
+| 0 | `APPLIED` | the command was applied (acknowledgement) |
+| 1 | `REPEAT` | already applied: a retransmission or a stale sequence; the sender can stop resending (acknowledgement) |
+| 2 | `WRONG_LENGTH` | the payload is not the size the command has |
+| 3 | `TOOL_ABSENT` | the tool byte says the slot holds nothing |
+| 4 | `TEMP_OUT_OF_RANGE` | the target is above what the rack, or that tool, accepts |
+| 5 | `TOOL_INVALID` | not a plain 5-bit value, or no tool profile has that number |
+| 6 | `NOT_HEATABLE` | a target above 0 for a tool without a heater |
+| 7 | `HELD_RATE` | too soon after the previous command accepted for that tool; send it again later |
+| 8 | `UNKNOWN_COMMAND` | a well-formed frame with a command this rack does not have |
+
+A frame that does not pass the framing and the CRC, or a CAN frame that is not for this rack, is not answered: noise must not provoke traffic. The reply is additive: a host that does not know the commands `0x81` and `0x82` ignores them, and nothing that was accepted or refused before changes. Nothing sends the frame yet, because no transport exists on a board; the host model and the programs do not read it yet.
+
 ### Transport
 
 The transport that is implemented is a **serial link** with the frame above. It can be up

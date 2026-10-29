@@ -9,6 +9,7 @@
 #include "test_runner.h"
 #include "../src/preheat_limit.h"
 #include "../src/rack_app.h"
+#include "../src/rack_command.h"
 #include "../src/tool_limits.h"
 
 #define MINUTE 60000u
@@ -25,7 +26,7 @@ static uint16_t target_of(const rack_inventory_t *inv, uint8_t tool)
 
 static rack_decision_t set_target(uint8_t tool, uint16_t temp)
 {
-    rack_decision_t d = {RACK_ACT_SET_TARGET, tool, temp, 1};
+    rack_decision_t d = {RACK_ACT_SET_TARGET, tool, temp, 1, RACK_REPLY_APPLIED, RACK_CMD_SET_PREHEAT, tool, 0};
     return d;
 }
 

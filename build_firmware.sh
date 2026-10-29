@@ -109,14 +109,15 @@ COVERAGE_FLAGS=""
 if [ -n "${URTC_COVERAGE_FLOOR:-}" ]; then
     COVERAGE_FLAGS="--coverage -O0"
 fi
+# One list of sources for both build scripts: tools/host_sources.txt.
+HOST_SOURCES=()
+while IFS= read -r source_line || [ -n "$source_line" ]; do
+    source_line="${source_line%$'\r'}"
+    case "$source_line" in ''|'#'*) continue ;; esac
+    HOST_SOURCES+=("$source_line")
+done < tools/host_sources.txt
 "$HOST_CC" -std=c11 -Wall -Wextra -Wconversion -Isrc -Itests $SANITIZE_FLAGS $COVERAGE_FLAGS \
-    -o "$BUILD/host_tests" \
-    tests/test_main.c tests/test_tool_id.c tests/test_lifecycle.c tests/test_preheat.c \
-    tests/test_protocol.c tests/test_rack_command.c tests/test_link_watchdog.c tests/test_rack_link_scenarios.c \
-    tests/test_rack_inventory.c tests/test_robustness.c tests/test_rack_app.c \
-    tests/test_rack_deframer.c tests/test_rack_can.c tests/test_preheat_limit.c tests/test_rack_vectors.c tests/test_rack_units.c tests/test_rack_ring.c tests/test_rack_persist.c \
-    src/tool_id.c src/tool_limits.c src/lifecycle.c src/preheat.c src/protocol.c src/rack_command.c src/link_watchdog.c src/rack_link.c \
-    src/rack_inventory.c src/rack_app.c src/rack_deframer.c src/rack_can.c src/preheat_limit.c src/slot_verify.c src/rack_units.c src/preheat_plan.c src/rack_ring.c src/rack_persist.c
+    -o "$BUILD/host_tests" "${HOST_SOURCES[@]}"
 "$BUILD/host_tests"
 if [ -n "${URTC_COVERAGE_FLOOR:-}" ]; then
     python3 tools/gcov_floor.py "$URTC_COVERAGE_FLOOR" "$BUILD"

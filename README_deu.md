@@ -12,8 +12,11 @@
   <img src="https://img.shields.io/badge/Licencia-GPL%203.0-blue.svg" alt="GPL 3.0">
   <img src="https://img.shields.io/badge/MCU-STM32G4-003551.svg" alt="STM32G4">
   <img src="https://img.shields.io/badge/Protocol-CAN%20framing%20only-orange.svg" alt="CAN framing only">
+  <img src="https://img.shields.io/badge/Tests-467-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Feature-Smart%20Idle-green.svg" alt="Smart Idle">
 </p>
+
+---
 
 **Ehrlichkeitscheck - was heute wirklich funktioniert:** `tool_id.c`, `lifecycle.c`, `preheat.c`, `protocol.c`, `rack_command.c`, `link_watchdog.c`, `tool_limits.c`, `rack_app.c`, `rack_link.c`, `rack_deframer.c`, `rack_can.c`, `preheat_limit.c` und `rack_inventory.c` sind echtes, reines C, abgesichert durch 467 bestandene `TEST_ASSERT`-Prüfungen (`tests/test_*.c`, kompiliert und ausgeführt mit dem eigenen C-Compiler des Hosts, nicht `arm-none-eabi-gcc`) - bestätigt durch Kompilieren und Ausführen genau dieser Host-Testsuite. Das deckt ID-Dekodierung, Nutzungs-/Lebenszyklus-Tracking, Vorheiz-Aktivierung und Zieltemperatur, CRC8-gerahmtes Protokoll-Parsing, Befehlsbereichsvalidierung, Link-Timeout-/Idempotenz-Handling und die Verwaltung des Mehrplatz-Werkzeuginventars (welches Werkzeug wo eingelagert ist, ein echtes Werkzeug nie gleichzeitig in zwei Plätzen) ab - alles Logik, nichts Hardware. Wie die Einleitung des READMEs bereits sagt: für diese Platine existiert noch keine PCB/kein Schaltplan, also hat nichts hier je einen echten GPIO-Pin, F-RAM-Chip, Heizer oder CAN-Transceiver angesteuert - `main.c`/`startup_stm32g4_minimal.c` beweisen nur, dass die Cross-Kompilierung und das Linken für Cortex-M4F gegen ein Platzhalter-Linker-Skript gelingen, nicht dass irgendetwas davon auf echtem Silizium läuft. Siehe `CHANGELOG.md` für das, was bisher genau ausgeliefert wurde. Auch die serielle Leitung wird geprüft: 19 Byteströme mit dem Zeitpunkt jedes Stücks (ein Frame in Teilen, Rauschen, ein falscher CRC, eine Version oder Länge, die nicht passt, eine Pause genau an der Grenze des Timeouts, ein Überlauf des Millisekundentakts) laufen durch den echten Deframer, und die Frames, die herauskommen, und seine Zähler sind die des Modells von URTC-COMMON.
 
@@ -27,9 +30,12 @@
 |---|---|
 | Version | `0.2.1` |
 | Reifegrad | Funktionsfähig |
+| Tests | 467 |
 | Technik | C / STM32G4 / arm-none-eabi-gcc |
 | Ziel | Eine Mikrocontroller-Platine (die Firmware); wird auf einem PC gebaut |
 | Auf echter Hardware | Noch nicht: für diese Version ist kein Lauf auf echter Hardware vermerkt |
+
+**Springe zu:** [Überblick](#-überblick) · [Architektur](#-architektur) · [Sicherheit](#-sicherheit-und-schutz) · [Schnittstellen](#-schnittstellen) · [Schnellstart](#-schnellstart) · [Tests](#-tests) · [Struktur](#-struktur-des-repositorys) · [Verwandte](#-verwandte-projekte)
 
 <!-- urtc-section:status_smart_rack -->
 ## 🚦 Projektstatus
@@ -45,7 +51,7 @@
 
 <!-- /urtc-section:status_smart_rack -->
 
-## 1. 🛠️ TECHNISCHER ÜBERBLICK
+## 🎯 Überblick
 
 **URTC-SMART-RACK** ist ein intelligentes Lagersystem für Werkzeugköpfe innerhalb des HYDRA-UMC-Ökosystems. Basierend auf dem STM32G4-Mikrocontroller überwacht und bereitet es Werkzeuge vor, während sie nicht an einem Roboter angebracht sind.
 
@@ -64,9 +70,20 @@ Für diese Platine existiert noch keine PCB/kein Schaltplan (siehe `hardware/`),
 * 🔒 **Protokoll-Bereichsprüfungen** — versioniertes Framing mit einer CRC8-Prüfsumme, Aktuierungsbereichs-Validierung und ein Link-Timeout-/Idempotenz-Watchdog mit einem definierten sicheren Zustand. Rahmenversion 2: Jeder Mehrbytewert ist Big-Endian wie beim Bus, und ein Rahmen der Version 1 wird abgelehnt. *(als reines C implementiert und nur auf einem PC getestet; nie auf einer Platine ausgeführt und keine zertifizierte Sicherheitsfunktion)*
 * ✅ **Cortex-M4F-Firmware-Toolchain** — ein echtes Bare-Metal-Image (Startup + Linker + `main.c`), das mit `arm-none-eabi-gcc` wirklich kompiliert und gelinkt wird, derselben Toolchain, die auch das Schwester-Repository URTC nutzt. *(implementiert — siehe BUILD unten)*
 
----
+## 🧩 Rolle in URTC
 
-## 2. 🔄 SMART-RACK-WORKFLOW
+URTC-SMART-RACK ist die Platine, die die Werkzeugköpfe aufbewahrt, kein Werkzeugkopf: ein Ständer, der jeden aufgenommenen Kopf erkennt (die 5-Bit-Werkzeug-ID, die URTC verwendet), Nutzung und thermische Fehler jedes physischen Kopfes führt, weiß, welches Werkzeug in welchem Fach liegt, und ein Löt- oder Heißluftwerkzeug kurz vor einem Werkzeugwechsel vorheizt (Smart Idle). Er teilt die Werkzeug-IDs und Firmware-Konventionen von URTC, ist aber ein ergänzendes Werkzeug und kein Kind von URTC und soll vom Robotersteuerung HYDRA-UMC angesteuert werden. Eine Platine gibt es noch nicht: Real ist heute die Logik und das Rack-Protokoll, auf einem Computer getestet.
+
+## 🏛️ Architektur
+
+<p align="center">
+  <img src="images/architecture.svg" alt="Architektur von URTC-SMART-RACK: wer es nutzt, was es enthält und wovon es abhängt" width="100%">
+</p>
+
+Wie die Teile dieses Repositorys zusammenpassen: wer es nutzt, was es enthält und wovon es abhängt. Das Bild wird aus `docs/architecture.json` gezeichnet und gegen den Code geprüft.
+
+<details>
+<summary>Textversion des Diagramms (Mermaid)</summary>
 
 ```mermaid
 flowchart TB
@@ -77,73 +94,39 @@ flowchart TB
     RACK -- Zustandsprüfung --> LOG["Wartungsbericht"]
 ```
 
----
+</details>
 
-## 3. 🧱 ARCHITEKTUR & DESIGNENTSCHEIDUNGEN
+### ARCHITEKTUR & DESIGNENTSCHEIDUNGEN
 
 * **Warum diese Platine noch kein echtes Pinout/keine echte Hardware-ID definiert hat.** Es gibt noch keine PCB für diese Platine - `src/firmware_common.h` trägt eine Versionsidentität ohne Hardware-ID, und die Startup-/Linker-Dateien sind handgeschriebene Platzhalter, die den eigenen CMSIS/HAL-Start von ST ersetzen, bis ein echtes STM32G4-Bauteil feststeht.
 * **Warum es kein Kind von URTC selbst ist.** URTC-SMART-RACK ist ein ergänzendes Werkzeug, kein Kind der URTC-Familie - es ist eine separate physische Platine (ein Werkzeug-Lagerregal, kein Werkzeugkopf), die den eigenen Werkzeug-ID-Raum und die Firmware-Konventionen von URTC teilt, nicht dessen Integrationshierarchie.
-* **Warum `bump_version.py` eine direkte Kopie des eigenen Skripts von URTC ist.** Gleiche Kilometerzähler-Versionierungsregel, gleiches Firmware-Header-Format - das exakte Skript wiederzuverwenden statt es neu zu erfinden, hält beide durch Konstruktion synchron.
+* **Warum `bump_version.py` eine unveränderte Kopie des Skripts von URTC ist.** Dasselbe Firmware-Header-Format - das genaue Skript wiederzuverwenden statt es neu zu erfinden, hält beide von Natur aus im Gleichschritt.
 * **Warum `tool_id.c`/`lifecycle.c`/`preheat.c` vor jedem GPIO/F-RAM/CAN-Treiber kommen.** Eine ID zu dekodieren, Nutzung zu akkumulieren und zu entscheiden, wann vorgeheizt werden soll, sind reine Funktionen bereits vorhandener Daten - sie brauchen keine PCB, um geschrieben oder getestet zu werden, also liefert v0 diese Logik zuerst, host-getestet mit dem eigenen C-Compiler der Maschine statt `arm-none-eabi-gcc`. Die Treiber, die diese Daten tatsächlich von echter Hardware beziehen würden, kommen, sobald die PCB existiert.
 * **Wie sich das ins restliche Ökosystem einfügt.** Nutzt das Werkzeug-Ökosystem von URTC (dieselben Werkzeug-IDs; die Frames des Racks sind noch keine CAN-Frames, siehe `docs/OPERATIONS.md`) und bildet ein natürliches Paar mit HYDRA-UMC-DETECTION-HEF, um visuell zu erkennen, welches Werkzeug tatsächlich eingelagert ist.
 * **Warum Protokoll, Befehlsvalidierung und Link-Watchdog drei getrennte Module sind.** `protocol.c` kennt nur Bytes, Framing und eine CRC - es hat keine Ahnung, was eine "sichere" Temperatur ist. `rack_command.c` besitzt dieses Urteil, dekodiert und prüft den Bereich eines echten Befehls, ohne sich darum zu kümmern, wie er auf der Leitung ankam. `link_watchdog.c` verfolgt Timeout/Idempotenz unabhängig von beiden - ein beschädigter Frame darf ihn niemals überhaupt erreichen (siehe die eigene echte Assertion von `test_rack_link_scenarios.c`, dass ein Frame mit falscher CRC den Watchdog niemals wiederbelebt). Sie getrennt zu halten macht jedes einzeln host-testbar und hält einen künftigen CAN-Empfangshandler schlank - er ruft jede Schicht der Reihe nach auf, er implementiert das Urteil keiner von ihnen neu.
 * **Ratenbegrenzer für Befehle.** Eine Flut von Befehlen für ein Werkzeug wird durch einen Mindestabstand zwischen angenommenen Befehlen gebremst (Standard 20 ms, 0 schaltet ihn ab; `link_watchdog_set_command_interval()`). Ein zurückgehaltener Befehl ändert nichts und wird nicht quittiert, zählt aber als lebendige Verbindung; ein sicherer Zustand oder eine Wiederholung wird nie zurückgehalten. Der Abstand lässt sich in der simulierten Rack-Werkbank von URTC-WEB-STUDIO einstellen.
 * **Warum eine unbewiesene Verbindung genau wie eine tote behandelt wird.** `link_watchdog_is_link_lost()` ist sowohl nach einem echten Timeout wahr ALS AUCH bevor der allererste Frame überhaupt angekommen ist - die Diagnosenotizen selbst nennen es "estado seguro al arrancar". Ein Rack, das ohne bereits verbundenen Host hochfährt, muss im sicheren Zustand starten, statt stillschweigend "alles in Ordnung" anzunehmen, bis das Gegenteil bewiesen ist.
 
----
+## 🔒 Sicherheit und Schutz
 
-## 📂 VERZEICHNISSTRUKTUR
+| Bedrohung | Abwehr |
+|---|---|
+| Ein Befehl außerhalb des Bereichs an ein Werkzeug | `rack_command.c` dekodiert und prüft jeden Befehl, ohne zu wissen, wie er ankam; `protocol.c` kennt nur Bytes, Rahmen und eine CRC; `tool_limits.c` hält die Grenze jedes Werkzeugprofils |
+| Ein beschädigter oder alter Frame | Ein versionierter Frame mit CRC-8; in Version 2 ist jeder Mehrbytewert Big-Endian wie der Bus, ein Frame der Version 1 wird abgelehnt |
+| Eine Flut von Befehlen | Ein Mindestabstand zwischen angenommenen Befehlen (standardmäßig 20 ms, 0 schaltet ihn ab); ein zurückgehaltener Befehl ändert nichts und wird nicht bestätigt, zählt aber als lebendige Verbindung; ein sicherer Zustand oder eine Wiederholung wird nie zurückgehalten |
+| Eine verlorene oder unbewiesene Verbindung | `link_watchdog_is_link_lost()` ist nach einem echten Timeout und auch vor dem ersten Frame wahr: Ein Rack, das ohne Host einschaltet, startet im sicheren Zustand |
+| Zu langes oder zu heißes Vorheizen | `preheat_limit.c` begrenzt, wie lange ein Vorheizen ohne Werkzeugwechsel laufen darf (standardmäßig 10 Minuten, einstellbar), und `tool_limits.c` das höchste Ziel je Werkzeugprofil |
+| Ein Werkzeug in zwei Fächern | `rack_inventory.c` hält ein echtes Werkzeug in genau einem Fach; legt man es woanders ab, wird das alte Fach geleert |
 
-```text
-URTC-SMART-RACK/
-├── src/                            # Firmware-Quellcode
-│   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
-│   ├── tool_id.h / .c              # Echt: Dekodierung roher 5-Bit-Ablesung -> Werkzeug-ID
-│   ├── lifecycle.h / .c            # Echt: Verfolgung Nutzungszyklen/-zeit, Prüfung fälliger Wartung
-│   ├── preheat.h / .c              # Echt: Smart-Idle-Aktivierung + Zieltemperatur + Ziel für sicheren Zustand
-│   ├── protocol.h / .c             # Echt: versioniertes Frame-Format + CRC8-Parsing/-Kodierung
-│   ├── urtc_crc8.h                 # Echt: CRC-8, gemeinsam mit der Vision-Sensorverbindung (aus URTC-COMMON kopiert)
-│   ├── urtc_frame.h                # Echt: Rahmenschicht (Startbyte, Version, Länge, CRC), gemeinsam mit der Vision-Sensorverbindung (aus URTC-COMMON kopiert)
-│   ├── urtc_rate_limiter.h         # Echt: Begrenzer des Mindestabstands der Befehle an ein Werkzeug (aus URTC-COMMON kopiert)
-│   ├── urtc_common.lock.json       # Sperrdatei der aus URTC-COMMON kopierten Dateien
-│   ├── rack_command.h / .c         # Echt: Befehlsdekodierung + Aktuierungsgrenzen-Validierung
-│   ├── link_watchdog.h / .c        # Echt: Link-Timeout + Befehls-Idempotenz
-│   ├── rack_link.h / .c            # Echt: Frame-Dispatch-Entscheidung, die protocol/rack_command/link_watchdog/preheat verbindet
-│   ├── rack_inventory.h / .c       # Echt: Mehrplatz-Werkzeuginventar - welches Werkzeug wo eingelagert ist, nie in zwei Plätzen zugleich
-│   ├── tool_limits.h / .c          # Echt: höchstes Vorheizziel je Werkzeugprofil (0 = kein Heizer)
-│   ├── rack_app.h / .c             # Echt: wendet die Entscheidung des Empfangspfads auf das Inventar an; sicherer Zustand bei verlorener Verbindung
-│   ├── rack_deframer.h / .c        # Echt: findet die Rahmen im Bytestrom der seriellen Verbindung (Neusynchronisation, Ruhezeit)
-│   ├── rack_can.h / .c             # Echt: wie der Rack-Befehl über CAN laufen wird, sobald eine Platine mit Transceiver existiert
-│   ├── preheat_limit.h / .c        # Echt: das längste Vorheizen ohne Werkzeugwechsel
-│   ├── preheat_plan.h / .c         # Echt: vorausschauendes Vorheizen aus der Auftragswarteschlange
-│   ├── slot_verify.h / .c          # Echt: was eine thermische Messung über einen Slot aussagt
-│   ├── rack_units.h / .c           # Echt: Identität und Verschleiß jedes physischen Werkzeugkopfs
-│   ├── main.c                      # Minimaler Einstiegspunkt (Lebenszeichen-Schleife)
-│   ├── startup_stm32g4_minimal.c   # Vektortabelle + Reset_Handler (noch keine ST-HAL, siehe Datei-Header)
-│   └── STM32G4_MINIMAL.ld          # Platzhalter-Linkerskript (Untergrenze 128K FLASH / 32K RAM)
-├── tests/                          # Echtes host-natives Test-Harness (tool_id, Werkzeuggrenzen, lifecycle, preheat, protocol, rack_command, link_watchdog, Rack-Link-Szenarien, Rack-Inventar, Robustheit, rack_app) und Python-Prüfungen, dass Build-Skripte und veröffentlichte Testanzahl übereinstimmen
-├── docs/                           # Betriebsanleitung (docs/OPERATIONS.md): was die Logik tut, ablehnt und unverifiziert lässt
-├── hardware/                       # Hardware-Notizen (README.md) - noch keine Entwurfsdateien (kein Schaltplan, keine PCB)
-├── firmware/                       # Build-Ausgabe (.bin/.elf/.hex), von git ignoriert - nur als Assets des GitHub-Releases veröffentlicht
-├── build/                          # Zwischen-Build-Objekte (von git ignoriert)
-├── images/                         # Medien und Diagramme
-├── tools/
-│   ├── build_test.py               # Build-/Kompilierprüfung ohne Versionserhöhung
-│   ├── gcov_floor.py               # Schlägt fehl, wenn die Host-Tests weniger von src/ ausführen als ein Mindestwert (gcov)
-│   ├── publish_release_assets.py   # Listet die Release-Assets auf und gibt den gh-Befehl aus
-│   ├── ci_validate.py              # Manifest-/CHANGELOG-/Doku-Validierung, von der CI genutzt
-│   └── _doc_policy.py / _readme_parity.py / _tracked_names.py # Gemeinsame Prüfungen, die ci_validate.py verwendet
-├── bump.py                         # Ausdrücklicher Befehl zum Erhöhen der Version (Kompilieren erhöht nie)
-├── bump_version.py                 # Versionserhöhung nach Kilometerzähler-Prinzip (generisch, geteilt mit URTC)
-├── bump_manifest_version.py        # Synchronisiert die Version von urtc.project.json mit der nativen (--sync)
-├── build_firmware.sh / .bat        # Echter Build: Host-Tests + kompilieren + linken + veröffentlichen (ändert nie die Version)
-├── build-test.sh / .bat            # Build-/Kompilierprüfung ohne Versionserhöhung
-└── README.md
-```
+All das ist reines C, auf einem Computer getestet; es lief nie auf einer Platine und ist keine zertifizierte Sicherheitsfunktion.
 
----
+## 🔌 Schnittstellen
 
-## 4. ⚙️ BUILD
+* **Der serielle Frame des Racks:** Version 2, Big-Endian wie der Bus, mit der CRC-8 aus URTC-COMMON (`src/urtc_crc8.h`, `src/urtc_frame.h`); `protocol.c` liest und schreibt ihn, `rack_deframer.c` findet Frames in einem Byte-Strom (Resynchronisierung nach einem verlorenen Byte, ein halber Frame wird nach einem Timeout verworfen) und `rack_link.c` entscheidet, was mit jedem Frame geschieht. Die Formate stehen in [docs/OPERATIONS.md](docs/OPERATIONS.md).
+* **Die CAN-Form des Befehls:** `rack_can.c` (acht Datenbytes, Temperatur Big-Endian). Noch keine Platine trägt sie: Die Frames des Racks sind noch keine CAN-Frames.
+* **Mit URTC geteilt:** die 5-Bit-Werkzeug-ID (`tool_id.c`) und die Zähler `0x1AA` / `0x1AB`, die die Nutzung jedes physischen Kopfes führen (`rack_units.c`). Die Vektoren, die die Frame-Schicht reproduzieren muss, sind die von URTC-COMMON (`conformance/rack_vectors.json`).
+
+## 🚀 Schnellstart
 
 Erfordert die ARM-GNU-Toolchain (`arm-none-eabi-gcc`, `arm-none-eabi-objcopy`, `arm-none-eabi-size`) und Python 3.
 
@@ -155,14 +138,6 @@ chmod +x build_firmware.sh   # einmalig
 # Windows
 build_firmware.bat
 ```
-
-Der Build kompiliert und führt zuerst `tests/` mit dem C-Compiler des *Hosts selbst* aus (nie `arm-none-eabi-gcc` - das sind reine Logik-Tests, keine MCU-Register werden angefasst) und lässt den gesamten Build fehlschlagen, falls eine Assertion fehlschlägt. Erst danach erhöht er die Version von `src/firmware_common.h` (Kilometerzähler-Regel, wie im übrigen Ökosystem), kompiliert `main.c` und `startup_stm32g4_minimal.c` für Cortex-M4F, linkt sie gegen die Platzhalter-Speicherkarte `STM32G4_MINIMAL.ld` und veröffentlicht versionierte `.elf`/`.bin`/`.hex`-Dateien in `firmware/`.
-
-Alle Module unter `src/` werden zusätzlich für Cortex-M4F kompiliert und zur Kontrolle alle zusammen gelinkt (auf dem Ziel steht keine C-Bibliothek zur Verfügung), obwohl das Image heute nur `main.c` und die Startdatei enthält. Schlägt der Build fehl, nachdem die Version erhöht wurde, werden Version, Manifest und Changelog zurückgesetzt. Mit `URTC_CI=1` wird nichts Versioniertes verändert.
-
-Die Firmware-Images (`.bin`, `.hex`, `.elf`) werden nicht in git versioniert: ein Release-Build schreibt `firmware/URTC_SMART_RACK_FIRMWARE_v<Version>.*` (von git ignoriert; `build/firmware` im CI-Modus, `URTC_CI=1`), und sie werden nur als Assets des GitHub-Releases der jeweiligen Version veröffentlicht. `python tools/publish_release_assets.py` prüft die Dateien, schreibt die fehlende `.sha256`-Datei und gibt den genauen `gh release create`-Befehl mit den anzuhängenden Dateien aus.
-
-Es gibt noch nichts, was auf echte Hardware geflasht werden könnte - es existiert keine PCB, die das Ziel-STM32G4-Modell, das Pinout oder die realen Flash-/RAM-Größen bestätigt. Die Speicherkarte des Linkerskripts ist ein konservativer Platzhalter (in seinem eigenen Header dokumentiert), der ersetzt wird, sobald echte Hardware existiert - zu demselben Zeitpunkt, an dem die handgeschriebene Vektortabelle von `startup_stm32g4_minimal.c` durch STs eigenen CMSIS/HAL-Startupcode ersetzt wird (nach dem Muster des Schwester-Repos URTC in `src/F303-master/` für dessen STM32F303-Platinen).
 
 Echtes Beispiel - die Host-seitigen Tests laufen auch eigenständig, nützlich um die Logik ohne vollständigen Firmware-Build zu prüfen:
 
@@ -178,13 +153,76 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 # All tests passed.
 ```
 
----
+<!-- urtc-section:compatibility -->
+### Voraussetzungen und Kompatibilität
 
-## 5. 📋 CHANGELOG
+Welche Versionen der URTC-Programme zusammenarbeiten und welche Protokollversion jede spricht, steht in der Kompatibilitätstabelle, die URTC-COMMON erzeugt: [docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md).
+<!-- /urtc-section:compatibility -->
 
-Siehe [`CHANGELOG.md`](CHANGELOG.md) für die vollständige Versionshistorie — jeder echte Build erhöht automatisch die Version von `src/firmware_common.h` (Kilometerzähler-Regel, siehe BUILD oben), und jede Erhöhung hat dort ihren eigenen Eintrag.
+## 🧪 Tests
 
----
+Die Host-Tests sind C-Programme in `tests/` (467 `TEST_ASSERT`-Prüfungen in 16 Dateien), kompiliert und ausgeführt mit dem C-Compiler des Rechners selbst, nie mit `arm-none-eabi-gcc`: Werkzeug-ID, Werkzeuggrenzen, Lebenszyklus, Vorheizen, der Frame, die Befehlsprüfung, der Verbindungs-Watchdog, ganze Verbindungsszenarien, das Inventar, Robustheit gegen fehlerhafte Eingaben, die Anwendungsschicht, der Deframer (19 Byte-Ströme mit der Ankunftszeit jedes Stücks: ein Frame in Stücken, Rauschen, eine falsche CRC, eine falsche Version oder Länge, eine Stille an der Grenze des Timeouts, ein Überlauf der Millisekundenuhr), die CAN-Form, die Vorheizgrenze und die Einheiten jedes Kopfes; die Vektoren sind die von URTC-COMMON. Fünf Python-Testdateien (25 Tests) prüfen, dass Build-Skripte, Release-Dateien, Versionsdateien und die veröffentlichte Testzahl übereinstimmen. Die CI baut die C-Tests mit AddressSanitizer und UBSan und schlägt unter einer Abdeckungsschwelle der ausgeführten Zeilen von `src/` fehl (`tools/gcov_floor.py`). `bash build_firmware.sh` führt sie vor dem Cross-Kompilieren aus und bricht den Build ab, wenn eine Prüfung fehlschlägt.
+
+## 🏗️ Build und Veröffentlichung
+
+Der Build kompiliert und führt zuerst `tests/` mit dem C-Compiler *des Rechners selbst* aus (nie `arm-none-eabi-gcc`: Es sind reine Logiktests ohne MCU-Register) und bricht ganz ab, wenn eine Prüfung fehlschlägt. Erst danach kompiliert er `main.c` und `startup_stm32g4_minimal.c` für Cortex-M4F, linkt sie gegen die vorläufige Speicherkarte `STM32G4_MINIMAL.ld` und legt versionierte `.elf`/`.bin`/`.hex`-Dateien in `firmware/` ab. Das Bauen ändert nie die Version.
+
+Jedes Modul unter `src/` wird auch für Cortex-M4F kompiliert und alle werden als Prüfung zusammengelinkt (auf dem Ziel gibt es keine C-Bibliothek), obwohl das Image heute nur `main.c` und die Startdatei enthält. Mit `URTC_CI=1` wird keine versionierte Datei angefasst.
+
+Die Firmware-Images (`.bin`, `.hex`, `.elf`) werden nicht in git versioniert: ein Release-Build schreibt `firmware/URTC_SMART_RACK_FIRMWARE_v<Version>.*` (von git ignoriert; `build/firmware` im CI-Modus, `URTC_CI=1`), und sie werden nur als Assets des GitHub-Releases der jeweiligen Version veröffentlicht. `python tools/publish_release_assets.py` prüft die Dateien, schreibt die fehlende `.sha256`-Datei und gibt den genauen `gh release create`-Befehl mit den anzuhängenden Dateien aus.
+
+Es gibt noch nichts, was auf echte Hardware geflasht werden könnte - es existiert keine PCB, die das Ziel-STM32G4-Modell, das Pinout oder die realen Flash-/RAM-Größen bestätigt. Die Speicherkarte des Linkerskripts ist ein konservativer Platzhalter (in seinem eigenen Header dokumentiert), der ersetzt wird, sobald echte Hardware existiert - zu demselben Zeitpunkt, an dem die handgeschriebene Vektortabelle von `startup_stm32g4_minimal.c` durch STs eigenen CMSIS/HAL-Startupcode ersetzt wird (nach dem Muster des Schwester-Repos URTC in `src/F303-master/` für dessen STM32F303-Platinen).
+
+Den vollständigen Versionsverlauf findest du in [`CHANGELOG.md`](CHANGELOG.md); jede Version hat dort ihren eigenen Eintrag.
+
+## 📂 Struktur des Repositorys
+
+<p align="center">
+  <img src="images/repository-structure.svg" alt="Struktur des Repositorys URTC-SMART-RACK" width="100%">
+</p>
+
+<details>
+<summary>Textversion des Baums</summary>
+
+```text
+URTC-SMART-RACK/
+├── src/                                               die Firmware: reine C-Logik, die geprüften Kopien von URTC-COMMON, der Einstiegspunkt und das vorläufige Linker-Skript
+├── tests/                                             C-Host-Tests (467 Prüfungen) und Python-Prüfungen der Build-Skripte
+├── docs/                                              OPERATIONS.md: was die Logik tut, ablehnt und unverifiziert lässt
+├── hardware/                                          Notizen: noch kein Schaltplan, keine Leiterplatte
+├── tools/                                             Build-Prüfung, Abdeckungsschwelle, Release-Dateien und die gemeinsamen CI- und Bild-Werkzeuge
+├── images/                                            Banner und Bilder dieses READMEs
+├── .github/                                           CI-Workflow sowie Vorlagen für Issues und Pull Requests
+├── build-test.sh build-test.bat                       Build- und Testskripte, die im Repository nichts ändern
+├── test.sh test.bat                                   führen die Tests aus
+├── urtc.project.json                                  Manifest: Version, Rolle, Reifegrad und Build-Befehl
+├── CHANGELOG.md                                       was sich in jeder Version geändert hat
+├── SECURITY.md SUPPORT.md LICENSE                     Sicherheitsrichtlinie, Support und Lizenz
+├── CONTRIBUTING.md CODE_OF_CONDUCT.md                 wie man mitwirkt, und der Verhaltenskodex
+├── .gitattributes .gitignore                          Git-Einstellungen
+├── build_firmware.sh build_firmware.bat               Host-Tests, Cross-Kompilierung, Linken und Veröffentlichen der Images
+├── bump.py bump_version.py bump_manifest_version.py   Skripte, die die Version erhöhen
+└── LICENSE.md ruff.toml                               Dokumentationslizenz und Lint-Einstellungen
+```
+
+</details>
+
+## 🗺️ Roadmap und bekannte Grenzen
+
+**Bekannte Grenzen heute**
+
+* Für diese Platine gibt es noch keine Leiterplatte und keinen Schaltplan (siehe `hardware/`): Nichts davon hat je einen echten GPIO-Pin, einen F-RAM-Chip, ein Heizelement oder einen CAN-Transceiver angesteuert. `main.c` und die Startdatei beweisen nur, dass das Cross-Kompilieren und Linken für Cortex-M4F mit einem vorläufigen Linker-Skript gelingt.
+* Das Lesen der Firmware-Version jedes Kopfes ist geplant, nicht umgesetzt.
+* Die CAN-Form des Befehls lief nie: Es gibt weder einen CAN-Treiber noch eine Platine, und die Frames des Racks sind noch keine CAN-Frames.
+* Die Aufheizzeiten des vorausschauenden Vorheizens sind Schätzungen, und sein Schalter ist standardmäßig aus.
+
+**Als Nächstes**
+
+* Die Platine entwerfen, das STM32G4-Bauteil festlegen und das vorläufige Linker-Skript und die Startdatei durch die von ST ersetzen; die GPIO-, F-RAM- und CAN-Treiber schreiben, die der Logik ihre Daten liefern.
+
+## 🌍 Sprachen
+
+README und Texte gibt es auf Englisch, Spanisch, Französisch, Italienisch, Deutsch, Chinesisch, Japanisch und europäischem Portugiesisch.
 
 ## 🔗 Verwandte Projekte
 
@@ -277,10 +315,7 @@ Dieses Projekt ist Teil des HYDRA-UMC-Robotik-Ökosystems desselben Autors (Juan
 - **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — Wartungsvorfall-Koordinator: eine Edge-Rolle mit niedrigem Privileg sammelt einen bereinigten Inventar-/Gesundheits-Snapshot, eine Control-Plane-Rolle rendert ihn schreibgeschützt und bittet einen KI-Anbieter um einen Diagnosevorschlag - wendet nie einen Patch an und stellt nie etwas bereit.
 - **[HYDRA-UMC-DEV-SERVER](https://github.com/JuanenRac/HYDRA-UMC-DEV-SERVER)** — reproduzierbarer Entwicklungshost (Raspberry Pi 5 / CM5), der den Quellcode des Ökosystems vorhält und begrenzte Build-/Test-Aufgaben über eine dauerhafte Warteschlange ausführt; eine dedizierte Entwicklerrolle, ausdrücklich kein operativer CM5.
 
-
----
-
-## 📚 Dokumentation & Community
+## 📚 Dokumentation
 
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — Technologie-Stack und Coding-Richtlinien für einen Pull Request.
 - **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** — die in dieser Community erwarteten Verhaltensstandards.
@@ -288,16 +323,20 @@ Dieses Projekt ist Teil des HYDRA-UMC-Robotik-Ökosystems desselben Autors (Juan
 - **[SUPPORT.md](SUPPORT.md)** — wo man Fragen stellt und Fehler meldet.
 - **[LICENSE.md](LICENSE.md)** — die eigene Lizenz dieses Projekts.
 
+## 🤝 Mitwirken und Community
+
+* Führe vor einem Pull Request `URTC_CI=1 python tools/ci_validate.py` aus: es muss bestehen. Siehe [CONTRIBUTING.md](CONTRIBUTING.md) und den [Verhaltenskodex](CODE_OF_CONDUCT.md).
+* Das README gibt es in acht Sprachen: Eine Textänderung wird in allen acht Dateien vorgenommen, und die mit anderen Repositorys geteilten Abschnitte schreibt `tools/readme_sections.py` von URTC-COMMON.
+* Eine Änderung am CAN-Protokoll beginnt in URTC-COMMON (`spec/can_protocol.json`) und gelangt über die geprüfte Kopie in dieses Repository.
+* Beschreibe nichts als auf einer Platine funktionierend, was nur gebaut wurde.
+* Melde eine Schwachstelle privat: [SECURITY.md](SECURITY.md). Fragen, Ideen und Meldungen: electrohobby3d@gmail.com ([SUPPORT.md](SUPPORT.md)).
+
 ## 👤 AUTOR
+
 **JuanenRac** (Electro Hobby 3D)
 📧 electrohobby3d@gmail.com
 📺 [youtube.com/@electrohobby3d](https://youtube.com/@electrohobby3d)
 
-<!-- urtc-section:compatibility -->
-## 🧩 Kompatibilität
-
-Welche Versionen der URTC-Programme zusammenarbeiten und welche Protokollversion jede spricht, steht in der Kompatibilitätstabelle, die URTC-COMMON erzeugt: [docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md).
-<!-- /urtc-section:compatibility -->
-
 ## 📜 LIZENZ
+
 GPL-3.0-or-later - Siehe LICENSE für Details.

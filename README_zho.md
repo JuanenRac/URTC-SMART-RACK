@@ -12,8 +12,11 @@
   <img src="https://img.shields.io/badge/Licencia-GPL%203.0-blue.svg" alt="GPL 3.0">
   <img src="https://img.shields.io/badge/MCU-STM32G4-003551.svg" alt="STM32G4">
   <img src="https://img.shields.io/badge/Protocol-CAN%20framing%20only-orange.svg" alt="CAN framing only">
+  <img src="https://img.shields.io/badge/Tests-467-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Feature-Smart%20Idle-green.svg" alt="Smart Idle">
 </p>
+
+---
 
 **诚实核查 - 今天真正能运行的部分：** `tool_id.c`、`lifecycle.c`、`preheat.c`、`protocol.c`、`rack_command.c`、`link_watchdog.c`、`tool_limits.c`、`rack_app.c`、`rack_link.c`、`rack_deframer.c`、`rack_can.c`、`preheat_limit.c` 和 `rack_inventory.c` 都是真实、纯粹的 C 代码，由 467 个通过的 `TEST_ASSERT` 检查支撑（`tests/test_*.c`，使用宿主机自身的 C 编译器而非 `arm-none-eabi-gcc` 编译并运行）——通过实际编译并运行这套宿主测试套件加以确认。这覆盖了 ID 解码、使用/生命周期跟踪、预热激活与目标温度、CRC8 分帧协议解析、命令范围校验、链路超时/幂等性处理，以及多槽位工具库存跟踪(哪个工具放在哪个槽位、同一把真实工具绝不会同时出现在两个槽位)——全部都是逻辑，没有任何硬件。正如 README 自己的介绍已经说明的那样：这块板子目前还没有 PCB/原理图，所以这里的任何代码都从未驱动过真实的 GPIO 引脚、F-RAM 芯片、加热元件或 CAN 收发器——`main.c`/`startup_stm32g4_minimal.c` 只是证明了针对 Cortex-M4F 的交叉编译和链接能够在一个占位链接脚本上成功完成，并不能证明其中任何部分真的运行在真实芯片上。具体已经交付了什么，请参见 `CHANGELOG.md`。 串行线路也会测试：19 条带有每段到达时间的字节流（分段的帧、噪声、错误的 CRC、不匹配的版本或长度、恰在超时界限上的静默、毫秒时钟回绕）经过真实的解帧器，输出的帧及其计数器与 URTC-COMMON 的模型一致。
 
@@ -27,9 +30,12 @@
 |---|---|
 | 版本 | `0.2.1` |
 | 成熟度 | 可用 |
+| 测试 | 467 |
 | 技术栈 | C / STM32G4 / arm-none-eabi-gcc |
 | 目标 | 微控制器板（固件）；在电脑上构建 |
 | 真实硬件 | 尚未：此版本没有在真实硬件上运行的记录 |
+
+**跳转到：** [概述](#-概述) · [架构](#-架构) · [安全](#-安全与防护) · [接口](#-接口) · [快速开始](#-快速开始) · [测试](#-测试) · [结构](#-仓库结构) · [相关项目](#-相关项目)
 
 <!-- urtc-section:status_smart_rack -->
 ## 🚦 项目状态
@@ -45,7 +51,7 @@
 
 <!-- /urtc-section:status_smart_rack -->
 
-## 1. 🛠️ 技术概述
+## 🎯 概述
 
 **URTC-SMART-RACK** 是 HYDRA-UMC 生态系统内用于末端执行器的智能存储系统。
 基于 STM32G4 微控制器，它在工具未安装到机器人上时对其进行监控和预处理。
@@ -69,9 +75,20 @@
 * 🔒 **协议范围检查** —— 版本化帧格式与 CRC8 校验和、执行范围验证，以及带有明确安全状态的链路超时/幂等性看门狗。帧版本 2：所有多字节数值均与总线一样采用大端序，版本 1 的帧会被拒绝。*（以纯 C 实现，仅在 PC 上测试过；从未在板卡上运行过，也不是经过认证的安全功能）*
 * ✅ **Cortex-M4F 固件工具链** —— 一个真实的裸机镜像（启动文件 + 链接脚本 + `main.c`），使用与兄弟仓库 URTC 相同的工具链，通过 `arm-none-eabi-gcc` 交叉编译并链接。*（已实现——见下方"构建"）*
 
----
+## 🧩 在 URTC 中的角色
 
-## 2. 🔄 智能架构工作流程
+URTC-SMART-RACK 是存放工具头的板子，而不是工具头：一个机架，它识别所容纳的每个头（URTC 使用的 5 位工具 ID），记录每个实体头的使用情况和热故障，知道哪个工具在哪个槽位，并在换刀前不久为焊接或热风工具预热（Smart Idle）。它与 URTC 共用工具 ID 和固件约定，但属于互补工具而非 URTC 的子项目，设计上由 HYDRA-UMC 机器人控制器驱动。目前还没有板子：现在真实存在的是逻辑和机架协议，已在计算机上测试。
+
+## 🏛️ 架构
+
+<p align="center">
+  <img src="images/architecture.svg" alt="URTC-SMART-RACK 的架构：谁在使用、包含什么、依赖什么" width="100%">
+</p>
+
+本仓库各部分如何协作：谁在使用它、它包含什么、它依赖什么。图片由 `docs/architecture.json` 绘制，并与代码核对。
+
+<details>
+<summary>图表的文本版 (Mermaid)</summary>
 
 ```mermaid
 flowchart TB
@@ -82,73 +99,39 @@ flowchart TB
     RACK -- 健康检查 --> LOG["维护报告"]
 ```
 
----
+</details>
 
-## 3. 🧱 架构与设计决策
+### 架构与设计决策
 
 * **为什么该板卡尚未定义真实的引脚布局/硬件 ID。** 该板卡目前尚无 PCB——`src/firmware_common.h` 携带一个没有硬件 ID 的版本标识，启动文件/链接脚本是手写的占位符，暂时代替 ST 自身的 CMSIS/HAL 启动代码，直到确定真实的 STM32G4 型号。
 * **为什么它不是 URTC 自身的子项目。** URTC-SMART-RACK 是一个配套工具，而非 URTC 系列的子项目——它是一块独立的物理板卡（工具存储架，而非刀头本身），恰好共享 URTC 自身的工具 ID 空间和固件惯例，而非其集成层级结构。
-* **为什么 `bump_version.py` 直接复制自 URTC 自身。** 相同的里程表版本规则，相同的固件头格式——直接复用同一脚本而非重新发明，可以通过构造方式使两者天然保持同步。
+* **为什么 `bump_version.py` 是 URTC 同名脚本的原样副本。** 固件头格式相同——复用同一个脚本而不是重新发明，从构造上保证两者同步。
 * **为什么 `tool_id.c`/`lifecycle.c`/`preheat.c` 先于任何 GPIO/F-RAM/CAN 驱动交付。** 解码 ID、累积使用情况、决定何时预热，都是对已有数据的纯函数运算——无需 PCB 即可编写或测试，因此 v0 首先交付这部分逻辑，使用宿主机自身的 C 编译器而非 `arm-none-eabi-gcc` 进行宿主测试。真正从真实硬件获取这些数据的驱动程序，将在 PCB 存在后到来。
 * **这如何融入生态系统的其余部分。** 使用 URTC 自身的工具生态系统（相同的工具 ID；机架的帧目前还不是 CAN 帧，见 `docs/OPERATIONS.md`），并与 HYDRA-UMC-DETECTION-HEF 自然搭配，用于视觉识别实际存放在架上的工具。
 * **为什么协议、命令验证与链路看门狗是三个独立的模块。** `protocol.c` 只了解字节、帧格式和 CRC，它并不知道什么样的温度才算“安全”。`rack_command.c` 拥有那份判断，它解码并对一个真实的命令进行范围检查，而不关心它是如何在总线上到达的。`link_watchdog.c` 独立于二者追踪超时/幂等性——一个损坏的帧甚至不应该到达它（参见 `test_rack_link_scenarios.c` 自身的真实断言：一个 CRC 错误的帧永远不会让看门狗复活）。保持它们分离使得每一个都能在宿主机上独立测试，并让未来的 CAN 接收处理函数保持精简——它只需按顺序调用每一层，而不需要重新实现它们任何一个的判断。
 * **命令速率限制器。** 针对同一工具的大量命令会被已接受命令之间的最小间隔所限制（默认 20 毫秒，0 表示关闭；`link_watchdog_set_command_interval()`）。被暂缓的命令不会改变任何状态，也不会收到确认，但仍视为链路存活；安全状态和重传绝不会被暂缓。该间隔可在 URTC-WEB-STUDIO 的模拟机架试验台中调整。
 * **为什么未经验证的链路会被当作已断开的链路处理。** `link_watchdog_is_link_lost()` 在真正超时之后为真，在第一个帧还从未到达之前也为真——正如诊断笔记自身所说的“estado seguro al arrancar”。一个开机时还没有主机连接的机架，必须以安全状态启动，而不是在未经证实之前默默假定“没问题”。
 
----
+## 🔒 安全与防护
 
-## 📂 目录结构
+| 威胁 | 防御 |
+|---|---|
+| 发给某个工具的超范围命令 | `rack_command.c` 对每条命令解码并检查范围，不关心它如何到达；`protocol.c` 只认识字节、帧和 CRC；`tool_limits.c` 保存每个工具配置的限值 |
+| 损坏或过时的帧 | 带版本号的帧和 CRC-8；版本 2 中所有多字节数值都与总线一样采用大端序，版本 1 的帧会被拒绝 |
+| 命令洪泛 | 已接受命令之间的最小间隔（默认 20 毫秒，0 为关闭）；被扣留的命令不会改变任何东西也没有确认，但算作链路仍然存活；安全状态或重传永远不会被扣留 |
+| 丢失或未经证明的链路 | `link_watchdog_is_link_lost()` 在真正超时后以及第一帧到达之前都为真：没有主机就上电的机架会从安全状态启动 |
+| 预热过久或过热 | `preheat_limit.c` 限制没有换刀时预热可持续的时间（默认 10 分钟，可配置），`tool_limits.c` 限制每个工具配置的最高目标值 |
+| 一个工具出现在两个槽位 | `rack_inventory.c` 让一个真实工具只在一个槽位；把它放到别处会清除原来的槽位 |
 
-```text
-URTC-SMART-RACK/
-├── src/                            # 固件源代码
-│   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
-│   ├── tool_id.h / .c              # 真实：原始 5 位读数解码 -> 工具 ID
-│   ├── lifecycle.h / .c            # 真实：使用周期/时间追踪，到期维护检查
-│   ├── preheat.h / .c              # 真实：智能待机激活 + 目标温度 + 安全状态目标
-│   ├── protocol.h / .c             # 真实：版本化帧格式 + CRC8 解析/编码
-│   ├── urtc_crc8.h                 # 真实：与视觉传感器链路共用的 CRC-8（复制自 URTC-COMMON）
-│   ├── urtc_frame.h                # 真实：与视觉传感器链路共用的帧层（起始字节、版本、长度、CRC；复制自 URTC-COMMON）
-│   ├── urtc_rate_limiter.h         # 真实：工具命令的最小间隔限制器（复制自 URTC-COMMON）
-│   ├── urtc_common.lock.json       # 复制自 URTC-COMMON 的文件的锁定文件
-│   ├── rack_command.h / .c         # 真实：命令解码 + 执行限制验证
-│   ├── link_watchdog.h / .c        # 真实：链路超时 + 命令幂等性
-│   ├── rack_link.h / .c            # 真实：连接 protocol/rack_command/link_watchdog/preheat 的帧分发决策
-│   ├── rack_inventory.h / .c       # 真实：多槽位工具库存——哪个工具放在哪个槽位，同一工具绝不会同时出现在两个槽位
-│   ├── tool_limits.h / .c          # 真实：每种工具配置的预热目标上限（0 = 无加热器）
-│   ├── rack_app.h / .c             # 真实：将接收路径的决定应用到库存；链路丢失时保持安全状态
-│   ├── rack_deframer.h / .c        # 真实：在串行链路的字节流中找出帧（重新同步、静默超时）
-│   ├── rack_can.h / .c             # 真实：有带收发器的板子之后，机架命令将如何在 CAN 上传输
-│   ├── preheat_limit.h / .c        # 真实：不更换工具时最长的预热时间
-│   ├── preheat_plan.h / .c         # 真实：根据作业队列的预测性预热
-│   ├── slot_verify.h / .c          # 真实：对槽位的热读数说明了什么
-│   ├── rack_units.h / .c           # 真实：每个实体工具头的身份与磨损
-│   ├── main.c                      # 最小入口点（存活证明心跳循环）
-│   ├── startup_stm32g4_minimal.c   # 向量表 + Reset_Handler（暂无 ST HAL，见文件头说明）
-│   └── STM32G4_MINIMAL.ld          # 占位链接脚本（128K FLASH / 32K RAM 下限）
-├── tests/                          # 真实的宿主机原生测试工具集（tool_id、工具上限、lifecycle、preheat、protocol、rack_command、link_watchdog、机架链路场景、机架库存、健壮性、rack_app），以及校验构建脚本与已公布测试数量一致的 Python 检查
-├── docs/                           # 运行指南（docs/OPERATIONS.md）：逻辑做什么、拒绝什么、哪些尚未验证
-├── hardware/                       # 硬件说明（README.md）—— 尚无设计文件（没有原理图，也没有 PCB）
-├── firmware/                       # 构建输出（.bin/.elf/.hex），被 git 忽略——仅作为 GitHub 发布的资源发布
-├── build/                          # 中间构建对象（已被 gitignore）
-├── images/                         # 媒体与图表
-├── tools/
-│   ├── build_test.py               # 不递增版本号的构建/编译检查
-│   ├── gcov_floor.py               # 主机测试执行的 src/ 少于下限时失败（gcov）
-│   ├── publish_release_assets.py   # 列出要附加的发布资源并输出 gh 命令
-│   ├── ci_validate.py              # CI 使用的 manifest/CHANGELOG/docs 校验
-│   └── _doc_policy.py / _readme_parity.py / _tracked_names.py # ci_validate.py 使用的共享检查
-├── bump.py                         # 显式的版本递增命令（编译从不递增）
-├── bump_version.py                 # 里程表式版本递增（通用脚本，与 URTC 共享）
-├── bump_manifest_version.py        # 将 urtc.project.json 的版本与原生版本同步（--sync）
-├── build_firmware.sh / .bat        # 真实构建：宿主测试 + 编译 + 链接 + 发布（从不更改版本）
-├── build-test.sh / .bat            # 不递增版本号的构建/编译检查
-└── README.md
-```
+这一切都是在计算机上测试的纯 C；从未在板子上运行过，也不是经过认证的安全功能。
 
----
+## 🔌 接口
 
-## 4. ⚙️ 构建
+* **机架的串行帧：** 版本 2，与总线一样采用大端序，使用 URTC-COMMON 提供的 CRC-8（`src/urtc_crc8.h`、`src/urtc_frame.h`）；`protocol.c` 负责解析和编码，`rack_deframer.c` 在字节流中找出帧（丢字节后重新同步，超时后丢弃半个帧），`rack_link.c` 决定如何处理每一帧。格式见 [docs/OPERATIONS.md](docs/OPERATIONS.md)。
+* **命令的 CAN 形式：** `rack_can.c`（八个数据字节，温度为大端序）。目前还没有板子承载它：机架的帧还不是 CAN 帧。
+* **与 URTC 共用：** 5 位工具 ID（`tool_id.c`）以及记录每个实体头使用情况的计数器 `0x1AA` / `0x1AB`（`rack_units.c`）。帧层必须复现的向量来自 URTC-COMMON（`conformance/rack_vectors.json`）。
+
+## 🚀 快速开始
 
 需要 ARM GNU 工具链（`arm-none-eabi-gcc`、`arm-none-eabi-objcopy`、
 `arm-none-eabi-size`）以及 Python 3。
@@ -161,24 +144,6 @@ chmod +x build_firmware.sh   # 仅需一次
 # Windows
 build_firmware.bat
 ```
-
-该构建首先使用*宿主机自身*的 C 编译器（绝不是 `arm-none-eabi-gcc`——这些
-是纯逻辑测试，不涉及任何 MCU 寄存器）编译并运行 `tests/`，若任何断言失败
-则整个构建失败。只有在此之后，它才会递增 `src/firmware_common.h` 中的
-版本号（里程表规则，与生态系统其余部分一致），针对 Cortex-M4F 编译
-`main.c` 和 `startup_stm32g4_minimal.c`，将其与占位性质的
-`STM32G4_MINIMAL.ld` 内存映射进行链接，并将版本化的 `.elf`/`.bin`/`.hex`
-文件发布到 `firmware/`。
-
-`src/` 下的每个模块也会针对 Cortex-M4F 编译，并作为检查一并链接在一起（目标上没有 C 库），尽管目前映像中只包含 `main.c` 和启动文件。如果在版本号递增之后构建失败，版本号、清单和变更日志会恢复原状。使用 `URTC_CI=1` 时不会改动任何受版本控制的文件。
-
-固件映像（`.bin`、`.hex`、`.elf`）不纳入 git 版本管理：发布构建会写入 `firmware/URTC_SMART_RACK_FIRMWARE_v<版本>.*`（已被 git 忽略；CI 模式即 `URTC_CI=1` 时写入 `build/firmware`），它们仅作为每个版本的 GitHub 发布资源发布。`python tools/publish_release_assets.py` 会检查这些文件、补写缺失的 `.sha256` 文件，并输出带有待附加文件的准确 `gh release create` 命令。
-
-目前尚无内容可刷写到真实硬件——因为没有 PCB 可以确认目标 STM32G4 型号、
-引脚布局或其真实的 flash/RAM 容量。链接脚本的内存映射是一个保守的占位符
-（在其自身的文件头注释中有说明），一旦真实硬件问世将被替换，届时
-`startup_stm32g4_minimal.c` 手写的向量表也会被 ST 自身的 CMSIS/HAL 启动
-代码取代（对应兄弟仓库 URTC 中针对 STM32F303 板卡的 `src/F303-master/`）。
 
 真实示例——宿主机侧测试也可以独立运行，便于在不进行完整固件构建的情况下
 检查逻辑：
@@ -195,13 +160,80 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 # All tests passed.
 ```
 
----
+<!-- urtc-section:compatibility -->
+### 要求与兼容性
 
-## 5. 📋 更新日志
+哪些版本的 URTC 程序可以配合使用、各自使用哪个协议版本，列在 URTC-COMMON 生成的兼容性表中：[docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md)。
+<!-- /urtc-section:compatibility -->
 
-完整版本历史见 [`CHANGELOG.md`](CHANGELOG.md) —— 每次真实构建都会自动递增 `src/firmware_common.h` 的版本号(里程表式规则,见上方"构建"一节),每次递增在其中都有独立条目。
+## 🧪 测试
 
----
+主机测试是 `tests/` 中的 C 程序（16 个文件中的 467 个 `TEST_ASSERT` 检查），用电脑自己的 C 编译器编译运行，从不使用 `arm-none-eabi-gcc`：工具 ID、工具限值、生命周期、预热、帧、命令检查、链路看门狗、完整的链路场景、库存、对错误输入的鲁棒性、应用层、帧拆分器（19 个字节流，带有每一块到达的时间：分块的帧、噪声、错误的 CRC、错误的版本或长度、恰在超时边界的静默、毫秒时钟回绕）、CAN 形式、预热限制和每个头的单元；向量来自 URTC-COMMON。五个 Python 测试文件（25 个测试）检查构建脚本、发布资源、版本文件和公布的测试数量是否一致。CI 用 AddressSanitizer 和 UBSan 构建 C 测试，并在 `src/` 已执行行的覆盖率低于下限时失败（`tools/gcov_floor.py`）。`bash build_firmware.sh` 在交叉编译前运行它们，任何断言失败则构建失败。
+
+## 🏗️ 构建与发布
+
+构建首先用*电脑自己的* C 编译器编译并运行 `tests/`（从不使用 `arm-none-eabi-gcc`：这些是纯逻辑测试，不接触 MCU 寄存器），任何断言失败整个构建就失败。之后才为 Cortex-M4F 编译 `main.c` 和 `startup_stm32g4_minimal.c`，与占位的 `STM32G4_MINIMAL.ld` 内存映射链接，并把带版本号的 `.elf`/`.bin`/`.hex` 文件发布到 `firmware/`。构建从不改变版本。
+
+`src/` 下的每个模块也会为 Cortex-M4F 编译，并作为检查全部链接在一起（目标上没有 C 库），尽管目前镜像里只有 `main.c` 和启动文件。设置 `URTC_CI=1` 时不会改动任何受版本控制的文件。
+
+固件映像（`.bin`、`.hex`、`.elf`）不纳入 git 版本管理：发布构建会写入 `firmware/URTC_SMART_RACK_FIRMWARE_v<版本>.*`（已被 git 忽略；CI 模式即 `URTC_CI=1` 时写入 `build/firmware`），它们仅作为每个版本的 GitHub 发布资源发布。`python tools/publish_release_assets.py` 会检查这些文件、补写缺失的 `.sha256` 文件，并输出带有待附加文件的准确 `gh release create` 命令。
+
+目前尚无内容可刷写到真实硬件——因为没有 PCB 可以确认目标 STM32G4 型号、
+引脚布局或其真实的 flash/RAM 容量。链接脚本的内存映射是一个保守的占位符
+（在其自身的文件头注释中有说明），一旦真实硬件问世将被替换，届时
+`startup_stm32g4_minimal.c` 手写的向量表也会被 ST 自身的 CMSIS/HAL 启动
+代码取代（对应兄弟仓库 URTC 中针对 STM32F303 板卡的 `src/F303-master/`）。
+
+完整的版本历史见 [`CHANGELOG.md`](CHANGELOG.md)，每个版本在其中都有自己的条目。
+
+## 📂 仓库结构
+
+<p align="center">
+  <img src="images/repository-structure.svg" alt="URTC-SMART-RACK 的仓库结构" width="100%">
+</p>
+
+<details>
+<summary>目录树的文本版</summary>
+
+```text
+URTC-SMART-RACK/
+├── src/                                               固件：纯 C 逻辑、URTC-COMMON 的核对副本、入口点和占位链接脚本
+├── tests/                                             C 主机测试（467 项检查）和构建脚本的 Python 检查
+├── docs/                                              OPERATIONS.md：逻辑做什么、拒绝什么、哪些尚未验证
+├── hardware/                                          说明：目前没有原理图和 PCB
+├── tools/                                             构建检查、覆盖率下限、发布资源以及共用的 CI 和图片工具
+├── images/                                            横幅和本 README 的图片
+├── .github/                                           CI 工作流以及 Issue 和 Pull Request 模板
+├── build-test.sh build-test.bat                       构建并测试的脚本，不会修改仓库内容
+├── test.sh test.bat                                   运行测试
+├── urtc.project.json                                  清单：版本、角色、成熟度和构建命令
+├── CHANGELOG.md                                       每个版本的变更
+├── SECURITY.md SUPPORT.md LICENSE                     安全政策、支持和许可证
+├── CONTRIBUTING.md CODE_OF_CONDUCT.md                 如何参与贡献和行为准则
+├── .gitattributes .gitignore                          Git 设置
+├── build_firmware.sh build_firmware.bat               主机测试、交叉编译、链接并发布镜像
+├── bump.py bump_version.py bump_manifest_version.py   提升版本号的脚本
+└── LICENSE.md ruff.toml                               文档许可证和 lint 设置
+```
+
+</details>
+
+## 🗺️ 路线图与已知限制
+
+**目前已知的限制**
+
+* 这块板子还没有 PCB 或原理图（见 `hardware/`）：这里的一切从未驱动过真实的 GPIO 引脚、F-RAM 芯片、加热器或 CAN 收发器。`main.c` 和启动文件只证明了用占位链接脚本为 Cortex-M4F 交叉编译并链接是成功的。
+* 读取每个头的固件版本是计划中的，尚未实现。
+* 命令的 CAN 形式从未运行过：既没有 CAN 驱动也没有板子，机架的帧还不是 CAN 帧。
+* 预测性预热的加热时间是估计值，其开关默认关闭。
+
+**下一步**
+
+* 设计板子，确定 STM32G4 型号，并用 ST 自己的链接脚本和启动文件替换占位文件；编写为逻辑提供数据的 GPIO、F-RAM 和 CAN 驱动。
+
+## 🌍 语言
+
+README 和文本提供英语、西班牙语、法语、意大利语、德语、汉语、日语和欧洲葡萄牙语版本。
 
 ## 🔗 相关项目
 
@@ -294,10 +326,7 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 - **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — 维护事件协调器：一个低权限的边缘角色采集经过脱敏的库存/健康快照，一个控制面角色以只读方式渲染它，并请求某个 AI 提供方给出诊断建议——从不应用补丁，也从不部署任何内容。
 - **[HYDRA-UMC-DEV-SERVER](https://github.com/JuanenRac/HYDRA-UMC-DEV-SERVER)** — 可复现的开发主机（Raspberry Pi 5 / CM5），保存整个生态系统的源代码，并在持久队列下运行有界的构建/测试任务；这是专用的开发角色，明确区别于运行中的 CM5。
 
-
----
-
-## 📚 文档与社区
+## 📚 文档
 
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** —— 提交 Pull Request 所需的技术栈和编码规范。
 - **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** —— 本社区所期望的行为准则。
@@ -305,16 +334,20 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 - **[SUPPORT.md](SUPPORT.md)** —— 在哪里提问和报告缺陷。
 - **[LICENSE.md](LICENSE.md)** —— 本项目自身的许可证。
 
+## 🤝 参与贡献与社区
+
+* 提交 Pull Request 之前请运行 `URTC_CI=1 python tools/ci_validate.py`：必须通过。参见 [CONTRIBUTING.md](CONTRIBUTING.md) 和[行为准则](CODE_OF_CONDUCT.md)。
+* README 有八种语言：修改文字时要同步修改全部八个文件，与其他仓库共用的章节由 URTC-COMMON 的 `tools/readme_sections.py` 写入。
+* 对 CAN 协议的修改从 URTC-COMMON（`spec/can_protocol.json`）开始，并通过经过核对的副本进入本仓库。
+* 不要把仅仅构建过的东西描述为已在板子上运行。
+* 请私下报告漏洞：[SECURITY.md](SECURITY.md)。问题、想法和报告：electrohobby3d@gmail.com（[SUPPORT.md](SUPPORT.md)）。
+
 ## 👤 作者
+
 **JuanenRac** (Electro Hobby 3D)
 📧 electrohobby3d@gmail.com
 📺 [youtube.com/@electrohobby3d](https://youtube.com/@electrohobby3d)
 
-<!-- urtc-section:compatibility -->
-## 🧩 兼容性
-
-哪些版本的 URTC 程序可以配合使用、各自使用哪个协议版本，列在 URTC-COMMON 生成的兼容性表中：[docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md)。
-<!-- /urtc-section:compatibility -->
-
 ## 📜 许可证
+
 GPL-3.0-or-later —— 详见 LICENSE。

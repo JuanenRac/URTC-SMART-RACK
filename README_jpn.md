@@ -12,8 +12,11 @@
   <img src="https://img.shields.io/badge/Licencia-GPL%203.0-blue.svg" alt="GPL 3.0">
   <img src="https://img.shields.io/badge/MCU-STM32G4-003551.svg" alt="STM32G4">
   <img src="https://img.shields.io/badge/Protocol-CAN%20framing%20only-orange.svg" alt="CAN framing only">
+  <img src="https://img.shields.io/badge/Tests-467-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Feature-Smart%20Idle-green.svg" alt="Smart Idle">
 </p>
+
+---
 
 **正直な現状確認 - 実際に今動くもの:** `tool_id.c`、`lifecycle.c`、`preheat.c`、`protocol.c`、`rack_command.c`、`link_watchdog.c`、`tool_limits.c`、`rack_app.c`、`rack_link.c`、`rack_deframer.c`、`rack_can.c`、`preheat_limit.c`、そして `rack_inventory.c` は本物の純粋な C コードであり、467件の通過している `TEST_ASSERT` チェック（`tests/test_*.c`、`arm-none-eabi-gcc` ではなくホスト自身の C コンパイラでコンパイル・実行）に裏付けられている——実際にこのホストテストスイートをコンパイルして実行し確認済みだ。これは ID デコード、使用状況/ライフサイクルの追跡、予熱の起動判断と目標温度、CRC8 フレーミングのプロトコル解析、コマンドの範囲検証、リンクタイムアウト/冪等性の処理、そしてマルチスロット工具インベントリの追跡(どの工具がどのスロットに収納されているか、実物の工具が同時に2つのスロットに存在することはない)をカバーしている——すべてロジックであり、ハードウェアは一切含まれない。README 自身の冒頭がすでに述べている通り、このボード用の PCB/回路図はまだ存在しないため、ここにあるものはいずれも実際の GPIO ピン、F-RAM チップ、ヒーター、CAN トランシーバーを一度も駆動したことがない——`main.c`/`startup_stm32g4_minimal.c` は、Cortex-M4F 向けのクロスコンパイルとリンクがプレースホルダーのリンカスクリプトに対して成功することを示すだけであり、これらが実際のシリコン上で動くことを示すものではない。これまでに実際に出荷されたものの詳細は `CHANGELOG.md` を参照。 シリアル回線も試験しています。各断片が届いた時刻付きの 19 本のバイト列（断片に分かれたフレーム、ノイズ、誤った CRC、合わないバージョンや長さ、タイムアウトちょうどの無音、ミリ秒クロックの一周）を本物のデフレーマーに通し、出てくるフレームとそのカウンターは URTC-COMMON のモデルと同じです。
 
@@ -27,9 +30,12 @@
 |---|---|
 | バージョン | `0.2.1` |
 | 成熟度 | 機能する |
+| テスト | 467 |
 | 技術 | C / STM32G4 / arm-none-eabi-gcc |
 | 対象 | マイコン基板（ファームウェア）。ビルドは PC で行います |
 | 実機での確認 | まだです：このバージョンについて実機での動作記録はありません |
+
+**移動先：** [概要](#-概要) · [アーキテクチャ](#-アーキテクチャ) · [セキュリティ](#-セキュリティと安全) · [インターフェース](#-インターフェース) · [クイックスタート](#-クイックスタート) · [テスト](#-テスト) · [構成](#-リポジトリの構成) · [関連](#-関連プロジェクト)
 
 <!-- urtc-section:status_smart_rack -->
 ## 🚦 プロジェクトの状況
@@ -45,7 +51,7 @@
 
 <!-- /urtc-section:status_smart_rack -->
 
-## 1. 🛠️ 技術概要
+## 🎯 概要
 
 **URTC-SMART-RACK** は、HYDRA-UMC エコシステム内のエンドエフェクター向け
 インテリジェント収納システムです。STM32G4 マイクロコントローラーを基盤
@@ -73,9 +79,20 @@
 * 🔒 **プロトコルの範囲チェック** — バージョン化されたフレーミングと CRC8 チェックサム、アクチュエーション範囲検証、そして明確な安全状態を持つリンクタイムアウト/冪等性ウォッチドッグ。フレームのバージョン 2：複数バイトの値はすべてバスと同じビッグエンディアンで、バージョン 1 のフレームは拒否されます。*（純粋な C として実装され、PC 上でのみテスト済みです。ボード上で動作したことはなく、認証された安全機能でもありません）*
 * ✅ **Cortex-M4F ファームウェアツールチェーン** — 兄弟リポジトリ URTC が使用するのと同じツールチェーンを用いて、`arm-none-eabi-gcc` でクロスコンパイルおよびリンクされる、実際のベアメタルイメージ（起動コード + リンカ + `main.c`）。*（実装済み——下記の「ビルド」を参照）*
 
----
+## 🧩 URTC での役割
 
-## 2. 🔄 スマートラックのワークフロー
+URTC-SMART-RACK はツールヘッドを保管するボードで、ツールヘッドそのものではありません。収めた各ヘッドを識別し（URTC が使う 5 ビットのツール ID）、物理ヘッドごとの使用状況と熱的な故障を記録し、どのツールがどのスロットにあるかを把握し、ツール交換の直前にはんだ付けやホットエアのツールを予熱します（Smart Idle）。URTC のツール ID とファームウェアの規約を共有しますが、URTC の子ではなく補完的なツールで、HYDRA-UMC のロボットコントローラーから制御される想定です。ボードはまだ存在せず、現時点で実在するのはロジックとラックのプロトコルで、コンピューター上で試験されています。
+
+## 🏛️ アーキテクチャ
+
+<p align="center">
+  <img src="images/architecture.svg" alt="URTC-SMART-RACK のアーキテクチャ：誰が使い、何を持ち、何に依存するか" width="100%">
+</p>
+
+このリポジトリの各部分の関係：誰が使い、何を持ち、何に依存するか。図は `docs/architecture.json` から描かれ、コードと照合されます。
+
+<details>
+<summary>図のテキスト版 (Mermaid)</summary>
 
 ```mermaid
 flowchart TB
@@ -86,73 +103,39 @@ flowchart TB
     RACK -- ヘルスチェック --> LOG["メンテナンスレポート"]
 ```
 
----
+</details>
 
-## 3. 🧱 アーキテクチャと設計上の決定
+### アーキテクチャと設計上の決定
 
 * **この基板にまだ実際のピン配置/ハードウェア ID が定義されていない理由。** この基板にはまだ PCB が存在しません——`src/firmware_common.h` はハードウェア ID を持たないバージョン識別情報を携えており、起動/リンカファイルは、実際の STM32G4 部品が確定するまで ST 自身の CMSIS/HAL 起動コードの代わりを務める手書きのプレースホルダーです。
 * **URTC 自体の子プロジェクトではない理由。** URTC-SMART-RACK は URTC ファミリーの子プロジェクトではなく、補完ツールです——独立した物理基板（工具ヘッドではなく工具保管ラック）でありながら、URTC 自身の工具 ID 空間とファームウェアの慣例を共有していますが、その統合階層は共有していません。
-* **`bump_version.py` が URTC 自身のものをそのままコピーしている理由。** 同じオドメーター式バージョニング規則、同じファームウェアヘッダー形式——スクリプトを再発明するのではなく正確に再利用することで、両者が構造的に自動的に同期を保ちます。
+* **`bump_version.py` が URTC のものとそのままのコピーである理由。** ファームウェアヘッダーの形式が同じで、同じスクリプトを作り直さずに再利用することで、両者は構造上、足並みがそろいます。
 * **`tool_id.c`/`lifecycle.c`/`preheat.c` が GPIO/F-RAM/CAN ドライバーより先に実装される理由。** ID のデコード、使用状況の累積、予熱タイミングの判断は、すでに手元にあるデータに対する純粋な関数であり、書くにもテストするにも PCB を必要としません。そのため v0 ではまずこのロジックを実装し、`arm-none-eabi-gcc` ではなくマシン自身の C コンパイラでホストテストを行います。実際のハードウェアからこれらのデータを取得するドライバーは、PCB が存在するようになってから実装されます。
 * **エコシステムの他の部分との関係。** URTC 自身の工具エコシステム（同じ工具 ID。ラックのフレームはまだ CAN フレームではありません。`docs/OPERATIONS.md` を参照）を利用しており、実際にどの工具がラックに収納されているかを視覚的に認識する HYDRA-UMC-DETECTION-HEF と自然に組み合わされます。
 * **プロトコル、コマンド検証、リンクウォッチドッグが 3 つの独立したモジュールである理由。** `protocol.c` はバイト、フレーミング、CRC しか知らず、何が「安全」な温度なのかは一切知りません。`rack_command.c` がその判断を担い、実際のコマンドをデコードして範囲チェックします。それがワイヤー上でどのように届いたかは気にしません。`link_watchdog.c` は両者とは独立してタイムアウト/冪等性を追跡します——壊れたフレームは決してそこにさえ届いてはなりません（`test_rack_link_scenarios.c` 自身の実際のアサーションで、CRC 不正なフレームがウォッチドッグを決して復活させないことを参照）。これらを分離しておくことで、それぞれをホスト上で単独にテストできるようになり、将来の CAN 受信ハンドラを薄く保てます——各レイヤーを順番に呼び出すだけで、どの判断も自分で再実装しません。
 * **コマンドのレート制限。** 同じツールへのコマンドの連続送信は、受理したコマンド間の最小間隔で抑えられます（既定は 20 ms、0 で無効。`link_watchdog_set_command_interval()`）。保留されたコマンドは何も変更せず応答も返しませんが、リンクは生きているとみなされます。安全状態や再送は保留されません。この間隔は URTC-WEB-STUDIO のシミュレート済みラック試験台で調整できます。
 * **検証されていないリンクが、死んだリンクと完全に同じとして扱われる理由。** `link_watchdog_is_link_lost()` は、実際のタイムアウト後も、最初のフレームがまだ一度も到着していない段階も、両方とも真です——診断ノート自身がそれを「estado seguro al arrancar」と呼んでいます。まだホストが一度も接続されていない状態で起動するラックは、安全状態で起動しなければならず、証明されるまで黙って「大丈夫」だと仮定してはなりません。
 
----
+## 🔒 セキュリティと安全
 
-## 📂 リポジトリ構成
+| 脅威 | 防御 |
+|---|---|
+| ツールへの範囲外の命令 | `rack_command.c` は届き方に関係なくすべての命令をデコードして範囲を検査します。`protocol.c` はバイト、フレーム、CRC だけを知り、`tool_limits.c` は各ツールプロファイルの上限を持ちます |
+| 壊れた、または古いフレーム | バージョン付きフレームと CRC-8。バージョン 2 では複数バイトの値はバスと同じビッグエンディアンで、バージョン 1 のフレームは拒否されます |
+| 命令の洪水 | 受理した命令の間の最小間隔（既定 20 ミリ秒、0 で無効）。保留された命令は何も変えず確認応答もありませんが、リンクは生きているものとして数えられます。安全状態や再送が保留されることはありません |
+| 失われた、または未証明のリンク | `link_watchdog_is_link_lost()` は、実際のタイムアウト後と最初のフレームが届く前の両方で真になります。ホストなしで電源が入ったラックは安全状態から始まります |
+| 長すぎる、または高温すぎる予熱 | `preheat_limit.c` はツール交換なしで予熱が続く時間を制限し（既定 10 分、設定可能）、`tool_limits.c` は各ツールプロファイルの最高目標値を制限します |
+| 1 つのツールが 2 つのスロットに | `rack_inventory.c` は実在するツールを 1 つのスロットにだけ置きます。別の場所に収めると、元のスロットは空になります |
 
-```text
-URTC-SMART-RACK/
-├── src/                            # ファームウェアソース
-│   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
-│   ├── tool_id.h / .c              # 本物：生の 5 ビット読み取り値のデコード -> 工具 ID
-│   ├── lifecycle.h / .c            # 本物：使用サイクル/時間の追跡、メンテナンス期限チェック
-│   ├── preheat.h / .c              # 本物：スマートアイドル起動 + 目標温度 + 安全状態ターゲット
-│   ├── protocol.h / .c             # 本物：バージョン化されたフレーム形式 + CRC8 パース/エンコード
-│   ├── urtc_crc8.h                 # 本物：ビジョンセンサーリンクと共有する CRC-8（URTC-COMMON からコピー）
-│   ├── urtc_frame.h                # 本物：ビジョンセンサーリンクと共有するフレーム層（開始バイト、バージョン、長さ、CRC。URTC-COMMON からコピー）
-│   ├── urtc_rate_limiter.h         # 本物：工具へのコマンドの最小間隔リミッター（URTC-COMMON からコピー）
-│   ├── urtc_common.lock.json       # URTC-COMMON からコピーしたファイルのロックファイル
-│   ├── rack_command.h / .c         # 本物：コマンドデコード + アクチュエーション限界検証
-│   ├── link_watchdog.h / .c        # 本物：リンクタイムアウト + コマンド冪等性
-│   ├── rack_link.h / .c            # 本物：protocol/rack_command/link_watchdog/preheat を結びつけるフレームディスパッチの判断
-│   ├── rack_inventory.h / .c       # 本物：マルチスロット工具インベントリ——どの工具がどのスロットにあるか、2つのスロットに同時に存在することはない
-│   ├── tool_limits.h / .c          # 本物：工具プロファイルごとの予熱目標の上限（0 = ヒーターなし）
-│   ├── rack_app.h / .c             # 本物：受信パスの判断をインベントリに適用。リンク喪失中は安全状態
-│   ├── rack_deframer.h / .c        # 本物：シリアルリンクのバイトストリームからフレームを見つける（再同期、無通信タイムアウト）
-│   ├── rack_can.h / .c             # 本物：トランシーバー付きの基板ができたときにラックのコマンドが CAN をどう通るか
-│   ├── preheat_limit.h / .c        # 本物：ツール交換なしで許される最長の予熱
-│   ├── preheat_plan.h / .c         # 本物：ジョブキューに基づく予測予熱
-│   ├── slot_verify.h / .c          # 本物：スロットの熱読み取りが何を意味するか
-│   ├── rack_units.h / .c           # 本物：各ツールヘッドの個体識別と摩耗
-│   ├── main.c                      # 最小限のエントリポイント（生存証明のハートビートループ）
-│   ├── startup_stm32g4_minimal.c   # ベクターテーブル + Reset_Handler（ST HAL はまだなし、ファイルヘッダー参照）
-│   └── STM32G4_MINIMAL.ld          # プレースホルダーリンカスクリプト（128K FLASH / 32K RAM の下限）
-├── tests/                          # 本物のホストネイティブテストハーネス（tool_id、工具ごとの上限、lifecycle、preheat、protocol、rack_command、link_watchdog、ラックリンクシナリオ、ラックインベントリ、堅牢性、rack_app）と、ビルドスクリプトおよび公開テスト件数の一致を確認する Python チェック
-├── docs/                           # 運用ガイド（docs/OPERATIONS.md）：ロジックが行うこと、拒否すること、未検証のこと
-├── hardware/                       # ハードウェアに関するメモ（README.md）—— 設計ファイルはまだなし（回路図も PCB もなし）
-├── firmware/                       # ビルド出力（.bin/.elf/.hex）、git の無視対象——GitHub リリースのアセットとしてのみ公開
-├── build/                          # 中間ビルドオブジェクト（gitignore 対象）
-├── images/                         # メディアと図表
-├── tools/
-│   ├── build_test.py               # バージョンを更新しないビルド/コンパイル確認
-│   ├── gcov_floor.py               # ホストテストが src/ を下限より少なくしか実行しないと失敗する（gcov）
-│   ├── publish_release_assets.py   # 添付するリリースアセットを列挙し gh コマンドを表示
-│   ├── ci_validate.py              # CI が使用する manifest/CHANGELOG/docs の検証
-│   └── _doc_policy.py / _readme_parity.py / _tracked_names.py # ci_validate.py が使う共有チェック
-├── bump.py                         # 明示的なバージョン加算コマンド（コンパイルでは加算されない）
-├── bump_version.py                 # オドメーター式バージョンインクリメント（汎用スクリプト、URTC と共有）
-├── bump_manifest_version.py        # urtc.project.json のバージョンをネイティブ側と同期（--sync）
-├── build_firmware.sh / .bat        # 実際のビルド：ホストテスト + コンパイル + リンク + 公開（バージョンは変更しない）
-├── build-test.sh / .bat            # バージョンを更新しないビルド/コンパイル確認
-└── README.md
-```
+これはすべてコンピューター上で試験された純粋な C で、ボード上で動いたことはなく、認証された安全機能でもありません。
 
----
+## 🔌 インターフェース
 
-## 4. ⚙️ ビルド
+* **ラックのシリアルフレーム：** バージョン 2、バスと同じビッグエンディアンで、URTC-COMMON が提供する CRC-8（`src/urtc_crc8.h`、`src/urtc_frame.h`）を使います。`protocol.c` が解析と符号化を行い、`rack_deframer.c` がバイト列からフレームを見つけ（欠落バイト後の再同期、タイムアウト後の半端なフレームの破棄）、`rack_link.c` が各フレームの扱いを決めます。形式は [docs/OPERATIONS.md](docs/OPERATIONS.md) にあります。
+* **命令の CAN 形式：** `rack_can.c`（データ 8 バイト、温度はビッグエンディアン）。これを載せたボードはまだなく、ラックのフレームはまだ CAN フレームではありません。
+* **URTC と共有するもの：** 5 ビットのツール ID（`tool_id.c`）と、物理ヘッドごとの使用状況を保つカウンター `0x1AA` / `0x1AB`（`rack_units.c`）。フレーム層が再現すべきベクトルは URTC-COMMON のもの（`conformance/rack_vectors.json`）です。
+
+## 🚀 クイックスタート
 
 ARM GNU ツールチェーン（`arm-none-eabi-gcc`、`arm-none-eabi-objcopy`、
 `arm-none-eabi-size`）と Python 3 が必要です。
@@ -165,28 +148,6 @@ chmod +x build_firmware.sh   # 初回のみ
 # Windows
 build_firmware.bat
 ```
-
-このビルドはまず *ホスト自身* の C コンパイラ（`arm-none-eabi-gcc` では
-ありません——これらは純粋なロジックテストであり、MCU レジスタには一切
-触れません）で `tests/` をコンパイルして実行し、アサーションが一つでも
-失敗すればビルド全体を失敗させます。それが終わって初めて `src/firmware_common.h`
-のバージョンを増加させ（オドメーター規則、エコシステムの他の部分と同じ）、
-`main.c` と `startup_stm32g4_minimal.c` を Cortex-M4F 向けにコンパイルし、
-プレースホルダーである `STM32G4_MINIMAL.ld` のメモリマップとリンクし、
-バージョン管理された `.elf`/`.bin`/`.hex` ファイルを `firmware/` に公開します。
-
-`src/` のすべてのモジュールも Cortex-M4F 向けにコンパイルされ、確認のためにすべてをまとめてリンクします（ターゲットには C ライブラリがありません）。現時点でイメージに含まれるのは `main.c` と起動ファイルだけです。バージョンを上げた後にビルドが失敗した場合、バージョン、マニフェスト、変更履歴は元の状態に戻されます。`URTC_CI=1` では追跡対象のファイルは一切変更されません。
-
-ファームウェアイメージ（`.bin`、`.hex`、`.elf`）は git で管理されません。リリースビルドは `firmware/URTC_SMART_RACK_FIRMWARE_v<バージョン>.*` に書き出し（git の無視対象。CI モード、つまり `URTC_CI=1` では `build/firmware`）、各バージョンの GitHub リリースのアセットとしてのみ公開されます。`python tools/publish_release_assets.py` がファイルを検査し、不足している `.sha256` ファイルを書き出して、添付するファイルを含む正確な `gh release create` コマンドを表示します。
-
-実際のハードウェアにフラッシュできるものは今のところ何もありません——
-対象の STM32G4 部品、ピン配置、実際の flash/RAM サイズを確認できる PCB が
-存在しないためです。リンカスクリプトのメモリマップは保守的なプレース
-ホルダー（そのファイル自身のヘッダーコメントに記載）であり、実際の
-ハードウェアが存在するようになった時点で置き換えられます。それと同じ
-タイミングで、`startup_stm32g4_minimal.c` の手書きのベクターテーブルも
-ST 自身の CMSIS/HAL 起動コードに置き換えられます（兄弟リポジトリ URTC の
-STM32F303 基板向け `src/F303-master/` を踏襲）。
 
 実例——ホスト側のテストは単独でも実行でき、完全なファームウェアビルドを
 行わずにロジックを確認するのに便利です：
@@ -203,13 +164,83 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 # All tests passed.
 ```
 
----
+<!-- urtc-section:compatibility -->
+### 要件と互換性
 
-## 5. 📋 チェンジログ
+どのバージョンの URTC プログラムが連携して動作し、それぞれがどのプロトコルバージョンを話すかは、URTC-COMMON が生成する互換性表に載っています：[docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md)。
+<!-- /urtc-section:compatibility -->
 
-バージョン履歴の全文は [`CHANGELOG.md`](CHANGELOG.md) を参照。実ビルドのたびに `src/firmware_common.h` のバージョンが自動的に上がり(オドメーター方式、上記のビルドを参照)、各更新はそこに個別のエントリを持つ。
+## 🧪 テスト
 
----
+ホストテストは `tests/` にある C プログラム（16 ファイル、467 件の `TEST_ASSERT` 検査）で、`arm-none-eabi-gcc` ではなくコンピューター自身の C コンパイラーでコンパイル・実行します。ツール ID、ツールの上限、ライフサイクル、予熱、フレーム、命令の検査、リンクのウォッチドッグ、リンク全体のシナリオ、在庫、不正な入力への堅牢性、アプリケーション層、デフレーマー（各断片が届いた時刻付きの 19 本のバイト列：断片化したフレーム、ノイズ、不正な CRC、誤ったバージョンや長さ、タイムアウトぎりぎりの無音、ミリ秒クロックの折り返し）、CAN 形式、予熱の上限、各ヘッドの単位を扱い、ベクトルは URTC-COMMON のものです。5 つの Python テストファイル（25 件）は、ビルドスクリプト、リリースの成果物、バージョンファイル、公開しているテスト数が一致していることを検査します。CI は C のテストを AddressSanitizer と UBSan 付きでビルドし、`src/` の実行行のカバレッジが下限を下回ると失敗します（`tools/gcov_floor.py`）。`bash build_firmware.sh` はクロスコンパイルの前にこれらを実行し、アサーションが 1 つでも失敗するとビルドを失敗させます。
+
+## 🏗️ ビルドとリリース
+
+ビルドはまず `tests/` を*コンピューター自身の* C コンパイラー（`arm-none-eabi-gcc` ではありません。純粋なロジックのテストで、MCU のレジスタには触れません）でコンパイル・実行し、アサーションが 1 つでも失敗するとビルド全体が失敗します。その後はじめて `main.c` と `startup_stm32g4_minimal.c` を Cortex-M4F 用にコンパイルし、仮の `STM32G4_MINIMAL.ld` メモリマップとリンクして、バージョン付きの `.elf`/`.bin`/`.hex` を `firmware/` に出力します。ビルドがバージョンを変えることはありません。
+
+`src/` 以下のすべてのモジュールも Cortex-M4F 用にコンパイルされ、検査としてまとめてリンクされます（ターゲットには C ライブラリがありません）。現時点でイメージに入っているのは `main.c` と起動ファイルだけです。`URTC_CI=1` を設定すると、バージョン管理されたファイルには一切触れません。
+
+ファームウェアイメージ（`.bin`、`.hex`、`.elf`）は git で管理されません。リリースビルドは `firmware/URTC_SMART_RACK_FIRMWARE_v<バージョン>.*` に書き出し（git の無視対象。CI モード、つまり `URTC_CI=1` では `build/firmware`）、各バージョンの GitHub リリースのアセットとしてのみ公開されます。`python tools/publish_release_assets.py` がファイルを検査し、不足している `.sha256` ファイルを書き出して、添付するファイルを含む正確な `gh release create` コマンドを表示します。
+
+実際のハードウェアにフラッシュできるものは今のところ何もありません——
+対象の STM32G4 部品、ピン配置、実際の flash/RAM サイズを確認できる PCB が
+存在しないためです。リンカスクリプトのメモリマップは保守的なプレース
+ホルダー（そのファイル自身のヘッダーコメントに記載）であり、実際の
+ハードウェアが存在するようになった時点で置き換えられます。それと同じ
+タイミングで、`startup_stm32g4_minimal.c` の手書きのベクターテーブルも
+ST 自身の CMSIS/HAL 起動コードに置き換えられます（兄弟リポジトリ URTC の
+STM32F303 基板向け `src/F303-master/` を踏襲）。
+
+バージョンの全履歴は [`CHANGELOG.md`](CHANGELOG.md) を参照してください。各バージョンにそれぞれの項目があります。
+
+## 📂 リポジトリの構成
+
+<p align="center">
+  <img src="images/repository-structure.svg" alt="URTC-SMART-RACK のリポジトリ構成" width="100%">
+</p>
+
+<details>
+<summary>ツリーのテキスト版</summary>
+
+```text
+URTC-SMART-RACK/
+├── src/                                               ファームウェア：純粋な C のロジック、URTC-COMMON の検査済みコピー、エントリーポイント、仮のリンカースクリプト
+├── tests/                                             C のホストテスト（467 件の検査）とビルドスクリプトの Python 検査
+├── docs/                                              OPERATIONS.md：ロジックが行うこと、拒否すること、未検証のまま残すこと
+├── hardware/                                          メモ：回路図も PCB もまだありません
+├── tools/                                             ビルド検査、カバレッジ下限、リリース成果物、共有の CI・画像ツール
+├── images/                                            バナーとこの README の画像
+├── .github/                                           CI ワークフローと Issue・プルリクエストのテンプレート
+├── build-test.sh build-test.bat                       リポジトリを変更しないビルド・テストのスクリプト
+├── test.sh test.bat                                   テストを実行
+├── urtc.project.json                                  マニフェスト：バージョン、役割、成熟度、ビルドコマンド
+├── CHANGELOG.md                                       各バージョンの変更内容
+├── SECURITY.md SUPPORT.md LICENSE                     セキュリティポリシー、サポート、ライセンス
+├── CONTRIBUTING.md CODE_OF_CONDUCT.md                 貢献方法と行動規範
+├── .gitattributes .gitignore                          Git の設定
+├── build_firmware.sh build_firmware.bat               ホストテスト、クロスコンパイル、リンク、イメージの公開
+├── bump.py bump_version.py bump_manifest_version.py   バージョンを上げるスクリプト
+└── LICENSE.md ruff.toml                               ドキュメントのライセンスと lint 設定
+```
+
+</details>
+
+## 🗺️ ロードマップと既知の制限
+
+**現時点で分かっている制限**
+
+* このボードにはまだ PCB も回路図もありません（`hardware/` 参照）。ここにあるものは、実際の GPIO ピン、F-RAM チップ、ヒーター、CAN トランシーバーを一度も動かしたことがありません。`main.c` と起動ファイルが示すのは、仮のリンカースクリプトで Cortex-M4F 向けのクロスコンパイルとリンクが通るということだけです。
+* 各ヘッドのファームウェアバージョンの読み取りは計画段階で、未実装です。
+* 命令の CAN 形式は一度も動いていません。CAN ドライバーもボードも存在せず、ラックのフレームはまだ CAN フレームではありません。
+* 予測予熱の加熱時間は推定値で、そのスイッチは既定でオフです。
+
+**次のステップ**
+
+* ボードを設計し、STM32G4 の部品を決め、仮のリンカースクリプトと起動ファイルを ST のものに置き換え、ロジックにデータを供給する GPIO、F-RAM、CAN のドライバーを書きます。
+
+## 🌍 言語
+
+README とテキストは、英語、スペイン語、フランス語、イタリア語、ドイツ語、中国語、日本語、ヨーロッパポルトガル語で提供されています。
 
 ## 🔗 関連プロジェクト
 
@@ -302,10 +333,7 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 - **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — 保守インシデントコーディネーター: 低権限のエッジ役割がサニタイズされたインベントリ/ヘルスのスナップショットを収集し、コントロールプレーン役割がそれを読み取り専用でレンダリングして AI プロバイダーに診断の提案を依頼します - パッチを適用することも、何かをデプロイすることも決してありません。
 - **[HYDRA-UMC-DEV-SERVER](https://github.com/JuanenRac/HYDRA-UMC-DEV-SERVER)** — 再現可能な開発ホスト（Raspberry Pi 5 / CM5）。エコシステムのソースコードを保管し、永続キューのもとで境界の明確なビルド/テストタスクを実行する。運用中の CM5 とは明確に異なる、開発専用の役割。
 
-
----
-
-## 📚 ドキュメント & コミュニティ
+## 📚 ドキュメント
 
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** —— プルリクエストのための技術スタックとコーディング指針。
 - **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** —— このコミュニティで期待される行動規範。
@@ -313,16 +341,20 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 - **[SUPPORT.md](SUPPORT.md)** —— 質問の投稿先とバグの報告先。
 - **[LICENSE.md](LICENSE.md)** —— このプロジェクト自身のライセンス。
 
+## 🤝 コントリビュートとコミュニティ
+
+* プルリクエストの前に `URTC_CI=1 python tools/ci_validate.py` を実行してください。通過する必要があります。[CONTRIBUTING.md](CONTRIBUTING.md) と[行動規範](CODE_OF_CONDUCT.md)を参照してください。
+* README は 8 言語で提供されています。文章の変更は 8 つのファイルすべてで行い、他のリポジトリと共有するセクションは URTC-COMMON の `tools/readme_sections.py` が書き込みます。
+* CAN プロトコルの変更は URTC-COMMON（`spec/can_protocol.json`）から始まり、検査済みのコピーを通じてこのリポジトリに届きます。
+* ビルドしただけのものを、ボード上で動いているかのように書かないでください。
+* 脆弱性は非公開で報告してください：[SECURITY.md](SECURITY.md)。質問、アイデア、報告：electrohobby3d@gmail.com（[SUPPORT.md](SUPPORT.md)）。
+
 ## 👤 作者
+
 **JuanenRac** (Electro Hobby 3D)
 📧 electrohobby3d@gmail.com
 📺 [youtube.com/@electrohobby3d](https://youtube.com/@electrohobby3d)
 
-<!-- urtc-section:compatibility -->
-## 🧩 互換性
-
-どのバージョンの URTC プログラムが連携して動作し、それぞれがどのプロトコルバージョンを話すかは、URTC-COMMON が生成する互換性表に載っています：[docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md)。
-<!-- /urtc-section:compatibility -->
-
 ## 📜 ライセンス
+
 GPL-3.0-or-later —— 詳細は LICENSE を参照してください。

@@ -1,0 +1,140 @@
+{
+  "repo": "URTC-SMART-RACK",
+  "ecosystem": "urtc",
+  "tagline": "The logic and the serial protocol of a rack that stores URTC tool heads, tracks their use and pre-heats the next tool.",
+  "description": "URTC-SMART-RACK is pure C tested on a computer: it frames and checks the serial messages of the rack, validates each command and watches the link, keeps an inventory of which tool is in which slot and the wear of each head, and decides when a tool should be pre-heated and to what temperature. No PCB exists yet, so none of it has driven a real pin, heater or CAN transceiver.",
+  "columns": [
+    "WHO TALKS TO IT",
+    "THE RACK LOGIC",
+    "WHAT IT WILL DRIVE"
+  ],
+  "nodes": [
+    {
+      "id": "host",
+      "column": 0,
+      "level": "external",
+      "title": "The robot controller",
+      "lines": [
+        "HYDRA-UMC sends pre-heat",
+        "orders over the serial link",
+        "(CAN form not run yet)"
+      ]
+    },
+    {
+      "id": "heads",
+      "column": 0,
+      "level": "external",
+      "title": "URTC tool heads",
+      "lines": [
+        "5-bit tool ID and the counters",
+        "of use shared with URTC"
+      ]
+    },
+    {
+      "id": "frames",
+      "column": 1,
+      "level": "tested",
+      "title": "Frames and link",
+      "lines": [
+        "protocol, deframer and rack_link:",
+        "CRC-8, version 2, resync after",
+        "a lost byte"
+      ],
+      "code": [
+        "src/protocol.c",
+        "src/rack_deframer.c",
+        "src/rack_link.c"
+      ]
+    },
+    {
+      "id": "cmd",
+      "column": 1,
+      "level": "contract",
+      "title": "Command check",
+      "lines": [
+        "ranges per tool profile, link",
+        "watchdog with a safe state and",
+        "a command rate limiter"
+      ],
+      "code": [
+        "src/rack_command.c",
+        "src/link_watchdog.c",
+        "src/tool_limits.c"
+      ]
+    },
+    {
+      "id": "inv",
+      "column": 1,
+      "level": "tested",
+      "title": "Inventory and wear",
+      "lines": [
+        "which tool is in which slot,",
+        "use and thermal faults of each",
+        "physical head"
+      ],
+      "code": [
+        "src/rack_inventory.c",
+        "src/rack_units.c",
+        "src/tool_id.c"
+      ]
+    },
+    {
+      "id": "heat",
+      "column": 1,
+      "level": "config",
+      "title": "Pre-heat decision",
+      "lines": [
+        "when and to what target, a limit",
+        "without a tool swap, a plan from",
+        "the job queue (off by default)"
+      ],
+      "code": [
+        "src/preheat.c",
+        "src/preheat_limit.c",
+        "src/preheat_plan.c"
+      ]
+    },
+    {
+      "id": "hw",
+      "column": 2,
+      "level": "untested",
+      "title": "The rack hardware",
+      "lines": [
+        "heaters, presence sensors, F-RAM",
+        "and a CAN transceiver; the PCB",
+        "does not exist yet"
+      ]
+    },
+    {
+      "id": "common",
+      "column": 2,
+      "level": "external",
+      "title": "URTC-COMMON",
+      "lines": [
+        "the CRC-8, the frame layer and",
+        "the rate limiter (checked copies)",
+        "and the shared vectors"
+      ],
+      "code": [
+        "src/urtc_common.lock.json"
+      ]
+    }
+  ],
+  "edges": [
+    {"from": "host", "to": "frames", "label": "frames", "level": "tested"},
+    {"from": "heads", "to": "inv", "label": "tool ID", "level": "tested"},
+    {"from": "frames", "to": "cmd", "level": "tested"},
+    {"from": "cmd", "to": "heat", "level": "tested"},
+    {"from": "inv", "to": "heat", "level": "tested"},
+    {"from": "heat", "to": "hw", "label": "not run", "level": "untested"},
+    {"from": "frames", "to": "common", "level": "contract"}
+  ],
+  "legend": {
+    "tested": "covered by host tests in C",
+    "contract": "the source of the rest",
+    "config": "off or limited by default",
+    "untested": "has not run on real hardware",
+    "external": "another repository or a device"
+  },
+  "footer": "467 checks pass on a computer; nothing has driven a real pin, heater or CAN transceiver."
+}

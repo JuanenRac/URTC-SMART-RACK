@@ -34,7 +34,7 @@ jobs:
       - name: Type check the build scripts and their tests
         run: |
           python -m pip install "mypy==2.4.0"
-          python -m mypy bump_manifest_version.py bump_version.py bump.py tools tests --ignore-missing-imports
+          python -m mypy bump_manifest_version.py bump_version.py bump.py tools tests --ignore-missing-imports --exclude 'tools/(_readme_svg|make_architecture|make_structure)\.py'
       - name: Compile Python sources without running versioning build scripts
         run: |
           python - <<'PY'

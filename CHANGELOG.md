@@ -7,6 +7,7 @@ All notable changes to this project are documented here.
 - **The README follows the universal layout in the eight languages:** the sections are in the fixed order with the fixed names, the workflow diagram is drawn from `docs/architecture.json` (the Mermaid source stays in a collapsible block), the Repository Structure comes from `docs/structure.json`, and the sections for role, security, interfaces, testing and roadmap are new. The build text now says that building never changes the version.
 - **The layout of the README is checked in the CI:** the validator runs `tools/universal_readme_check.py` and lists, as a warning, what differs from the universal layout of the README.
 - **Project status is the second section of the README,** right after At a glance, in the eight languages.
+- **The full CI runs every night:** a scheduled workflow runs the complete baseline again on the default branch and opens (or updates) one issue when it fails, so a change in a runner image, a toolchain or a pinned dependency is found the next day instead of with the next unrelated change.
 
 ## [0.2.1] - The serial line is held to shared streams of bytes and a limit on how often a tool can be commanded
 

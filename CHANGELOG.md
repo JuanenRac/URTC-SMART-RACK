@@ -79,7 +79,7 @@ All notable changes to this project are documented here.
 
 ## [0.1.3] - Firmware version boundaries and side-effect-free CI builds
 
-- The firmware version scripts keep their own three-component odometer (0.7.9 -> 0.8.0, 0.9.9 -> 1.0.0, 9.9.9 -> 10.0.0) and no longer hand over to the shared manifest utility, which broke the build at the boundary versions; the successor rule is now a pure function covered by boundary tests that run in CI and as a step of the build script.
+- The firmware version scripts keep their own three-component scheme and no longer hand over to the shared manifest utility, which broke the build at the boundary versions; the successor rule is now a pure function covered by boundary tests that run in CI and as a step of the build script.
 - CI builds (URTC_CI=1) publish firmware images under build/firmware instead of firmware/, so a validation build leaves the tracked images untouched.
 - Verified: unit tests and shell syntax checks only; the ARM firmware build itself was not run.
 
@@ -249,7 +249,7 @@ entry) - `All tests passed.`, 0 failures, all 9 new assertions included.
 - **`src/STM32G4_MINIMAL.ld`** - placeholder linker script (128K FLASH /
   32K RAM, the smallest floor a mainstream STM32G4 part ships with).
 - **`src/main.c`** - minimal proof-of-life entry point (heartbeat counter).
-- **`bump_version.py`** - generic odometer-style version bump script,
+- **`bump_version.py`** - generic version bump script,
   identical to sibling repo URTC's own (copied rather than reinvented).
 - **`build_firmware.sh` / `build_firmware.bat`** - real build: version
   bump, cross-compile with `arm-none-eabi-gcc` for Cortex-M4F, link,

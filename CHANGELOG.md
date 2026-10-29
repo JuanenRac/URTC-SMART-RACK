@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.2.2] - The rack answers every frame with an acknowledgement or a refusal with its reason, and takes its tool identifiers from the spec
 
 - **A command is answered with the reason:** `rack_link_decide()` now says why a frame was applied or refused (applied, repeat, wrong length, tool absent or invalid, temperature out of range, tool without a heater, too soon, unknown command) and `rack_reply.c` writes it as an acknowledgement or refusal frame (commands `0x81` and `0x82`) that `rack_reply_parse()` reads back; corrupt frames and frames for other devices are not answered. Nothing sends it yet, because no transport exists on a board; the host model and the programs do not read it yet.
 - **The tool identifiers come from the shared header:** `src/urtc_tool_ids.h` is the file generated once from the tool profiles of the tool head, and `tool_id.h` and `tool_limits.h` take the numbering of the last profile, the free configuration, the mask and the three heated profiles from it instead of repeating the numbers; the host tests refuse to build if the rack drifts from it.

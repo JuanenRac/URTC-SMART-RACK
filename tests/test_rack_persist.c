@@ -73,7 +73,18 @@ static rack_state_t make_state(uint32_t cycles)
 
 static bool same(const rack_state_t *a, const rack_state_t *b)
 {
-    return memcmp(a, b, sizeof *a) == 0;
+    // Field by field: the structures have padding bytes that no copy promises to keep equal.
+    if (a->lifecycle.total_cycles != b->lifecycle.total_cycles || a->lifecycle.total_seconds != b->lifecycle.total_seconds) {
+        return false;
+    }
+    for (uint8_t i = 0; i < RACK_INVENTORY_MAX_SLOTS; i++) {
+        const rack_slot_t *x = &a->inventory.slots[i];
+        const rack_slot_t *y = &b->inventory.slots[i];
+        if (x->occupied != y->occupied || x->tool_id != y->tool_id || x->serial != y->serial || x->target_temp_c != y->target_temp_c) {
+            return false;
+        }
+    }
+    return true;
 }
 
 void run_rack_persist_tests(int *failures)

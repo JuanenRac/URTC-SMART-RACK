@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The lights of Project status follow the evidence of the manifest:** the manifest says how far the repository has been shown to work (`evidence`: `host-test`, `simulator`, `bench` or `field`) and the validator fails when a light is above what that evidence and the maturity allow (`tools/status_lights.py`), so a green that never ran on real hardware cannot come back.
 - **The reply to a command is held to the shared vectors:** every step of the link scenarios of URTC-COMMON now carries the reply frame (acknowledgement or refusal with its reason), and the host tests compare what `rack_reply_encode()` writes with it byte for byte, so the firmware and the model of the programs cannot drift apart; the vectors added cover every refusal with its reason and a command that comes too soon.
 - **A 3D printer hotend can be pre-heated, with a target the person sets:** `preheat_plan_config_t` has a new `printer_target_c`, 0 by default (the rack does not pre-heat a hotend until a target is configured, because the right temperature depends on the filament) and held to the 310 degree ceiling of the tool; `preheat_plan_target_c()` gives the target the plan uses and the lead time of a hotend is estimated at 20 seconds per 100 degrees. Host tests cover the default, the configured target and the clamp.
 

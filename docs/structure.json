@@ -103,14 +103,14 @@
       "span": 1,
       "accent": "b",
       "tree": {
-        "en": "host C tests (571 checks) and Python checks of the build scripts",
-        "es": "pruebas de host en C (571 comprobaciones) y comprobaciones en Python de los scripts de compilación",
-        "de": "C-Host-Tests (571 Prüfungen) und Python-Prüfungen der Build-Skripte",
-        "fr": "tests hôte en C (571 vérifications) et contrôles Python des scripts de compilation",
-        "it": "test host in C (571 controlli) e controlli Python degli script di compilazione",
-        "zh": "C 主机测试（571 项检查）和构建脚本的 Python 检查",
-        "ja": "C のホストテスト（571 件の検査）とビルドスクリプトの Python 検査",
-        "pt": "testes de host em C (571 verificações) e verificações em Python dos scripts de compilação"
+        "en": "host C tests (573 checks) and Python checks of the build scripts",
+        "es": "pruebas de host en C (573 comprobaciones) y comprobaciones en Python de los scripts de compilación",
+        "de": "C-Host-Tests (573 Prüfungen) und Python-Prüfungen der Build-Skripte",
+        "fr": "tests hôte en C (573 vérifications) et contrôles Python des scripts de compilation",
+        "it": "test host in C (573 controlli) e controlli Python degli script di compilazione",
+        "zh": "C 主机测试（573 项检查）和构建脚本的 Python 检查",
+        "ja": "C のホストテスト（573 件の検査）とビルドスクリプトの Python 検査",
+        "pt": "testes de host em C (573 verificações) e verificações em Python dos scripts de compilação"
       },
       "rows": [
         {

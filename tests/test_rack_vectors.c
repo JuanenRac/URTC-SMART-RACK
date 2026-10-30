@@ -13,6 +13,7 @@
 #include "../src/rack_can.h"
 #include "../src/rack_command.h"
 #include "../src/rack_deframer.h"
+#include "../src/rack_reply.h"
 #include "../src/rack_link.h"
 #include "../src/link_watchdog.h"
 #include "../src/slot_verify.h"
@@ -67,6 +68,16 @@ void run_rack_vectors_tests(int *failures)
         TEST_ASSERT((int)d.action == v->action && (int)d.acknowledge == v->ack, v->name);
         if (v->action != 0) {
             TEST_ASSERT((int)d.tool_id == v->tool && (int)d.temp_c == v->temp, v->name);
+        }
+        // The answer to the sender, byte for byte as the model of URTC-COMMON writes it (length 0: nobody is told).
+        uint8_t reply[PROTOCOL_MAX_FRAME_SIZE];
+        const uint8_t reply_len = rack_reply_encode(&d, reply);
+        TEST_ASSERT(reply_len == v->reply_len && memcmp(reply, v->reply, v->reply_len) == 0, v->name);
+        if (reply_len > 0u) {
+            protocol_frame_t answer;
+            rack_reply_t parsed;
+            TEST_ASSERT(protocol_parse_frame(reply, reply_len, &answer) == PROTOCOL_OK && rack_reply_parse(&answer, &parsed) && parsed.seq == d.reply_seq &&
+                        parsed.ack == (d.acknowledge != 0u), "the reply parses back and agrees with the decision");
         }
     }
     for (int i = 0; i < RACK_VEC_COUNT(RACK_VEC_VERIFY); i++) {

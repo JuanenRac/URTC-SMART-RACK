@@ -1,10 +1,10 @@
 {
   "format": 1,
-  "urtc_common_version": "0.0.7",
+  "urtc_common_version": "0.0.9",
   "files": {
     "rack_vectors.h": {
       "from": "generated/rack_vectors.h",
-      "sha256": "1c04e96fb17591ebc1589201609cb3659a3f7ff145b100dae6a16398732af388"
+      "sha256": "b12a733783bf0f5b0e2bf915dcf6458407963c9a1770f7ac07afac3bf72fe9d2"
     },
     "urtc_fw_vectors.h": {
       "from": "generated/urtc_fw_vectors.h",

@@ -23,6 +23,7 @@ int main(void)
     run_rack_can_tests(&failures);
     run_preheat_limit_tests(&failures);
     run_rack_vectors_tests(&failures);
+    run_free_tool_tests(&failures);
     run_rack_units_tests(&failures);
     run_rack_ring_tests(&failures);
     run_rack_persist_tests(&failures);

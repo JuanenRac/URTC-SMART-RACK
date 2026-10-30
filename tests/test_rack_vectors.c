@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "../src/protocol.h"
+#include "../src/free_tool.h"
 #include "../src/rack_can.h"
 #include "../src/rack_command.h"
 #include "../src/rack_deframer.h"
@@ -132,4 +133,50 @@ void run_rack_vectors_tests(int *failures)
         next_frame += expected;
     }
     TEST_ASSERT(next_frame == RACK_VEC_COUNT(RACK_VEC_STREAM_FRAMES), "every frame of the stream vectors belongs to a stream");
+
+    // ---- free configuration of a head (jumpers 0x1F): the reference model and this code must agree -----------------------------------
+    {
+        const free_tool_config_t d = free_tool_config_default();
+        TEST_ASSERT(d.query_timeout_ms == RACK_VEC_FREE_DEFAULTS.query_timeout_ms && d.max_attempts == RACK_VEC_FREE_DEFAULTS.max_attempts &&
+                    d.retry_backoff_ms == RACK_VEC_FREE_DEFAULTS.retry_backoff_ms && d.refresh_period_ms == RACK_VEC_FREE_DEFAULTS.refresh_period_ms,
+                    "the default query timing is the one of the shared contract");
+    }
+    for (int i = 0; i < RACK_VEC_COUNT(RACK_VEC_FREE_JUMPERS); i++) {
+        const rack_vec_free_jumper_t *v = &RACK_VEC_FREE_JUMPERS[i];
+        uint8_t tool = 0xFF;
+        const free_tool_kind_t kind = free_tool_classify_jumpers((uint8_t)v->raw, &tool);
+        TEST_ASSERT((int)kind == v->kind && (kind != FREE_TOOL_KIND_DIRECT || (int)tool == v->tool), "jumper reading classified like the shared vectors");
+    }
+    for (int i = 0; i < RACK_VEC_COUNT(RACK_VEC_FREE_REPLIES); i++) {
+        const rack_vec_free_reply_t *v = &RACK_VEC_FREE_REPLIES[i];
+        uint8_t tool = 0xFF;
+        const bool ok = free_tool_parse_reply(v->payload, v->len, &tool);
+        TEST_ASSERT(ok == (v->tool >= 0) && (!ok || (int)tool == v->tool), v->name);
+    }
+    for (int s = 0; s < RACK_VEC_COUNT(RACK_VEC_FREE_SCENARIOS); s++) {
+        const rack_vec_free_scenario_t *sc = &RACK_VEC_FREE_SCENARIOS[s];
+        free_tool_config_t cfg;
+        cfg.query_timeout_ms = sc->config.query_timeout_ms;
+        cfg.max_attempts = sc->config.max_attempts;
+        cfg.retry_backoff_ms = sc->config.retry_backoff_ms;
+        cfg.refresh_period_ms = sc->config.refresh_period_ms;
+        free_tool_t ft;
+        free_tool_reset(&ft);
+        int steps_ok = 1;
+        int steps = 0;
+        for (int i = 0; i < RACK_VEC_COUNT(RACK_VEC_FREE_STEPS); i++) {
+            const rack_vec_free_step_t *st = &RACK_VEC_FREE_STEPS[i];
+            if (st->scenario != s) {
+                continue;
+            }
+            free_tool_event_t event = FREE_TOOL_EVT_NONE;
+            const bool query = free_tool_step(&ft, &cfg, st->time_ms, st->has_reply ? st->reply : NULL, st->len, &event);
+            const int tool = ft.resolved ? (int)ft.tool : -1;
+            if ((query ? 1 : 0) != st->query || (int)event != st->event || tool != st->tool) {
+                steps_ok = 0;
+            }
+            steps++;
+        }
+        TEST_ASSERT(steps_ok && steps > 0, sc->name);
+    }
 }

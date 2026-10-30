@@ -7,6 +7,7 @@ URTC-SMART-RACK/
 ├── src/                            # Firmware source
 │   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
 │   ├── tool_id.h / .c              # Real: 5-bit raw reading -> tool ID decoding
+│   ├── free_tool.h / .c            # Real: heads whose jumpers read 0x1F are asked (0x1A3) for their tool; no identity until a valid answer
 │   ├── lifecycle.h / .c            # Real: usage-cycle/time tracking, maintenance-due check
 │   ├── preheat.h / .c              # Real: Smart Idle activation + target temperature + safe-state target
 │   ├── protocol.h / .c             # Real: versioned frame format + CRC8 parse/encode

@@ -18,6 +18,7 @@ the logic decides", not "what a real rack does".
 | --- | --- | --- |
 | Tool slots in the inventory | 8 (`RACK_INVENTORY_MAX_SLOTS`) | `rack_inventory.h` - a placeholder capacity, not a hardware claim |
 | Tool ID | 5 bits; `0`..`24` are the tool profiles of the URTC catalogue, `25`..`30` are unassigned, `31` is "free configuration" on a URTC head (and this firmware's marker for an empty slot) | `tool_id.h` |
+| Free-configuration query (heads whose jumpers read `0x1F`) | 250 ms per query, 3 queries per round, 2000 ms back-off, 5000 ms refresh (0 = never); until a valid answer the slot holds no tool | `free_tool.h` (`free_tool_config_t`) |
 | Idempotency table | one entry per possible tool ID (`1 << TOOL_ID_BITS` = 32) | `link_watchdog.h` |
 | Pre-heat targets | soldering iron 200 °C, hot air 350 °C, generic 0 (none) | `preheat.c` |
 | Hard upper bound on any commanded pre-heat | 400 °C | `rack_command.h` |

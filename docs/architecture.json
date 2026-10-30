@@ -75,6 +75,7 @@
       "code": [
         "src/rack_inventory.c",
         "src/rack_units.c",
+        "src/free_tool.c",
         "src/tool_id.c"
       ]
     },

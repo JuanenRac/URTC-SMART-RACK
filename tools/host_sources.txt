@@ -1,6 +1,7 @@
 # The C files the host tests are built from (one per line; # starts a comment).
 # build_firmware.sh and build_firmware.bat both read this file, so a file is added in one place.
 tests/test_main.c
+tests/test_free_tool.c
 tests/test_lifecycle.c
 tests/test_link_watchdog.c
 tests/test_preheat.c
@@ -19,6 +20,7 @@ tests/test_rack_units.c
 tests/test_rack_vectors.c
 tests/test_robustness.c
 tests/test_tool_id.c
+src/free_tool.c
 src/lifecycle.c
 src/link_watchdog.c
 src/preheat.c

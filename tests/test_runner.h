@@ -28,6 +28,7 @@ void run_rack_deframer_tests(int *failures);
 void run_rack_can_tests(int *failures);
 void run_preheat_limit_tests(int *failures);
 void run_rack_vectors_tests(int *failures);
+void run_free_tool_tests(int *failures);
 void run_rack_units_tests(int *failures);
 void run_rack_ring_tests(int *failures);
 void run_rack_persist_tests(int *failures);

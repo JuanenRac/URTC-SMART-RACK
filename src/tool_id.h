@@ -41,8 +41,9 @@
 
 // Value 31 on a URTC head means "free configuration" (the tool is read from
 // the head's F-RAM). The rack cannot pre-heat such a head by its ID alone, so
-// it is never accepted as a tool to act on; internally the same value marks
-// an empty slot.
+// it is never accepted as a tool to act on: free_tool.h asks the head for its
+// tool (0x1A3) and gives the slot an identity only from a valid answer.
+// Internally the same value marks an empty slot.
 #define TOOL_ID_FREE_CONFIG URTC_TOOL_ID_FREE_CONFIG
 #define TOOL_ID_NONE TOOL_ID_MASK
 

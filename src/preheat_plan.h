@@ -32,6 +32,7 @@ typedef struct {
     uint8_t margin_percent;  // extra time on top of the estimated heating time
     bool cool_unused;        // also order target 0 for a hot tool that no job needs soon
     uint32_t hold_ms;        // a hot tool whose next job is further away than lead + hold is switched off (when cool_unused)
+    uint16_t printer_target_c; // pre-heat target of a 3D printer hotend; 0 (the default) means the rack does not pre-heat it; never above tool_limits_max_preheat_c()
 } preheat_plan_config_t;
 
 typedef struct {
@@ -41,8 +42,13 @@ typedef struct {
 
 preheat_plan_config_t preheat_plan_config_default(void);
 
-// The default pre-heat target of a tool (0 when it has no heater the rack warms up).
+// The default pre-heat target of a tool (0 when it has no heater the rack warms up). A 3D printer hotend has no default target
+// (its temperature depends on the filament): see preheat_plan_target_c().
 uint16_t preheat_plan_default_target_c(uint8_t tool_id);
+
+// The pre-heat target the plan uses for a tool: the default of the tool, and for a 3D printer hotend the configured target
+// (printer_target_c), held to the ceiling of the tool (310 C). 0 when the rack must not pre-heat the tool.
+uint16_t preheat_plan_target_c(const preheat_plan_config_t *config, uint8_t tool_id);
 
 // How long a tool needs to reach `target_c` from room temperature, with the margin; 0 for a tool without heater.
 uint32_t preheat_plan_lead_ms(uint8_t tool_id, uint16_t target_c, uint8_t margin_percent);

@@ -67,7 +67,9 @@ the logic decides", not "what a real rack does".
 
 Pre-heating starts only when an anticipated swap is within the configured
 lead time and has not already begun. Generic tools (grippers, no-contact
-tools) have no pre-heat target. The decision and temperatures are real; the
+tools) have no pre-heat target. A 3D printer hotend has none by default either, because its temperature
+depends on the filament: the plan pre-heats it only when `printer_target_c` is set in the configuration of the
+plan, and never above the 310 degree ceiling of the tool. The decision and temperatures are real; the
 heater control loop is not implemented - no PWM, no ADC, no closed loop.
 
 ### Longest pre-heat without a swap

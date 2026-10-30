@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **A 3D printer hotend can be pre-heated, with a target the person sets:** `preheat_plan_config_t` has a new `printer_target_c`, 0 by default (the rack does not pre-heat a hotend until a target is configured, because the right temperature depends on the filament) and held to the 310 degree ceiling of the tool; `preheat_plan_target_c()` gives the target the plan uses and the lead time of a hotend is estimated at 20 seconds per 100 degrees. Host tests cover the default, the configured target and the clamp.
+
 ## [0.2.2] - The rack answers every frame with an acknowledgement or a refusal with its reason, and takes its tool identifiers from the spec
 
 - **A command is answered with the reason:** `rack_link_decide()` now says why a frame was applied or refused (applied, repeat, wrong length, tool absent or invalid, temperature out of range, tool without a heater, too soon, unknown command) and `rack_reply.c` writes it as an acknowledgement or refusal frame (commands `0x81` and `0x82`) that `rack_reply_parse()` reads back; corrupt frames and frames for other devices are not answered. Nothing sends it yet, because no transport exists on a board; the host model and the programs do not read it yet.

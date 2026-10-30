@@ -155,6 +155,25 @@ static void test_preheat_plan(int *failures)
     const preheat_job_t soon[] = { { TOOL_ID_SOLDERING_IRON, 60000u } };
     TEST_ASSERT(preheat_plan_decide(&cfg, &inv, soon, 1u, orders) == 0u, "but kept warm when its job is within lead plus hold");
     TEST_ASSERT(preheat_plan_decide(&cfg, &inv, NULL, 1u, orders) == 0u && preheat_plan_decide(NULL, &inv, soon, 1u, orders) == 0u, "bad arguments: no order");
+
+    // a 3D printer hotend: no default target, the person sets one, and the ceiling of the tool holds it
+    rack_inventory_init(&inv);
+    rack_inventory_set_slot_tool(&inv, 0, TOOL_ID_3D_PRINTER);
+    cfg = preheat_plan_config_default();
+    cfg.enabled = true;
+    const preheat_job_t print_job[] = { { TOOL_ID_3D_PRINTER, 1000u } };
+    TEST_ASSERT(cfg.printer_target_c == 0u && preheat_plan_target_c(&cfg, TOOL_ID_3D_PRINTER) == 0u && preheat_plan_default_target_c(TOOL_ID_3D_PRINTER) == 0u, "a hotend has no target by default");
+    TEST_ASSERT(preheat_plan_decide(&cfg, &inv, print_job, 1u, orders) == 0u, "default: the rack does not pre-heat a hotend");
+    cfg.printer_target_c = 200u;
+    TEST_ASSERT(preheat_plan_target_c(&cfg, TOOL_ID_3D_PRINTER) == 200u && preheat_plan_target_c(NULL, TOOL_ID_3D_PRINTER) == 0u, "the configured target");
+    n = preheat_plan_decide(&cfg, &inv, print_job, 1u, orders);
+    TEST_ASSERT(n == 1u && orders[0].tool_id == TOOL_ID_3D_PRINTER && orders[0].target_c == 200u, "a configured hotend is pre-heated before its job");
+    cfg.printer_target_c = 500u;
+    TEST_ASSERT(preheat_plan_target_c(&cfg, TOOL_ID_3D_PRINTER) == 310u, "never above the 310 degree ceiling");
+    n = preheat_plan_decide(&cfg, &inv, print_job, 1u, orders);
+    TEST_ASSERT(n == 1u && orders[0].target_c == 310u, "the order is clamped too");
+    TEST_ASSERT(preheat_plan_lead_ms(TOOL_ID_3D_PRINTER, 200u, 0u) == 35000u, "175 degrees at 20 s per 100");
+    TEST_ASSERT(preheat_plan_target_c(&cfg, TOOL_ID_SOLDERING_IRON) == 200u && preheat_plan_target_c(&cfg, 3u) == 0u, "other tools keep their targets");
 }
 
 void run_rack_units_tests(int *failures)

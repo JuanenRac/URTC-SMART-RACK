@@ -20,6 +20,7 @@ preheat_plan_config_t preheat_plan_config_default(void)
     c.margin_percent = 50u;
     c.cool_unused = false;
     c.hold_ms = 120000u;
+    c.printer_target_c = 0u; // off: the temperature of a hotend depends on the filament, so it is the person who sets it
     return c;
 }
 
@@ -41,12 +42,23 @@ uint16_t preheat_plan_default_target_c(uint8_t tool_id)
     return wanted > ceiling ? ceiling : wanted;
 }
 
+uint16_t preheat_plan_target_c(const preheat_plan_config_t *config, uint8_t tool_id)
+{
+    if (tool_id == TOOL_ID_3D_PRINTER) {
+        const uint16_t ceiling = tool_limits_max_preheat_c(tool_id);
+        const uint16_t wanted = config != NULL ? config->printer_target_c : 0u;
+        return wanted > ceiling ? ceiling : wanted;
+    }
+    return preheat_plan_default_target_c(tool_id);
+}
+
 // Milliseconds to climb 100 degrees, by tool: estimates, to be confirmed on a bench.
 static uint32_t ms_per_100c(uint8_t tool_id)
 {
     switch (tool_id) {
         case TOOL_ID_SOLDERING_IRON: return 10000u;
         case TOOL_ID_HOTAIR_REWORK: return 15000u;
+        case TOOL_ID_3D_PRINTER: return 20000u;
         default: return 0u;
     }
 }
@@ -74,7 +86,7 @@ uint8_t preheat_plan_decide(const preheat_plan_config_t *config, const rack_inve
         if (!s->occupied) {
             continue;
         }
-        const uint16_t target = preheat_plan_default_target_c(s->tool_id);
+        const uint16_t target = preheat_plan_target_c(config, s->tool_id);
         if (target == 0u) {
             continue; // no heater the rack warms up
         }

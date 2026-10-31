@@ -87,4 +87,46 @@ void run_rack_can_tests(int *failures)
     rack_link_decide_can(&silent, RACK_CAN_ID_SET_PREHEAT, NULL, 8, 10, &d);
     rack_link_decide_can(&silent, RACK_CAN_ID_SET_PREHEAT, data, 8, 10, NULL);
     TEST_ASSERT(d.action == RACK_ACT_NONE, "missing arguments change nothing");
+
+    // The reply on CAN: identifier 0x261, three bytes (the command answered, the tool byte, the reason).
+    TEST_ASSERT(RACK_CAN_ID_REPLY == 0x261u && RACK_CAN_REPLY_DLC == 3u && RACK_CAN_ID_REPLY == RACK_CAN_ID_SET_PREHEAT + 1u, "the reply sits next to the order");
+    {
+        link_watchdog_t reply_lw;
+        rack_decision_t decision;
+        uint8_t order[8];
+        uint8_t reply[RACK_CAN_REPLY_DLC] = {0xEE, 0xEE, 0xEE};
+        rack_can_reply_t parsed;
+        link_watchdog_init(&reply_lw, 1000);
+        (void)rack_can_encode_set_preheat(1, 0, 200, order);
+        rack_link_decide_can(&reply_lw, RACK_CAN_ID_SET_PREHEAT, order, 8, 100, &decision);
+        TEST_ASSERT(rack_can_encode_reply(&decision, reply) == 3u && reply[0] == RACK_CMD_SET_PREHEAT && reply[1] == 0 && reply[2] == RACK_REPLY_APPLIED, "an applied order is answered 01 00 00");
+        TEST_ASSERT(rack_can_parse_reply(RACK_CAN_ID_REPLY, reply, 3, &parsed) && parsed.ack && parsed.cmd == RACK_CMD_SET_PREHEAT && parsed.tool_id == 0 && parsed.code == RACK_REPLY_APPLIED, "and the reply parses back as an acknowledgement");
+        rack_link_decide_can(&reply_lw, RACK_CAN_ID_SET_PREHEAT, order, 8, 110, &decision);
+        TEST_ASSERT(rack_can_encode_reply(&decision, reply) == 3u && reply[2] == RACK_REPLY_REPEAT, "the same sequence again is answered with a repeat");
+        (void)rack_can_encode_set_preheat(2, 10, 900, order);
+        rack_link_decide_can(&reply_lw, RACK_CAN_ID_SET_PREHEAT, order, 8, 120, &decision);
+        TEST_ASSERT(rack_can_encode_reply(&decision, reply) == 3u && reply[0] == RACK_CMD_SET_PREHEAT && reply[1] == 10 && reply[2] == RACK_REPLY_TEMP_OUT_OF_RANGE, "a temperature above the limit of tool 10 is answered 01 0A 04");
+        TEST_ASSERT(rack_can_parse_reply(RACK_CAN_ID_REPLY, reply, 3, &parsed) && !parsed.ack && parsed.code == RACK_REPLY_TEMP_OUT_OF_RANGE, "and the reply parses back as a refusal");
+        decision.reply = RACK_REPLY_NONE;
+        reply[0] = reply[1] = reply[2] = 0xEE;
+        TEST_ASSERT(rack_can_encode_reply(&decision, reply) == 0u && reply[0] == 0xEE, "nobody is told when there is no reply, and nothing is written");
+        decision.reply = (uint8_t)(RACK_REPLY_UNKNOWN_COMMAND + 1u);
+        TEST_ASSERT(rack_can_encode_reply(&decision, reply) == 0u, "a reason that does not exist is not sent");
+        TEST_ASSERT(rack_can_encode_reply(NULL, reply) == 0u && rack_can_encode_reply(&decision, NULL) == 0u, "missing arguments write nothing");
+    }
+    {
+        // What is not a reply: another identifier, another length, a reason that does not exist (9, and 0xFF which the rack never sends), missing arguments.
+        const uint8_t good[3] = {1, 0, 3};
+        const uint8_t too_high[3] = {1, 0, 9};
+        const uint8_t never_sent[3] = {1, 0, 0xFFu};
+        rack_can_reply_t parsed = {true, 0xEE, 0xEE, 0xEE};
+        TEST_ASSERT(rack_can_parse_reply(RACK_CAN_ID_REPLY, good, 3, &parsed) && !parsed.ack && parsed.code == RACK_REPLY_TOOL_ABSENT, "tool absent is a refusal");
+        parsed.cmd = 0xEE;
+        TEST_ASSERT(!rack_can_parse_reply(RACK_CAN_ID_SET_PREHEAT, good, 3, &parsed), "the order identifier is not the reply");
+        TEST_ASSERT(!rack_can_parse_reply(RACK_CAN_ID_REPLY + 1u, good, 3, &parsed), "the next identifier is not the reply");
+        TEST_ASSERT(!rack_can_parse_reply(RACK_CAN_ID_REPLY, good, 2, &parsed) && !rack_can_parse_reply(RACK_CAN_ID_REPLY, good, 4, &parsed) && !rack_can_parse_reply(RACK_CAN_ID_REPLY, good, 0, &parsed), "the length is exactly three");
+        TEST_ASSERT(!rack_can_parse_reply(RACK_CAN_ID_REPLY, too_high, 3, &parsed) && !rack_can_parse_reply(RACK_CAN_ID_REPLY, never_sent, 3, &parsed), "a reason that does not exist is refused");
+        TEST_ASSERT(!rack_can_parse_reply(RACK_CAN_ID_REPLY, NULL, 3, &parsed) && !rack_can_parse_reply(RACK_CAN_ID_REPLY, good, 3, NULL), "missing arguments are refused");
+        TEST_ASSERT(parsed.cmd == 0xEE, "a refused frame leaves the output alone");
+    }
 }

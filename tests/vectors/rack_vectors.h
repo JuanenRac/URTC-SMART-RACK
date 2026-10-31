@@ -11,6 +11,8 @@ typedef struct { const char *name; uint8_t seq, cmd, payload_len; uint8_t payloa
 typedef struct { const char *name; uint8_t len; uint8_t buf[24]; int status; } rack_vec_parse_t; // protocol_status_t order
 typedef struct { const char *name; uint8_t len; uint8_t payload[4]; int status; int tool; int target; } rack_vec_validate_t; // rack_command_status_t order
 typedef struct { const char *name; uint8_t seq, tool; uint16_t target; uint8_t data[8]; } rack_vec_can_t;
+typedef struct { const char *name; uint16_t id; uint8_t cmd, tool, code; int ack; uint8_t data[3]; } rack_vec_can_reply_t; // a well-formed reply (0x261): rack_reply_code_t order
+typedef struct { const char *name; uint16_t id; uint8_t len; uint8_t data[8]; } rack_vec_can_reply_bad_t; // a frame that is not a reply
 typedef struct { const char *name; int occupied; int commanded_c; float measured_c; float ambient_c; uint32_t elapsed_ms; int verdict; } rack_vec_verify_t; // slot_verdict_t order
 typedef struct { int scenario; const char *name; uint32_t time_ms; uint8_t len; uint8_t buf[24]; int action; int tool; int temp; int ack; uint8_t reply_len; uint8_t reply[9]; } rack_vec_step_t; // rack_action_t order; the reply frame (none: length 0)
 typedef struct { int stream; uint32_t time_ms; uint8_t len; uint8_t data[40]; } rack_vec_stream_event_t; // bytes that arrived together
@@ -60,6 +62,28 @@ static const rack_vec_can_t RACK_VEC_CAN[] = {
     {"soldering 250", 4, 0, 250, {0x00, 0x00, 0xFA, 0x04, 0x00, 0x00, 0x00, 0x00}},
     {"hot air 350", 200, 19, 350, {0x13, 0x01, 0x5E, 0xC8, 0x00, 0x00, 0x00, 0x00}},
     {"off", 0, 5, 0, {0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}},
+};
+
+static const rack_vec_can_reply_t RACK_VEC_CAN_REPLIES[] = {
+    {"applied", 0x261, 1, 0, 0, 1, {0x01, 0x00, 0x00}},
+    {"repeat", 0x261, 1, 1, 1, 1, {0x01, 0x01, 0x01}},
+    {"wrong_length", 0x261, 1, 2, 2, 0, {0x01, 0x02, 0x02}},
+    {"tool_absent", 0x261, 1, 3, 3, 0, {0x01, 0x03, 0x03}},
+    {"temp_out_of_range", 0x261, 1, 4, 4, 0, {0x01, 0x04, 0x04}},
+    {"tool_invalid", 0x261, 1, 5, 5, 0, {0x01, 0x05, 0x05}},
+    {"not_heatable", 0x261, 1, 6, 6, 0, {0x01, 0x06, 0x06}},
+    {"held_rate", 0x261, 1, 7, 7, 0, {0x01, 0x07, 0x07}},
+    {"unknown_command", 0x261, 64, 255, 8, 0, {0x40, 0xFF, 0x08}},
+};
+
+static const rack_vec_can_reply_bad_t RACK_VEC_CAN_REPLIES_BAD[] = {
+    {"two bytes", 0x261, 2, {0x01, 0x00}},
+    {"four bytes", 0x261, 4, {0x01, 0x00, 0x00, 0x00}},
+    {"empty", 0x261, 0, {0}},
+    {"reason 9, the first that does not exist", 0x261, 3, {0x01, 0x00, 0x09}},
+    {"reason 255, which the rack never sends", 0x261, 3, {0x01, 0x00, 0xFF}},
+    {"the order identifier, not the reply", 0x260, 3, {0x01, 0x00, 0x00}},
+    {"the next identifier, which is free", 0x262, 3, {0x01, 0x00, 0x00}},
 };
 
 static const rack_vec_step_t RACK_VEC_STEPS[] = {

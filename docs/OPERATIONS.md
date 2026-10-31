@@ -163,9 +163,17 @@ multi-byte value is **big-endian**, like every temperature on the URTC bus.
 | Frame | Direction | Identifier | DLC | Data |
 | --- | --- | --- | --- | --- |
 | `SET_PREHEAT` | host to rack | `0x260` | 8 | byte 0: tool ID; bytes 1-2: target in whole degrees C, big-endian; byte 3: sequence number; bytes 4-7: reserved, sent as 0, ignored on receipt |
-| status | rack to host | `0x261` | - | reserved; not defined yet |
+| `REPLY` | rack to host | `0x261` | 3 | byte 0: the command answered (`0x01`, `SET_PREHEAT`); byte 1: the tool byte the command carried (`0xFF`: none); byte 2: the reason (`0` applied, `1` repeat: acknowledgements; `2` wrong length, `3` tool absent, `4` temperature out of range, `5` tool invalid, `6` not heatable, `7` held (too soon), `8` unknown command: refusals) |
 
-The identifiers `0x260`..`0x26F` are the block the URTC CAN documentation keeps for the
+The reply is the same three bytes as the payload of the serial acknowledgement (`0x81`) and
+refusal (`0x82`); on CAN the kind is told by the reason, and there is no sequence number, so the
+host matches a reply with its order by the command and the tool. `rack_can_encode_reply()` writes it
+from the decision of the link and `rack_can_parse_reply()` reads it; nothing sends it yet because no
+board with a CAN transceiver exists. That code and its host tests (`tests/test_rack_can.c` and the shared
+vectors) were written without a compiler at hand: they have not been built or run, and nothing has been on a
+bus.
+
+The identifiers `0x260`..`0x26F` are the block the specification of URTC-COMMON keeps for the
 rack. A command that arrives this way goes through the same rules as a serial one
 (`rack_link_decide_can()`): the same range checks, the same per-tool anti-replay sequence, the
 same safe state for a refused value. A frame with another identifier or another length is not

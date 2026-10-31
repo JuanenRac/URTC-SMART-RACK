@@ -56,6 +56,25 @@ void run_rack_vectors_tests(int *failures)
         TEST_ASSERT(rack_can_decode_set_preheat(RACK_CAN_ID_SET_PREHEAT, v->data, 8, &seq, &cmd) == RACK_CMD_OK && seq == v->seq &&
                     cmd.tool_id == v->tool && cmd.target_temp_c == v->target, "a vector CAN frame decodes to its fields");
     }
+    // The reply on CAN (0x261): the three bytes the model of URTC-COMMON writes for each of the nine reasons, and the frames that are not a reply.
+    for (int i = 0; i < RACK_VEC_COUNT(RACK_VEC_CAN_REPLIES); i++) {
+        const rack_vec_can_reply_t *v = &RACK_VEC_CAN_REPLIES[i];
+        rack_decision_t decision;
+        memset(&decision, 0, sizeof decision);
+        decision.reply = v->code;
+        decision.reply_cmd = v->cmd;
+        decision.reply_tool = v->tool;
+        uint8_t data[RACK_CAN_REPLY_DLC];
+        TEST_ASSERT(v->id == RACK_CAN_ID_REPLY && rack_can_encode_reply(&decision, data) == RACK_CAN_REPLY_DLC && memcmp(data, v->data, RACK_CAN_REPLY_DLC) == 0, v->name);
+        rack_can_reply_t parsed;
+        TEST_ASSERT(rack_can_parse_reply(v->id, v->data, RACK_CAN_REPLY_DLC, &parsed) && parsed.ack == (v->ack != 0) && parsed.cmd == v->cmd &&
+                    parsed.tool_id == v->tool && parsed.code == v->code, "a vector CAN reply parses back to its fields");
+    }
+    for (int i = 0; i < RACK_VEC_COUNT(RACK_VEC_CAN_REPLIES_BAD); i++) {
+        const rack_vec_can_reply_bad_t *v = &RACK_VEC_CAN_REPLIES_BAD[i];
+        rack_can_reply_t parsed;
+        TEST_ASSERT(!rack_can_parse_reply(v->id, v->data, v->len, &parsed), v->name);
+    }
     link_watchdog_t lw;
     int current = -1;
     for (int i = 0; i < RACK_VEC_COUNT(RACK_VEC_STEPS); i++) {

@@ -23,6 +23,34 @@ uint8_t rack_can_encode_set_preheat(uint8_t seq, uint8_t tool_id, uint16_t targe
     return RACK_CAN_DLC;
 }
 
+static bool reply_code_exists(uint8_t code)
+{
+    return code <= RACK_REPLY_UNKNOWN_COMMAND;
+}
+
+uint8_t rack_can_encode_reply(const rack_decision_t *decision, uint8_t out_data[RACK_CAN_REPLY_DLC])
+{
+    if (decision == NULL || out_data == NULL || !reply_code_exists(decision->reply)) {
+        return 0u;
+    }
+    out_data[0] = decision->reply_cmd;
+    out_data[1] = decision->reply_tool;
+    out_data[2] = decision->reply;
+    return RACK_CAN_REPLY_DLC;
+}
+
+bool rack_can_parse_reply(uint32_t can_id, const uint8_t *data, uint8_t dlc, rack_can_reply_t *out)
+{
+    if (data == NULL || out == NULL || can_id != RACK_CAN_ID_REPLY || dlc != RACK_CAN_REPLY_DLC || !reply_code_exists(data[2])) {
+        return false;
+    }
+    out->ack = data[2] == RACK_REPLY_APPLIED || data[2] == RACK_REPLY_REPEAT;
+    out->cmd = data[0];
+    out->tool_id = data[1];
+    out->code = data[2];
+    return true;
+}
+
 rack_command_status_t rack_can_decode_set_preheat(uint32_t can_id, const uint8_t *data, uint8_t dlc, uint8_t *out_seq, rack_set_preheat_t *out_command)
 {
     if (data == NULL || out_seq == NULL || out_command == NULL || can_id != RACK_CAN_ID_SET_PREHEAT || dlc != RACK_CAN_DLC) {

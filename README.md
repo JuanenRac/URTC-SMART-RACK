@@ -105,7 +105,7 @@ flowchart TB
 * **Why `tool_id.c`/`lifecycle.c`/`preheat.c` ship before any GPIO/F-RAM/CAN driver.** Decoding an ID, accumulating usage, and deciding when to pre-heat are pure functions of data already in hand - they need no PCB to write or test, so v0 lands that logic first, host-tested with the machine's own C compiler rather than `arm-none-eabi-gcc`. The drivers that would actually source that data from real hardware come once the PCB exists.
 * **How this fits the rest of the ecosystem.** Uses URTC's own tool ecosystem (the same tool IDs; the rack's frames are not CAN frames yet, see `docs/OPERATIONS.md`), and is a natural pairing with HYDRA-UMC-DETECTION-HEF for visually recognizing which tool is actually racked.
 * **Why the protocol, command validation, and link watchdog are three separate modules.** `protocol.c` only knows about bytes, framing and a CRC - it has no idea what a "safe" temperature is. `rack_command.c` owns that judgment, decoding and range-checking a real command without caring how it arrived on the wire. `link_watchdog.c` tracks timeout/idempotency independently of both - a corrupted frame must never even reach it (see `test_rack_link_scenarios.c`'s own real assertion that a bad-CRC frame never revives the watchdog). Keeping these separate is what makes each one host-testable on its own, and keeps a future CAN receive handler thin - it calls each layer in order, it doesn't reimplement any of their judgment itself.
-* **Command rate limiter.** A flood of commands for one tool is held back by a minimum interval between accepted commands (default 20 ms, 0 turns it off; `link_watchdog_set_command_interval()`). A held command changes nothing and gets no acknowledgement, but still counts as a live link; a safe state or a retransmission is never held back. The interval can be adjusted in the simulated rack bench of URTC-WEB-STUDIO.
+* **Command rate limiter.** A flood of commands for one tool is held back by a minimum interval between accepted commands (default 20 ms, 0 turns it off; `link_watchdog_set_command_interval()`). A held command changes nothing and is answered with a refusal (`HELD_RATE`), not an acknowledgement, but still counts as a live link; a safe state or a retransmission is never held back. The interval can be adjusted in the simulated rack bench of URTC-WEB-STUDIO.
 * **Why an unproven link is treated exactly like a dead one.** `link_watchdog_is_link_lost()` is true both after a real timeout AND before the very first frame has ever arrived - the diagnosis notes' own "estado seguro al arrancar". A rack that powers on with no host yet connected must start in the safe state, not silently assume "fine" until proven otherwise.
 
 ## 🔒 Security & Safety
@@ -114,7 +114,7 @@ flowchart TB
 |---|---|
 | An out-of-range order to a tool | `rack_command.c` decodes and range-checks every order without caring how it arrived; `protocol.c` only knows bytes, framing and a CRC; `tool_limits.c` holds the limit of each tool profile |
 | A corrupted or old frame | A versioned frame with a CRC-8; in version 2 every multi-byte value is big-endian like the bus and a version 1 frame is refused |
-| A flood of commands | A minimum interval between accepted commands (20 ms by default, 0 turns it off); a held command changes nothing and gets no acknowledgement, but counts as a live link; a safe state or a retransmission is never held back |
+| A flood of commands | A minimum interval between accepted commands (20 ms by default, 0 turns it off); a held command changes nothing and is answered with a refusal (`HELD_RATE`), not an acknowledgement, but counts as a live link; a safe state or a retransmission is never held back |
 | A lost or unproven link | `link_watchdog_is_link_lost()` is true after a real timeout and also before the first frame ever arrives: a rack that powers on with no host starts in the safe state |
 | Pre-heating too long or too hot | `preheat_limit.c` limits how long a pre-heat may run without a tool swap (10 minutes by default, configurable) and `tool_limits.c` the highest target per tool profile |
 | One tool in two slots | `rack_inventory.c` keeps a real tool in exactly one slot; racking it elsewhere clears its old slot |
@@ -126,6 +126,7 @@ All of this is pure C tested on a computer; it has never run on a board and is n
 * **The serial frame of the rack:** version 2, big-endian like the bus, with the CRC-8 that URTC-COMMON provides (`src/urtc_crc8.h`, `src/urtc_frame.h`); `protocol.c` parses and encodes it, `rack_deframer.c` finds frames in a byte stream (resynchronisation after a lost byte, a half frame dropped after a timeout) and `rack_link.c` decides what to do with each frame. The formats are in [docs/OPERATIONS.md](docs/OPERATIONS.md).
 * **The CAN form of the command:** `rack_can.c` (eight data bytes, big-endian temperature). No board carries it yet: the frames of the rack are not CAN frames yet.
 * **Shared with URTC:** the 5-bit tool ID (`tool_id.c`) and the counters `0x1AA` / `0x1AB` that keep the use of each physical head (`rack_units.c`). The vectors that the frame layer must reproduce are those of URTC-COMMON (`conformance/rack_vectors.json`).
+* **The reply to a command:** every well-formed frame gets a reply frame, an acknowledgement or a refusal with its reason in one byte (wrong length, no tool in the slot, temperature above the limit, invalid tool, no heater, held back for coming too soon, unknown command); `rack_reply_encode()` writes it and the host tests compare it byte for byte with the shared vectors of URTC-COMMON, so the firmware and the model of the programs cannot drift apart. The simulated rack benches of URTC-TESTER and URTC-WEB-STUDIO read it; no transport sends it on a board yet. A 3D printer hotend is pre-heated only when `printer_target_c` is set in the configuration of the plan (0 by default, held to the 310 degree ceiling of the tool).
 
 ## 🚀 Quick start
 
@@ -157,7 +158,7 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 <!-- urtc-section:compatibility -->
 ### Requirements & compatibility
 
-Which versions of the URTC programs work together, and which protocol version each one speaks, is listed in the compatibility table that URTC-COMMON generates: [docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md).
+Which versions of the URTC programs work together, and which protocol version each one speaks, is listed in the compatibility table that URTC-COMMON generates: [docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md). The notes of a release of the repositories that carry `tools/changelog_section.py` (the firmware, the flasher, the tester and the updater) are the section of the CHANGELOG of that version followed by this table: `python tools/changelog_section.py VERSION --compat`.
 <!-- /urtc-section:compatibility -->
 
 ## 🧪 Testing

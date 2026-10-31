@@ -127,7 +127,7 @@ Every frame that is well formed (framing and CRC right) gets a reason, in one by
 | 7 | `HELD_RATE` | too soon after the previous command accepted for that tool; send it again later |
 | 8 | `UNKNOWN_COMMAND` | a well-formed frame with a command this rack does not have |
 
-A frame that does not pass the framing and the CRC, or a CAN frame that is not for this rack, is not answered: noise must not provoke traffic. The reply is additive: a host that does not know the commands `0x81` and `0x82` ignores them, and nothing that was accepted or refused before changes. Nothing sends the frame yet, because no transport exists on a board; the host model and the programs do not read it yet.
+A frame that does not pass the framing and the CRC, or a CAN frame that is not for this rack, is not answered: noise must not provoke traffic. The reply is additive: a host that does not know the commands `0x81` and `0x82` ignores them, and nothing that was accepted or refused before changes. No transport sends the frame on a board yet. The host model reads it: the simulated rack benches of URTC-TESTER and URTC-WEB-STUDIO write and read the same frame (a refusal is shown with its reason in the language of the program), and the host tests hold `rack_reply_encode()` to the reply of every step of the shared scenarios of URTC-COMMON, byte for byte.
 
 ### Transport
 

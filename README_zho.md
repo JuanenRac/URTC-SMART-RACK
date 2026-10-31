@@ -110,7 +110,7 @@ flowchart TB
 * **为什么 `tool_id.c`/`lifecycle.c`/`preheat.c` 先于任何 GPIO/F-RAM/CAN 驱动交付。** 解码 ID、累积使用情况、决定何时预热，都是对已有数据的纯函数运算——无需 PCB 即可编写或测试，因此 v0 首先交付这部分逻辑，使用宿主机自身的 C 编译器而非 `arm-none-eabi-gcc` 进行宿主测试。真正从真实硬件获取这些数据的驱动程序，将在 PCB 存在后到来。
 * **这如何融入生态系统的其余部分。** 使用 URTC 自身的工具生态系统（相同的工具 ID；机架的帧目前还不是 CAN 帧，见 `docs/OPERATIONS.md`），并与 HYDRA-UMC-DETECTION-HEF 自然搭配，用于视觉识别实际存放在架上的工具。
 * **为什么协议、命令验证与链路看门狗是三个独立的模块。** `protocol.c` 只了解字节、帧格式和 CRC，它并不知道什么样的温度才算“安全”。`rack_command.c` 拥有那份判断，它解码并对一个真实的命令进行范围检查，而不关心它是如何在总线上到达的。`link_watchdog.c` 独立于二者追踪超时/幂等性——一个损坏的帧甚至不应该到达它（参见 `test_rack_link_scenarios.c` 自身的真实断言：一个 CRC 错误的帧永远不会让看门狗复活）。保持它们分离使得每一个都能在宿主机上独立测试，并让未来的 CAN 接收处理函数保持精简——它只需按顺序调用每一层，而不需要重新实现它们任何一个的判断。
-* **命令速率限制器。** 针对同一工具的大量命令会被已接受命令之间的最小间隔所限制（默认 20 毫秒，0 表示关闭；`link_watchdog_set_command_interval()`）。被暂缓的命令不会改变任何状态，也不会收到确认，但仍视为链路存活；安全状态和重传绝不会被暂缓。该间隔可在 URTC-WEB-STUDIO 的模拟机架试验台中调整。
+* **命令速率限制器。** 针对同一工具的大量命令会被已接受命令之间的最小间隔所限制（默认 20 毫秒，0 表示关闭；`link_watchdog_set_command_interval()`）。被暂缓的命令不会改变任何状态，收到的是拒绝（`HELD_RATE`）而不是确认，但仍视为链路存活；安全状态和重传绝不会被暂缓。该间隔可在 URTC-WEB-STUDIO 的模拟机架试验台中调整。
 * **为什么未经验证的链路会被当作已断开的链路处理。** `link_watchdog_is_link_lost()` 在真正超时之后为真，在第一个帧还从未到达之前也为真——正如诊断笔记自身所说的“estado seguro al arrancar”。一个开机时还没有主机连接的机架，必须以安全状态启动，而不是在未经证实之前默默假定“没问题”。
 
 ## 🔒 安全与防护
@@ -119,7 +119,7 @@ flowchart TB
 |---|---|
 | 发给某个工具的超范围命令 | `rack_command.c` 对每条命令解码并检查范围，不关心它如何到达；`protocol.c` 只认识字节、帧和 CRC；`tool_limits.c` 保存每个工具配置的限值 |
 | 损坏或过时的帧 | 带版本号的帧和 CRC-8；版本 2 中所有多字节数值都与总线一样采用大端序，版本 1 的帧会被拒绝 |
-| 命令洪泛 | 已接受命令之间的最小间隔（默认 20 毫秒，0 为关闭）；被扣留的命令不会改变任何东西也没有确认，但算作链路仍然存活；安全状态或重传永远不会被扣留 |
+| 命令洪泛 | 已接受命令之间的最小间隔（默认 20 毫秒，0 为关闭）；被扣留的命令不会改变任何东西得到的是拒绝（`HELD_RATE`）而不是确认，但算作链路仍然存活；安全状态或重传永远不会被扣留 |
 | 丢失或未经证明的链路 | `link_watchdog_is_link_lost()` 在真正超时后以及第一帧到达之前都为真：没有主机就上电的机架会从安全状态启动 |
 | 预热过久或过热 | `preheat_limit.c` 限制没有换刀时预热可持续的时间（默认 10 分钟，可配置），`tool_limits.c` 限制每个工具配置的最高目标值 |
 | 一个工具出现在两个槽位 | `rack_inventory.c` 让一个真实工具只在一个槽位；把它放到别处会清除原来的槽位 |
@@ -131,6 +131,7 @@ flowchart TB
 * **机架的串行帧：** 版本 2，与总线一样采用大端序，使用 URTC-COMMON 提供的 CRC-8（`src/urtc_crc8.h`、`src/urtc_frame.h`）；`protocol.c` 负责解析和编码，`rack_deframer.c` 在字节流中找出帧（丢字节后重新同步，超时后丢弃半个帧），`rack_link.c` 决定如何处理每一帧。格式见 [docs/OPERATIONS.md](docs/OPERATIONS.md)。
 * **命令的 CAN 形式：** `rack_can.c`（八个数据字节，温度为大端序）。目前还没有板子承载它：机架的帧还不是 CAN 帧。
 * **与 URTC 共用：** 5 位工具 ID（`tool_id.c`）以及记录每个实体头使用情况的计数器 `0x1AA` / `0x1AB`（`rack_units.c`）。帧层必须复现的向量来自 URTC-COMMON（`conformance/rack_vectors.json`）。
+* **对命令的应答：** 每个格式正确的帧都会得到一个应答帧，即确认，或在一个字节中带原因的拒绝（长度错误、插槽中没有工具、温度超过上限、无效工具、没有加热器、因来得太早而被暂缓、未知命令）；`rack_reply_encode()` 负责写出，主机测试把它与 URTC-COMMON 的共享向量逐字节比较，因此固件与程序的模型不会各走各的。URTC-TESTER 和 URTC-WEB-STUDIO 的模拟机架试验台会读取它；开发板上还没有传输通道发送它。3D 打印机热端只有在计划配置中设置了 `printer_target_c` 时才会预热（默认 0，并限制在该工具 310 度的上限内）。
 
 ## 🚀 快速开始
 
@@ -164,7 +165,7 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 <!-- urtc-section:compatibility -->
 ### 要求与兼容性
 
-哪些版本的 URTC 程序可以配合使用、各自使用哪个协议版本，列在 URTC-COMMON 生成的兼容性表中：[docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md)。
+哪些版本的 URTC 程序可以配合使用、各自使用哪个协议版本，列在 URTC-COMMON 生成的兼容性表中：[docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md)。带有 `tools/changelog_section.py` 的仓库（固件、刷写器、测试器和更新器）的发布说明，就是该版本的 CHANGELOG 小节后面接上这张表：`python tools/changelog_section.py VERSION --compat`。
 <!-- /urtc-section:compatibility -->
 
 ## 🧪 测试

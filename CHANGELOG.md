@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **One executor for the host tests of the firmware, shared with the other firmware repositories:** `tools/run_host_tests.py` (the same text in `URTC`, `URTC-SMART-RACK` and `URTC-VISION-TOOL`, kept in the shared set) builds and runs the suites that `tools/host_tests.json` lists. Where `cmake` and `ctest` are installed (CI and WSL) CMake builds every suite and `ctest` runs it, with at most two compilations at the same time; elsewhere it compiles and runs each suite itself, with the same flags. The sanitizers, the static analysis, the coverage floor and the run through WSL are options of the same tool. `build_firmware.sh` and `build_firmware.bat` call it, so the order of the suites, the flags and the floor are written once.
+- **`tools/host_sources.txt` and `tools/gcov_floor.py` are replaced by `tools/host_tests.json` and the shared executor:** one suite (the whole host build, AddressSanitizer and UBSan when CI sets `URTC_SANITIZE=1`) and the coverage floor measured by the executor itself (`URTC_COVERAGE_FLOOR`, unchanged).
+
 ## [0.2.3] - The reply of the rack has its CAN identifier, a head with the ID jumpers on 0x1F is asked for its tool, the reply to a command is held to the shared vectors and a 3D printer hotend can be pre-heated
 
 - **The reply of the rack has its CAN identifier, `0x261`:** `rack_can.h` names it `RACK_CAN_ID_REPLY` (it was reserved as the status frame and not defined) and fixes its three bytes, the command answered, the tool byte and the reason, the same ones as the serial acknowledgement and refusal. `rack_can_encode_reply()` writes them from the decision of the link and `rack_can_parse_reply()` reads them back; `OPERATIONS.md` has the row. The shared vectors carry a vector for each of the nine reasons and seven frames that are not a reply. Not built and not run yet: the C code and its tests were written without a compiler at hand, nothing calls the encoder because no board with a CAN transceiver exists, and nothing has been on a bus.

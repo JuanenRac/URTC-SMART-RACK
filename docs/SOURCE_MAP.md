@@ -28,6 +28,7 @@ URTC-SMART-RACK/
 │   ├── preheat_plan.h / .c         # Real: predictive pre-heat from the job queue
 │   ├── slot_verify.h / .c          # Real: what a thermal reading of a slot says about it
 │   ├── rack_units.h / .c           # Real: identity and wear of each physical tool head
+│   ├── head_link.h / .c            # Real: the frames between the rack and the head in its slot - the two questions, the setpoint of the soldering iron and of hot air, the answers
 │   ├── rack_ring.h / .c            # Real: the names of the rack for that ring - the only thing a receive interrupt may touch
 │   ├── rack_rx.h / .c              # Real: the receive path for an interrupt - the interrupt only fills the ring, the main loop deframes and decides
 │   ├── rack_persist.h / .c         # Real: lifecycle and inventory in two CRC-checked copies that survive a power cut at any byte

@@ -25,6 +25,7 @@ int main(void)
     run_rack_vectors_tests(&failures);
     run_free_tool_tests(&failures);
     run_rack_units_tests(&failures);
+    run_head_link_tests(&failures);
     run_rack_ring_tests(&failures);
     run_rack_persist_tests(&failures);
     run_rack_reply_tests(&failures);

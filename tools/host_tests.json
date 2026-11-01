@@ -33,8 +33,36 @@
     "src/rack_persist.c",
     "src/rack_reply.c",
     "src/rack_ring.c",
+    "src/rack_rx.c",
     "src/rack_units.c",
     "src/slot_verify.c",
+    "src/tool_id.c",
+    "src/tool_limits.c"
+   ],
+   "includes": [
+    "src",
+    "tests"
+   ],
+   "std": "c11",
+   "sanitize": "env:URTC_SANITIZE"
+  },
+  {
+   "name": "isr_simulator",
+   "test": "tests/isr_simulator.c",
+   "sources": [
+    "src/link_watchdog.c",
+    "src/preheat.c",
+    "src/preheat_limit.c",
+    "src/protocol.c",
+    "src/rack_app.c",
+    "src/rack_can.c",
+    "src/rack_command.c",
+    "src/rack_deframer.c",
+    "src/rack_inventory.c",
+    "src/rack_link.c",
+    "src/rack_reply.c",
+    "src/rack_ring.c",
+    "src/rack_rx.c",
     "src/tool_id.c",
     "src/tool_limits.c"
    ],

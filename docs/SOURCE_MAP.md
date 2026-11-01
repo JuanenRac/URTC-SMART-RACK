@@ -29,6 +29,7 @@ URTC-SMART-RACK/
 │   ├── slot_verify.h / .c          # Real: what a thermal reading of a slot says about it
 │   ├── rack_units.h / .c           # Real: identity and wear of each physical tool head
 │   ├── rack_ring.h / .c            # Real: the names of the rack for that ring - the only thing a receive interrupt may touch
+│   ├── rack_rx.h / .c              # Real: the receive path for an interrupt - the interrupt only fills the ring, the main loop deframes and decides
 │   ├── rack_persist.h / .c         # Real: lifecycle and inventory in two CRC-checked copies that survive a power cut at any byte
 │   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
 │   ├── startup_stm32g4_minimal.c   # Vector table + Reset_Handler (no ST HAL yet, see file header)

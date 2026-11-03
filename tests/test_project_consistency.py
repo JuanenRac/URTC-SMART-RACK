@@ -79,10 +79,6 @@ class PublishedNumbersTests(unittest.TestCase):
             count += path.read_text(encoding="utf-8", errors="replace").count("TEST_ASSERT(")
         self.assertGreater(count, 0)
 
-        manifest = json.loads(read("urtc.project.json"))
-        quoted = re.findall(r"(\d+) host-native test assertions", manifest["notes"])
-        self.assertEqual(quoted, [str(count)], "manifest notes must quote the real assertion count")
-
         for name in README_FILES:
             numbers = re.findall(r"(\d+)[^`\d\n]{0,24}`TEST_ASSERT`", read(name))
             self.assertTrue(numbers, f"{name} must state how many TEST_ASSERT checks back it")

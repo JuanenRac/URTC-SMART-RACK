@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **The build check of the repository is one text for the whole family, with a light mode that CI runs:** `tools/build_test.py` is the same file in every repository of the family (taken from the shared set); what used to differ between its seven variants is data in an optional `tools/build_test.json`. `python tools/build_test.py --check` looks at the manifest, the stack and the files the full check needs and compiles the Python sources, builds and runs nothing, and the baseline step of the workflow now runs it.
+
 ## [0.2.4] - The frames between the rack and the head in its slot, a serial receive path wired for an interrupt with a simulator and one executor for the host tests
 
 - **The frames between the rack and the head in its slot:** `head_link.c` builds the two questions a rack asks a head (`0x110` for the active tool and its state, `0x1AA` for its lifetime counters), turns an order of the pre-heat plan into the ordinary setpoint frame of the tool (`0x130` for the soldering iron, `0x1E0` with a blower duty for hot air; a target of 0 is the order to cool), reads the answers (`0x111` and `0x1AB`, which feed `rack_units_note_counters()`) and says when the setpoint must be sent again (at once when the target changes, and every refresh time while the order stands, across the wrap of the clock): the head switches its heater off by itself when the setpoint stops arriving. The refresh time, the blower duty and the period of the readings are in `head_link_config_t`, estimates for a bench to confirm. Nothing transmits: no rack board with a transceiver exists. Host-tested.

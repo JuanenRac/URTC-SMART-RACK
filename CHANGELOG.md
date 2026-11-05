@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The copy of the shared code is refreshed:** the files taken from URTC-COMMON follow it again (the new frames of the bootloader and of the health report).
 - **The build check of the repository is one text for the whole family, with a light mode that CI runs:** `tools/build_test.py` is the same file in every repository of the family (taken from the shared set); what used to differ between its seven variants is data in an optional `tools/build_test.json`. `python tools/build_test.py --check` looks at the manifest, the stack and the files the full check needs and compiles the Python sources, builds and runs nothing, and the baseline step of the workflow now runs it.
 
 ## [0.2.4] - The frames between the rack and the head in its slot, a serial receive path wired for an interrupt with a simulator and one executor for the host tests

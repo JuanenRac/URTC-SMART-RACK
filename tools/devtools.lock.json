@@ -16,7 +16,7 @@
     "tools/make_architecture.py": "9df7d6c00af0f1178c44eae8e849c31218bae196984ec718a7fdc63daa2e2fa9",
     "tools/make_structure.py": "27615e9b6374cbb6cc21b52d52bad4e9db1c9307319a8910b4b75c4ecb9fe5c8",
     "tools/pretty_run.py": "1698bfec531568afaf5319f0a220e9bf7c0087f39cbf5e6e88e7035bfc1327c5",
-    "tools/run_host_tests.py": "a1cec66de41acb0cd1aa49c82d706c8c82e4400abd14fcbcc327af772401fadf",
+    "tools/run_host_tests.py": "2b6386777823762b12bb29e5385c52fe162dd542d612bafa59aa280a344eaceb",
     "tools/status_lights.py": "7e71dd24c828a07a3b842446dbab7921784df1e5538a463e88a1f33181550019",
     "tools/universal_readme_check.py": "ddb5f9986119a8b16800cba627d8a13af8b39ff1e044adc992fd06defea301e5"
   }

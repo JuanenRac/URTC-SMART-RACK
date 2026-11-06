@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **The repository check compares the manifest with what can be computed:** `tools/ci_validate.py` now also runs the shared `tools/sync_manifests.py` offline, which compares the shipped version, the newest released heading of this changelog, the presence of tests and the claimed level of evidence with the manifest. It is part of the shared set of tools, so the copy is pinned by the lock.
+
 ## [0.2.6] - The coverage floor of the CI is 93 percent: the host suites run on the hosted runner with gcov counters and execute 98 percent of the lines of the 22 firmware sources they compile (main.c and the start-up file are compiled by... (and 1 more changes)
 
 - **The coverage floor of the CI is 93 percent:** the host suites run on the hosted runner with gcov counters and execute 98 percent of the lines of the 22 firmware sources they compile (`main.c` and the start-up file are compiled by no suite: they need the board), so the floor that stood at 90 is raised to five points under the measure.

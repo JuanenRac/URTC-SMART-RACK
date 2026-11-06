@@ -35,7 +35,7 @@ URTC-SMART-RACK/
 │   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
 │   ├── startup_stm32g4_minimal.c   # Vector table + Reset_Handler (no ST HAL yet, see file header)
 │   └── STM32G4_MINIMAL.ld          # Placeholder linker script (128K FLASH / 32K RAM floor)
-├── tests/                          # Real host-native test harness (tool_id, tool limits, lifecycle, preheat, protocol, rack_command, link_watchdog, rack link scenarios, rack inventory, robustness, rack_app) and Python checks that the build scripts and the published test count agree
+├── tests/                          # Real host-native test harness (tool_id, tool limits, lifecycle, preheat, protocol, rack_command, link_watchdog, rack link scenarios, rack inventory, robustness, rack_app), the virtual rack (virtual_rack.c: the real rack logic behind a text port, played by tools/rack_bench.py) and Python checks that the build scripts and the published test count agree
 ├── docs/                           # Operations guide (docs/OPERATIONS.md): what the logic does, refuses and leaves unverified
 ├── hardware/                       # Hardware notes (README.md) - no design files yet (no schematic, no PCB)
 ├── firmware/                       # Build output (.bin/.elf/.hex), git-ignored - published only as assets of the GitHub release
@@ -45,6 +45,7 @@ URTC-SMART-RACK/
 │   ├── build_test.py               # Non-versioning build/compile check
 │   ├── run_host_tests.py           # Shared executor of the host tests: ctest, sanitizers, coverage floor (same file as the sibling firmware repositories)
 │   ├── host_tests.json             # The suites it builds and runs: sources, includes, flags
+│   ├── rack_bench.py               # Software bench: scenarios with injected faults through the virtual rack, compared with the Python model of the rack in URTC-COMMON
 │   ├── publish_release_assets.py   # Lists the release assets to attach and prints the gh command
 │   ├── ci_validate.py              # Manifest/CHANGELOG/docs validation used by CI
 │   └── _doc_policy.py / _readme_parity.py / _tracked_names.py # Shared checks used by ci_validate.py

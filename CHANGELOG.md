@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **A software bench of the rack, run by the CI:** `tests/virtual_rack.c` puts the real rack modules (receive ring, deframer, link decision, watchdog, inventory, pre-heat limit, replies) behind a text port and `tools/rack_bench.py` plays 17 scenarios and two seeded random runs of thousands of commands through it, with damaged, repeated, cut, noisy, late and lost frames, a silent link, a pre-heat that runs out and a burst that overflows the receive ring. The replies and the eight slots are also compared step by step with the Python model of the rack in URTC-COMMON, so the two readings of the protocol cannot drift apart. A recorded script can be replayed with `--replay`. The manifest now says `simulator`. Nothing here runs on a board.
+
 ## [0.2.5] - The full build check compiles only on CI or when allowed: tools/buildtest.py prints BUILDTEST=SKIPPED (exit status 2) for the stacks that compile unless it runs on a CI runner or ALLOWLOCALBUILD=1 says so; the light check is... (and 3 more changes)
 
 - **The full build check compiles only on CI or when allowed:** `tools/build_test.py` prints `BUILD_TEST=SKIPPED` (exit status 2) for the stacks that compile unless it runs on a CI runner or `ALLOW_LOCAL_BUILD=1` says so; the light check is not locked.

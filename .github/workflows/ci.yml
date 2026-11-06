@@ -59,6 +59,17 @@ jobs:
           path: build/firmware
           if-no-files-found: error
           retention-days: 14
+      - name: Check out the Python model of the rack (URTC-COMMON), the second reading of the protocol
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: JuanenRac/URTC-COMMON
+          path: urtc-common-model
+          persist-credentials: false
+      - name: Software bench of the rack (the real rack logic with injected faults, compared with the model)
+        env:
+          URTC_SANITIZE: "1"
+          URTC_COMMON_SRC: ${{ github.workspace }}/urtc-common-model/src
+        run: python tools/rack_bench.py --events 3000
 
   windows:
     name: Windows build and tests

@@ -210,6 +210,36 @@ loop. A receive interrupt should only copy the bytes into a ring buffer.
   baseline is reset so a new session is not compared against the old one.
   This is not cryptographic protection.
 
+## The software bench (a rack with no hardware)
+
+`tests/virtual_rack.c` joins the real modules of the firmware the way the main loop of the board will (receive ring, deframer, link decision, link watchdog, inventory, pre-heat limit and the reply encoders) and compiles them for the host behind a text port: one command per line on standard input, one line per frame the rack would transmit on standard output. `tools/rack_bench.py` builds it and plays scenarios through it:
+
+```
+python tools/rack_bench.py                  # every scenario (on a plain PC: ALLOW_LOCAL_BUILD=1, which builds inside WSL on Windows)
+python tools/rack_bench.py --list           # the scenarios and what each one checks
+python tools/rack_bench.py --only retransmission
+python tools/rack_bench.py --seed 7 --events 3000
+python tools/rack_bench.py --dump DIR       # write the script of every scenario
+python tools/rack_bench.py --replay FILE    # play a recorded script (the lines below) and print the answers
+```
+
+The scenarios are good commands over the serial line and over CAN, a target above the ceiling, a tool with a lower limit, a tool with no heater, a repeated sequence, two commands too close together, a damaged check byte, noise in front of a frame, a frame in two pieces and one cut short, an unknown command, a target for a tool that is not racked, a silent link and its return, a pre-heat that runs out after ten minutes, a burst that overflows the receive ring, and two seeded random runs of thousands of commands with damaged, repeated, cut, noisy, late and lost frames. Each scenario states what the rack must answer and where every target must end; the random runs must also keep every target under the ceiling of its tool and never set one while the link is lost.
+
+When the Python model of the rack (`urtc_common.rack_sim` of URTC-COMMON) can be imported (`--common DIR`, or the variable `URTC_COMMON_SRC` pointing at `URTC-COMMON/src`), the same events also go through the model and the replies and the eight slots must be identical after every step, so the firmware and the model cannot disagree about the protocol unnoticed. The CI builds the bench with the address and undefined-behaviour sanitizers and runs it on every push.
+
+The text port (hexadecimal values, no `0x`):
+
+| Line in | Meaning |
+| --- | --- |
+| `I <slot> <tool> <serial>` | put a tool in a slot |
+| `T <ms>` | the clock is now `<ms>` (it never goes back); runs the watchdog and the pre-heat limit |
+| `S <bytes>` / `B <bytes>` | serial bytes, polled after each byte / all at once before the loop polls (the ring can overflow) |
+| `C <id> <bytes>` | one CAN frame |
+| `Q` | print the state: `Q <slot> <occupied> <tool> <serial> <target> <expired>` for each slot, `Q link <lost>`, `Q dropped <bytes>` |
+| `M <text>` | print `M <text>`, a marker |
+
+Lines out: `S <bytes>` a serial reply frame and `C 261 <bytes>` a CAN reply. This bench says nothing about the board, the driver of a heater, the real CAN transceiver or the timing of the interrupts; those stay in the bench tests of the real board.
+
 ## What is not verified
 
 No test has run against a real board, transceiver, heater or sensor. Treat

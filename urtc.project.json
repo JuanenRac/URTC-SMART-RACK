@@ -12,11 +12,11 @@
   ],
   "deployment_target": "user-pc",
   "maturity": "functional",
-  "evidence": "host-test",
+  "evidence": "simulator",
   "family": "URTC Tool Platform",
   "parent": null,
   "build": "bash build_firmware.sh. Real host-native unit tests run before the arm-none-eabi-gcc cross-compile.",
-  "notes": "Hardware-independent pure-C logic, host-tested on a PC only: tool-ID decoding, usage and maintenance tracking, the Smart Idle pre-heat target with a safe-state target, a versioned rack command protocol (framing with CRC8, actuation-limit validation, a link watchdog), a multi-slot inventory with per-tool limits, and the layer that holds every slot in the safe state while the link is lost. A host-side scenario harness plays valid, corrupted, out-of-range, timed-out and duplicate frames through the whole pipeline, and the ARM cross-compile is verified with a size report. Real CAN/F-RAM/GPIO I/O needs a real PCB, which does not exist yet.",
+  "notes": "Hardware-independent pure-C logic, tested on a PC and run against a virtual rack with injected faults (compared with the Python model of the rack), never on a board: tool-ID decoding, usage and maintenance tracking, the Smart Idle pre-heat target with a safe-state target, a versioned rack command protocol (framing with CRC8, actuation-limit validation, a link watchdog), a multi-slot inventory with per-tool limits, and the layer that holds every slot in the safe state while the link is lost. A host-side scenario harness plays valid, corrupted, out-of-range, timed-out and duplicate frames through the whole pipeline, and the ARM cross-compile is verified with a size report. Real CAN/F-RAM/GPIO I/O needs a real PCB, which does not exist yet.",
   "native_version": {
     "file": "src/firmware_common.h",
     "pattern": {

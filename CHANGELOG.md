@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.2.6] - The coverage floor of the CI is 93 percent: the host suites run on the hosted runner with gcov counters and execute 98 percent of the lines of the 22 firmware sources they compile (main.c and the start-up file are compiled by... (and 1 more changes)
 
 - **The coverage floor of the CI is 93 percent:** the host suites run on the hosted runner with gcov counters and execute 98 percent of the lines of the 22 firmware sources they compile (`main.c` and the start-up file are compiled by no suite: they need the board), so the floor that stood at 90 is raised to five points under the measure.
 - **A software bench of the rack, run by the CI:** `tests/virtual_rack.c` puts the real rack modules (receive ring, deframer, link decision, watchdog, inventory, pre-heat limit, replies) behind a text port and `tools/rack_bench.py` plays 17 scenarios and two seeded random runs of thousands of commands through it, with damaged, repeated, cut, noisy, late and lost frames, a silent link, a pre-heat that runs out and a burst that overflows the receive ring. The replies and the eight slots are also compared step by step with the Python model of the rack in URTC-COMMON, so the two readings of the protocol cannot drift apart. A recorded script can be replayed with `--replay`. The manifest now says `simulator`. Nothing here runs on a board.

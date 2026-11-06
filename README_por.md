@@ -28,7 +28,7 @@
 
 | | |
 |---|---|
-| Versão | `0.2.5` |
+| Versão | `0.2.6` |
 | Maturidade | Funcional |
 | Testes | 691 |
 | Tecnologia | C / STM32G4 / arm-none-eabi-gcc |

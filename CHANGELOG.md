@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The Spanish README says "grabar" instead of the calque "flashear":** the same word as the window of the programs.
+
 - **The manifest says which version of the shared contracts it needs:** `min_common` in `urtc.project.json` is the oldest version of URTC-COMMON among the copies this repository carries, the value the updater compares with what is installed (a warning only). `tools/min_common.py` of URTC-COMMON checks it and a new copy brings it up to date.
 
 - **The German README calls a frame of the serial protocol a "Frame"** (it said "Rahmen"), as the rest of the German documents do.

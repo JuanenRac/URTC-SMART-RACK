@@ -111,7 +111,7 @@ for %%S in (src\*.c) do (
 )
 echo   OK   every src\*.c compiled for Cortex-M4F
 
-arm-none-eabi-gcc %CFLAGS% %LDFLAGS% build\arm\startup_stm32g4_minimal.o build\arm\main.o -o build\urtc-smart-rack.elf
+arm-none-eabi-gcc %CFLAGS% %LDFLAGS% build\arm\*.o -o build\urtc-smart-rack.elf
 if errorlevel 1 goto :error
 echo   OK   Linked build\urtc-smart-rack.elf
 

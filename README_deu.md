@@ -69,7 +69,7 @@ Für diese Platine existiert noch keine PCB/kein Schaltplan (siehe `hardware/`),
 * 🌡️ **Vorheiz-Logik** — intelligentes Temperaturmanagement für Löt- und Heißluftwerkzeuge. *(die Aktivierungsentscheidung und Zieltemperaturen sind real - siehe oben; einen echten Heizer anzusteuern benötigt die PCB.)*
 * 📈 **Lebenszyklus-Protokolle** — zeichnet die Gesamtzahl der Betätigungszyklen und Betriebsstunden im F-RAM des Werkzeugs auf. *(die Zähler und die Logik für fällige Wartung sind real - siehe oben; sie in echtem F-RAM zu persistieren benötigt die PCB.)*
 * 📡 **CAN-Integration** — soll mit dem HYDRA-UMC-Kinematik-Gehirn für koordinierten ATC (automatischen Werkzeugwechsel) kommunizieren; das lief nie, da weder ein CAN-Treiber noch eine Platine existiert. *(das Drahtprotokoll selbst - Framing, CRC, Befehlsvalidierung - ist real und auf dem Host getestet, siehe unten; ein echter CAN-Transceiver, um es tatsächlich zu übertragen, wird noch benötigt.)*
-* 🔒 **Protokoll-Bereichsprüfungen** — versioniertes Framing mit einer CRC8-Prüfsumme, Aktuierungsbereichs-Validierung und ein Link-Timeout-/Idempotenz-Watchdog mit einem definierten sicheren Zustand. Rahmenversion 2: Jeder Mehrbytewert ist Big-Endian wie beim Bus, und ein Rahmen der Version 1 wird abgelehnt. *(als reines C implementiert und nur auf einem PC getestet; nie auf einer Platine ausgeführt und keine zertifizierte Sicherheitsfunktion)*
+* 🔒 **Protokoll-Bereichsprüfungen** — versioniertes Framing mit einer CRC8-Prüfsumme, Aktuierungsbereichs-Validierung und ein Link-Timeout-/Idempotenz-Watchdog mit einem definierten sicheren Zustand. Rahmenversion 2: Jeder Mehrbytewert ist Big-Endian wie beim Bus, und ein Frame der Version 1 wird abgelehnt. *(als reines C implementiert und nur auf einem PC getestet; nie auf einer Platine ausgeführt und keine zertifizierte Sicherheitsfunktion)*
 * ✅ **Cortex-M4F-Firmware-Toolchain** — ein echtes Bare-Metal-Image (Startup + Linker + `main.c`), das mit `arm-none-eabi-gcc` wirklich kompiliert und gelinkt wird, derselben Toolchain, die auch das Schwester-Repository URTC nutzt. *(implementiert — siehe BUILD unten)*
 
 ## 🧩 Rolle in URTC
@@ -113,7 +113,7 @@ flowchart TB
 
 | Bedrohung | Abwehr |
 |---|---|
-| Ein Befehl außerhalb des Bereichs an ein Werkzeug | `rack_command.c` dekodiert und prüft jeden Befehl, ohne zu wissen, wie er ankam; `protocol.c` kennt nur Bytes, Rahmen und eine CRC; `tool_limits.c` hält die Grenze jedes Werkzeugprofils |
+| Ein Befehl außerhalb des Bereichs an ein Werkzeug | `rack_command.c` dekodiert und prüft jeden Befehl, ohne zu wissen, wie er ankam; `protocol.c` kennt nur Bytes, Frames und eine CRC; `tool_limits.c` hält die Grenze jedes Werkzeugprofils |
 | Ein beschädigter oder alter Frame | Ein versionierter Frame mit CRC-8; in Version 2 ist jeder Mehrbytewert Big-Endian wie der Bus, ein Frame der Version 1 wird abgelehnt |
 | Eine Flut von Befehlen | Ein Mindestabstand zwischen angenommenen Befehlen (standardmäßig 20 ms, 0 schaltet ihn ab); ein zurückgehaltener Befehl ändert nichts und wird mit einer Ablehnung (`HELD_RATE`) beantwortet, nicht bestätigt, zählt aber als lebendige Verbindung; ein sicherer Zustand oder eine Wiederholung wird nie zurückgehalten |
 | Eine verlorene oder unbewiesene Verbindung | `link_watchdog_is_link_lost()` ist nach einem echten Timeout und auch vor dem ersten Frame wahr: Ein Rack, das ohne Host einschaltet, startet im sicheren Zustand |

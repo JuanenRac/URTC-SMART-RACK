@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The German README calls a frame of the serial protocol a "Frame"** (it said "Rahmen"), as the rest of the German documents do.
+
 - **The main loop is tested against failures:** a frame with one bit flipped at every position is never applied, a frame cut at every length changes nothing, a ring nobody empties drops the surplus without writing beyond itself, the clock never goes back (also at the largest value), and a storm of seeded noise through the whole loop reports no more frames than bytes. The static count of `TEST_ASSERT` checks is 715 in 22 files.
 
 - **The manifest carries the chip and the hardware identifier of the board:** `pcb.chip` and `pcb.hardware_id` in `urtc.project.json`, empty while no board exists (pending). A test checks the shape of a value (`0x` and eight upper-case hexadecimal digits, not 0 and not an erased flash), that evidence from a board needs both, and that a simulator-only repository leaves them empty.

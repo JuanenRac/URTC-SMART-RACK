@@ -18,7 +18,7 @@
 
 ---
 
-**诚实核查 - 今天真正能运行的部分：** `tool_id.c`、`lifecycle.c`、`preheat.c`、`protocol.c`、`rack_command.c`、`link_watchdog.c`、`tool_limits.c`、`rack_app.c`、`rack_link.c`、`rack_deframer.c`、`rack_can.c`、`preheat_limit.c` 和 `rack_inventory.c` 都是真实、纯粹的 C 代码，由 691 个通过的 `TEST_ASSERT` 检查支撑（`tests/test_*.c`，使用宿主机自身的 C 编译器而非 `arm-none-eabi-gcc` 编译并运行）——通过实际编译并运行这套宿主测试套件加以确认。这覆盖了 ID 解码、使用/生命周期跟踪、预热激活与目标温度、CRC8 分帧协议解析、命令范围校验、链路超时/幂等性处理，以及多槽位工具库存跟踪(哪个工具放在哪个槽位、同一把真实工具绝不会同时出现在两个槽位)——全部都是逻辑，没有任何硬件。正如 README 自己的介绍已经说明的那样：这块板子目前还没有 PCB/原理图，所以这里的任何代码都从未驱动过真实的 GPIO 引脚、F-RAM 芯片、加热元件或 CAN 收发器——`main.c`/`startup_stm32g4_minimal.c` 只是证明了针对 Cortex-M4F 的交叉编译和链接能够在一个占位链接脚本上成功完成，并不能证明其中任何部分真的运行在真实芯片上。具体已经交付了什么，请参见 `CHANGELOG.md`。 串行线路也会测试：19 条带有每段到达时间的字节流（分段的帧、噪声、错误的 CRC、不匹配的版本或长度、恰在超时界限上的静默、毫秒时钟回绕）经过真实的解帧器，输出的帧及其计数器与 URTC-COMMON 的模型一致。
+**诚实核查 - 今天真正能运行的部分：** `tool_id.c`、`lifecycle.c`、`preheat.c`、`protocol.c`、`rack_command.c`、`link_watchdog.c`、`tool_limits.c`、`rack_app.c`、`rack_link.c`、`rack_deframer.c`、`rack_can.c`、`preheat_limit.c` 和 `rack_inventory.c` 都是真实、纯粹的 C 代码，由 705 个通过的 `TEST_ASSERT` 检查支撑（`tests/test_*.c`，使用宿主机自身的 C 编译器而非 `arm-none-eabi-gcc` 编译并运行）——通过实际编译并运行这套宿主测试套件加以确认。这覆盖了 ID 解码、使用/生命周期跟踪、预热激活与目标温度、CRC8 分帧协议解析、命令范围校验、链路超时/幂等性处理，以及多槽位工具库存跟踪(哪个工具放在哪个槽位、同一把真实工具绝不会同时出现在两个槽位)——全部都是逻辑，没有任何硬件。正如 README 自己的介绍已经说明的那样：这块板子目前还没有 PCB/原理图，所以这里的任何代码都从未驱动过真实的 GPIO 引脚、F-RAM 芯片、加热元件或 CAN 收发器——`main.c`/`startup_stm32g4_minimal.c` 只是证明了针对 Cortex-M4F 的交叉编译和链接能够在一个占位链接脚本上成功完成，并不能证明其中任何部分真的运行在真实芯片上。具体已经交付了什么，请参见 `CHANGELOG.md`。 串行线路也会测试：19 条带有每段到达时间的字节流（分段的帧、噪声、错误的 CRC、不匹配的版本或长度、恰在超时界限上的静默、毫秒时钟回绕）经过真实的解帧器，输出的帧及其计数器与 URTC-COMMON 的模型一致。
 
 ---
 
@@ -171,7 +171,7 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 
 ## 🧪 测试
 
-主机测试是 `tests/` 中的 C 程序（21 个文件中的 691 个 `TEST_ASSERT` 检查），用电脑自己的 C 编译器编译运行，从不使用 `arm-none-eabi-gcc`：工具 ID、工具限值、生命周期、预热、帧、命令检查、链路看门狗、完整的链路场景、库存、对错误输入的鲁棒性、应用层、帧拆分器（19 个字节流，带有每一块到达的时间：分块的帧、噪声、错误的 CRC、错误的版本或长度、恰在超时边界的静默、毫秒时钟回绕）、CAN 形式、预热限制和每个头的单元；向量来自 URTC-COMMON。五个 Python 测试文件（25 个测试）检查构建脚本、发布资源、版本文件和公布的测试数量是否一致。CI 用 AddressSanitizer 和 UBSan 构建 C 测试，并在 `src/` 已执行行的覆盖率低于下限时失败（`tools/run_host_tests.py`）。`bash build_firmware.sh` 在交叉编译前运行它们，任何断言失败则构建失败。接收中断填充的字节环（`rack_ring.c`）以及生命周期和库存的双份存储（`rack_persist.c`，在一次保存的每个字节处断电进行测试）同样是纯逻辑；存储背后的存储芯片尚未选定。
+主机测试是 `tests/` 中的 C 程序（22 个文件中的 705 个 `TEST_ASSERT` 检查），用电脑自己的 C 编译器编译运行，从不使用 `arm-none-eabi-gcc`：工具 ID、工具限值、生命周期、预热、帧、命令检查、链路看门狗、完整的链路场景、库存、对错误输入的鲁棒性、应用层、帧拆分器（19 个字节流，带有每一块到达的时间：分块的帧、噪声、错误的 CRC、错误的版本或长度、恰在超时边界的静默、毫秒时钟回绕）、CAN 形式、预热限制和每个头的单元；向量来自 URTC-COMMON。五个 Python 测试文件（25 个测试）检查构建脚本、发布资源、版本文件和公布的测试数量是否一致。CI 用 AddressSanitizer 和 UBSan 构建 C 测试，并在 `src/` 已执行行的覆盖率低于下限时失败（`tools/run_host_tests.py`）。`bash build_firmware.sh` 在交叉编译前运行它们，任何断言失败则构建失败。接收中断填充的字节环（`rack_ring.c`）以及生命周期和库存的双份存储（`rack_persist.c`，在一次保存的每个字节处断电进行测试）同样是纯逻辑；存储背后的存储芯片尚未选定。
 
 ## 🏗️ 构建与发布
 

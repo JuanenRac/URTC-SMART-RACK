@@ -29,16 +29,18 @@
 #include "../src/rack_app.h"
 #include "../src/rack_can.h"
 #include "../src/rack_inventory.h"
+#include "../src/rack_main_loop.h"
 #include "../src/rack_reply.h"
 #include "../src/rack_rx.h"
 
 #define LINE_MAX_CHARS 4096
 
-static rack_inventory_t inventory;
-static link_watchdog_t watchdog;
-static preheat_limit_t limit;
-static rack_rx_t rx;
-static uint32_t now_ms;
+static rack_ctx_t ctx;
+#define inventory (ctx.inventory)
+#define watchdog (ctx.watchdog)
+#define limit (ctx.limit)
+#define rx (ctx.rx)
+#define now_ms (ctx.now_ms)
 
 static int hex_digit(char c)
 {
@@ -103,13 +105,19 @@ static void answer_can(const rack_decision_t *decision)
     }
 }
 
+static void on_reply(const rack_decision_t *decision, bool from_can, void *user)
+{
+    (void)user;
+    if (from_can) {
+        answer_can(decision);
+    } else {
+        answer_serial(decision);
+    }
+}
+
 static void poll_serial(void)
 {
-    rack_decision_t decision;
-    while (rack_rx_poll(&rx, &watchdog, now_ms, &decision)) {
-        (void)rack_app_apply_decision_limited(&inventory, &limit, &decision, now_ms);
-        answer_serial(&decision);
-    }
+    (void)rack_main_poll_serial(&ctx, on_reply, NULL);
 }
 
 static void print_state(void)
@@ -139,9 +147,8 @@ static bool handle(char *line)
             }
             return false;
         case 'T':
-            if (sscanf(line + 1, "%u", &first) == 1 && first >= now_ms) {
-                now_ms = first;
-                (void)rack_app_tick_limited(&inventory, &watchdog, &limit, now_ms);
+            if (sscanf(line + 1, "%u", &first) == 1 && rack_main_set_time(&ctx, first)) {
+                (void)rack_main_tick(&ctx);
                 return true;
             }
             return false;
@@ -177,10 +184,7 @@ static bool handle(char *line)
             if (count < 0) {
                 return false;
             }
-            rack_decision_t decision;
-            rack_link_decide_can(&watchdog, can_id, bytes, (uint8_t)count, now_ms, &decision);
-            (void)rack_app_apply_decision_limited(&inventory, &limit, &decision, now_ms);
-            answer_can(&decision);
+            rack_main_on_can(&ctx, can_id, bytes, (uint8_t)count, on_reply, NULL);
             return true;
         }
         case 'M':
@@ -196,10 +200,7 @@ static bool handle(char *line)
 
 int main(void)
 {
-    rack_inventory_init(&inventory);
-    link_watchdog_init(&watchdog, LINK_WATCHDOG_DEFAULT_TIMEOUT_MS);
-    preheat_limit_init(&limit, RACK_PREHEAT_MAX_MS);
-    rack_rx_init(&rx, 0u);
+    rack_main_init(&ctx);
     char line[LINE_MAX_CHARS];
     while (fgets(line, sizeof line, stdin) != NULL) {
         if (line[0] == '\n' || line[0] == '\r' || line[0] == '#') {

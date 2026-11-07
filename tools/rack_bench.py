@@ -51,7 +51,7 @@ except ImportError:   # a repository that has not taken the helper yet keeps the
         return "local C builds are off; GitHub Actions builds it. Set ALLOW_LOCAL_BUILD=1 to allow it on this PC"
 
 SOURCES = ["tests/virtual_rack.c", "src/link_watchdog.c", "src/preheat.c", "src/preheat_limit.c", "src/protocol.c", "src/rack_app.c", "src/rack_can.c", "src/rack_command.c",
-           "src/rack_deframer.c", "src/rack_inventory.c", "src/rack_link.c", "src/rack_reply.c", "src/rack_ring.c", "src/rack_rx.c", "src/tool_id.c", "src/tool_limits.c"]
+           "src/rack_deframer.c", "src/rack_inventory.c", "src/rack_link.c", "src/rack_main_loop.c", "src/rack_reply.c", "src/rack_ring.c", "src/rack_rx.c", "src/tool_id.c", "src/tool_limits.c"]
 INCLUDES = ["src", "tests"]
 FLAGS = ["-std=c11", "-Wall", "-Wextra", "-Wconversion", "-O1", "-g"]
 SANITIZE = ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined"]

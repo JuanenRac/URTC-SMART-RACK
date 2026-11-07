@@ -30,6 +30,7 @@
     "src/rack_deframer.c",
     "src/rack_inventory.c",
     "src/rack_link.c",
+    "src/rack_main_loop.c",
     "src/rack_persist.c",
     "src/rack_reply.c",
     "src/rack_ring.c",

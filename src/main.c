@@ -11,6 +11,10 @@
 // firmware has nothing to drive - no F-RAM, no CAN transceiver, no ID
 // jumpers wired up. That real work lands once hardware exists.
 #include "firmware_common.h"
+#include "protocol.h"
+#include "rack_can.h"
+#include "rack_main_loop.h"
+#include "rack_reply.h"
 
 // Read by a debugger/flasher/bootloader straight from the image, without a CAN
 // link (this board has no confirmed CAN wiring yet - see firmware_common.h).
@@ -27,9 +31,51 @@ const uint32_t g_firmware_version_code = FIRMWARE_VERSION_CODE;
 // without any peripheral driver existing yet.
 static volatile uint32_t g_heartbeat;
 
+// The board supplies these three. Until a board exists, the weak defaults keep the image linkable (a clock that never advances and no transmitter), so
+// the loop runs its logic with an idle link and holds every slot in the safe state. A port to the real PCB replaces them.
+__attribute__((weak)) uint32_t rack_hal_millis(void)
+{
+    return 0u;
+}
+
+__attribute__((weak)) void rack_hal_serial_tx(const uint8_t *bytes, uint8_t length)
+{
+    (void)bytes;
+    (void)length;
+}
+
+__attribute__((weak)) void rack_hal_can_tx(uint32_t can_id, const uint8_t *data, uint8_t length)
+{
+    (void)can_id;
+    (void)data;
+    (void)length;
+}
+
+static rack_ctx_t g_rack;
+
+static void send_reply(const rack_decision_t *decision, bool from_can, void *user)
+{
+    (void)user;
+    if (from_can) {
+        uint8_t data[RACK_CAN_REPLY_DLC];
+        const uint8_t length = rack_can_encode_reply(decision, data);
+        if (length != 0u) {
+            rack_hal_can_tx(RACK_CAN_ID_REPLY, data, length);
+        }
+    } else {
+        uint8_t frame[PROTOCOL_MAX_FRAME_SIZE];
+        const uint8_t length = rack_reply_encode(decision, frame);
+        if (length != 0u) {
+            rack_hal_serial_tx(frame, length);
+        }
+    }
+}
+
 int main(void)
 {
+    rack_main_init(&g_rack);
     for (;;) {
         g_heartbeat++;
+        (void)rack_main_step(&g_rack, rack_hal_millis(), send_reply, 0);
     }
 }

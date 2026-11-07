@@ -11,7 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Licencia-GPL%203.0-blue.svg" alt="GPL 3.0">
   <img src="https://img.shields.io/badge/MCU-STM32G4-003551.svg" alt="STM32G4">
-  <img src="https://img.shields.io/badge/Protocol-CAN%20framing%20only-orange.svg" alt="CAN framing only">
+  <img src="https://img.shields.io/badge/Protocollo-solo%20framing%20CAN-orange.svg" alt="solo framing CAN">
   <img src="https://img.shields.io/badge/Tests-715-2ea44f.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Feature-Smart%20Idle-green.svg" alt="Smart Idle">
 </p>

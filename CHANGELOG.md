@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The manifest says which version of the shared contracts it needs:** `min_common` in `urtc.project.json` is the oldest version of URTC-COMMON among the copies this repository carries, the value the updater compares with what is installed (a warning only). `tools/min_common.py` of URTC-COMMON checks it and a new copy brings it up to date.
+
 - **The German README calls a frame of the serial protocol a "Frame"** (it said "Rahmen"), as the rest of the German documents do.
 
 - **The main loop is tested against failures:** a frame with one bit flipped at every position is never applied, a frame cut at every length changes nothing, a ring nobody empties drops the surplus without writing beyond itself, the clock never goes back (also at the largest value), and a storm of seeded noise through the whole loop reports no more frames than bytes. The static count of `TEST_ASSERT` checks is 715 in 22 files.

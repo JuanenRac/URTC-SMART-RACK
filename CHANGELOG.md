@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The manifest carries the chip and the hardware identifier of the board:** `pcb.chip` and `pcb.hardware_id` in `urtc.project.json`, empty while no board exists (pending). A test checks the shape of a value (`0x` and eight upper-case hexadecimal digits, not 0 and not an erased flash), that evidence from a board needs both, and that a simulator-only repository leaves them empty.
 - **The main loop of the rack is a compilable skeleton that the tests run too:** `rack_main_loop.c` joins the receive ring, the deframer, the link decision, the watchdog, the inventory and the pre-heat limit in one context; `main.c` runs it with weak hooks for the clock and the two transmitters (the defaults keep the image linkable until a board exists) and `tests/virtual_rack.c` now uses the same functions instead of its own copy of the loop. Host tests cover time that never goes back, the reply path for serial and CAN, and the safe state after a link loss.
 
 - **The repository check compares the manifest with what can be computed:** `tools/ci_validate.py` now also runs the shared `tools/sync_manifests.py` offline, which compares the shipped version, the newest released heading of this changelog, the presence of tests and the claimed level of evidence with the manifest. It is part of the shared set of tools, so the copy is pinned by the lock.

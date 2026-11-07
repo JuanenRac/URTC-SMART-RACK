@@ -131,7 +131,7 @@ for source in src/*.c; do
 done
 echo "  OK   every src/*.c compiled for Cortex-M4F"
 
-arm-none-eabi-gcc $CFLAGS $LDFLAGS "$BUILD/arm/startup_stm32g4_minimal.o" "$BUILD/arm/main.o" -o "$BUILD/urtc-smart-rack.elf"
+arm-none-eabi-gcc $CFLAGS $LDFLAGS "$BUILD"/arm/*.o -o "$BUILD/urtc-smart-rack.elf"
 echo "  OK   Linked $BUILD/urtc-smart-rack.elf"
 
 # All modules must also resolve against each other without a C library; this

@@ -18,11 +18,11 @@
 
 ---
 
-**诚实核查 - 今天真正能运行的部分：** `tool_id.c`、`lifecycle.c`、`preheat.c`、`protocol.c`、`rack_command.c`、`link_watchdog.c`、`tool_limits.c`、`rack_app.c`、`rack_link.c`、`rack_deframer.c`、`rack_can.c`、`preheat_limit.c` 和 `rack_inventory.c` 都是真实、纯粹的 C 代码，由 715 个通过的 `TEST_ASSERT` 检查支撑（`tests/test_*.c`，使用宿主机自身的 C 编译器而非 `arm-none-eabi-gcc` 编译并运行）——通过实际编译并运行这套宿主测试套件加以确认。这覆盖了 ID 解码、使用/生命周期跟踪、预热激活与目标温度、CRC8 分帧协议解析、命令范围校验、链路超时/幂等性处理，以及多槽位工具库存跟踪(哪个工具放在哪个槽位、同一把真实工具绝不会同时出现在两个槽位)——全部都是逻辑，没有任何硬件。正如 README 自己的介绍已经说明的那样：这块板子目前还没有 PCB/原理图，所以这里的任何代码都从未驱动过真实的 GPIO 引脚、F-RAM 芯片、加热元件或 CAN 收发器——`main.c`/`startup_stm32g4_minimal.c` 只是证明了针对 Cortex-M4F 的交叉编译和链接能够在一个占位链接脚本上成功完成，并不能证明其中任何部分真的运行在真实芯片上。具体已经交付了什么，请参见 `CHANGELOG.md`。 串行线路也会测试：19 条带有每段到达时间的字节流（分段的帧、噪声、错误的 CRC、不匹配的版本或长度、恰在超时界限上的静默、毫秒时钟回绕）经过真实的解帧器，输出的帧及其计数器与 URTC-COMMON 的模型一致。
+**诚实核查 - 今天真正能运行的部分：** `tool_id.c`、`lifecycle.c`、`preheat.c`、`protocol.c`、`rack_command.c`、`link_watchdog.c`、`tool_limits.c`、`rack_app.c`、`rack_link.c`、`rack_deframer.c`、`rack_can.c`、`preheat_limit.c` 和 `rack_inventory.c` 都是真实、纯粹的 C 代码，由 715 个通过的 `TEST_ASSERT` 检查支撑（`tests/test_*.c`，使用宿主机自身的 C 编译器而非 `arm-none-eabi-gcc` 编译并运行）——通过实际编译并运行这套宿主测试套件加以确认。这覆盖了 ID 解码、使用/生命周期跟踪、预热激活与目标温度、CRC8 分帧协议解析、命令范围校验、链路超时/幂等性处理，以及多槽位工具库存跟踪(哪个工具放在哪个槽位、同一把真实工具绝不会同时出现在两个槽位)——全部都是逻辑，没有任何硬件。正如 README 自己的介绍已经说明的那样：这块板卡目前还没有 PCB/原理图，所以这里的任何代码都从未驱动过真实的 GPIO 引脚、F-RAM 芯片、加热元件或 CAN 收发器——`main.c`/`startup_stm32g4_minimal.c` 只是证明了针对 Cortex-M4F 的交叉编译和链接能够在一个占位链接脚本上成功完成，并不能证明其中任何部分真的运行在真实芯片上。具体已经交付了什么，请参见 `CHANGELOG.md`。 串行线路也会测试：19 条带有每段到达时间的字节流（分段的帧、噪声、错误的 CRC、不匹配的版本或长度、恰在超时界限上的静默、毫秒时钟回绕）经过真实的解帧器，输出的帧及其计数器与 URTC-COMMON 的模型一致。
 
 ---
 
-> **安全与安防现状:**本生态系统不是经认证的安全系统,目前也不存在已组装的 URTC 电路板。引导程序使用 CRC32 和共享密钥的 HMAC-SHA256 校验固件映像,而非非对称签名(计划中);已发布的应用映像使用公开的开发密钥签名(`signing_key_kind: dev`),因此任何人都可以生成引导程序接受的映像;尚未向任何真实电路板发送过任何内容。在依赖此处任何说法来保障人身安全之前,请先阅读[安全基线](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/SECURITY_BASELINE.md)和[威胁模型](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/THREAT_MODEL.md)。
+> **安全与安防现状:**本生态系统不是经认证的安全系统,目前也不存在已组装的 URTC 板卡。引导程序使用 CRC32 和共享密钥的 HMAC-SHA256 校验固件映像,而非非对称签名(计划中);已发布的应用映像使用公开的开发密钥签名(`signing_key_kind: dev`),因此任何人都可以生成引导程序接受的映像;尚未向任何真实板卡发送过任何内容。在依赖此处任何说法来保障人身安全之前,请先阅读[安全基线](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/SECURITY_BASELINE.md)和[威胁模型](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/THREAT_MODEL.md)。
 
 ## 📋 速览
 
@@ -44,9 +44,9 @@
 
 | 部分 | 状态 | 仓库能够证明的内容 |
 | --- | :---: | --- |
-| 软件 | 🟡 | 可在电脑上和模拟器上运行；从未在真实板子上运行过。 |
+| 软件 | 🟡 | 可在电脑上和模拟器上运行；从未在真实板卡上运行过。 |
 | 测试 | 🟢 | 每次推送时测试套件都会在 CI 中通过。 |
-| 真实硬件 | 🟠 | 尚未在真实板子上运行：台架测试仍待进行。 |
+| 真实硬件 | 🟠 | 尚未在真实板卡上运行：台架测试仍待进行。 |
 | 接口与协议 | 🟡 | 提供的路由或消息已有文档，并用客户端测试过；尚未被所有客户端使用 |
 | 文档 | 🟡 | 提供八种语言的 README 和参考文档；翻译未经母语者审阅。 |
 
@@ -66,8 +66,8 @@
 单元测试。
 
 ### 关键特性：
-* ✅ **真实 v0 —— ID、生命周期与预热逻辑：** `tool_id.c` 将原始 5 位 ID 读数解码为工具身份；`lifecycle.c` 追踪使用周期/时间并标记到期维护；`preheat.c` 决定智能待机预热应何时启动以及目标温度。使用宿主机自身的 C 编译器完成 715 个测试断言——无需 PCB、GPIO 驱动或 F-RAM 即可运行或测试这一切。同样已实现：串行链路的流式拆帧器（`rack_deframer.c`：查找起始字节，丢字节后重新同步，超时后丢弃半帧）、命令的 CAN 形式（`rack_can.c`：八个数据字节，温度为大端序；目前还没有板子承载它）以及预热在不换工具时可持续时间的上限（`preheat_limit.c`：默认 10 分钟，可配置）。
-* ✅ **把工具头当作单个个体、热检查与预测性预热（已在主机上测试）：** `rack_inventory.c` 可以用类型加工具头序列号来标识一个槽位，`rack_units.c` 记录每个实体工具头的使用次数、加热时间和热故障（来自其自身计数器，`0x1AA` / `0x1AB`），因此磨损跟随工具头而不是类型；`slot_verify.c` 说明槽位的热读数对已下达的预热意味着什么（已达到、太慢、过冲、空槽位中有加热器在工作）；`preheat_plan.c` 把作业队列转换为预热指令，默认关闭。读数和队列来自其他程序，这些都没有在电路板上运行过，加热时间只是估计值。
+* ✅ **真实 v0 —— ID、生命周期与预热逻辑：** `tool_id.c` 将原始 5 位 ID 读数解码为工具身份；`lifecycle.c` 追踪使用周期/时间并标记到期维护；`preheat.c` 决定智能待机预热应何时启动以及目标温度。使用宿主机自身的 C 编译器完成 715 个测试断言——无需 PCB、GPIO 驱动或 F-RAM 即可运行或测试这一切。同样已实现：串行链路的流式拆帧器（`rack_deframer.c`：查找起始字节，丢字节后重新同步，超时后丢弃半帧）、命令的 CAN 形式（`rack_can.c`：八个数据字节，温度为大端序；目前还没有板卡承载它）以及预热在不换工具时可持续时间的上限（`preheat_limit.c`：默认 10 分钟，可配置）。
+* ✅ **把工具头当作单个个体、热检查与预测性预热（已在主机上测试）：** `rack_inventory.c` 可以用类型加工具头序列号来标识一个槽位，`rack_units.c` 记录每个实体工具头的使用次数、加热时间和热故障（来自其自身计数器，`0x1AA` / `0x1AB`），因此磨损跟随工具头而不是类型；`slot_verify.c` 说明槽位的热读数对已下达的预热意味着什么（已达到、太慢、过冲、空槽位中有加热器在工作）；`preheat_plan.c` 把作业队列转换为预热指令，默认关闭。读数和队列来自其他程序，这些都没有在板卡上运行过，加热时间只是估计值。
 * 🗄️ **工具追踪** —— 通过 5 位 ID 跳线或 F-RAM 自动识别 URTC 刀头。*（ID 解码逻辑本身是真实的——见上文；读取真实跳线/F-RAM 需要 PCB。）*
 * 🗂️ **多槽位库存** —— `rack_inventory.c` 跟踪哪个工具放在哪个槽位，确保同一把真实工具始终只处于一个槽位(把它移到别的槽位会自动清空原槽位，而不是同时声称它在两个地方)，并按工具身份维护每个槽位各自的预热目标。启动时，`rack_inventory_reconcile()` 会将其与每个槽位的在位传感器核对：机架断电期间被取走的工具会被清除（包括预热目标），手动放入的工具会被标记为待识别。 *（库存逻辑本身是真实的——见上文；接入真实的按槽位在位传感器需要 PCB。）*
 * 🧭 **自由配置的刀头（已在主机上测试）：** ID 跳线读数为 `0x1F` 的刀头不会被当作“无工具”：`free_tool.c` 会向其查询（`0x1A3`），只接受指明工具的应答（`0x1F` 加 1 到 25 的选择值），并像通过跳线读取的刀头一样赋予该槽位这一身份；在此之前槽位不含工具，因此没有目标温度，也没有预热指令。超时、重试次数、退避和刷新都是配置值而非逻辑，后续应答若指明另一种工具则视为换刀。已用共享向量回放；这些查询从未在总线上运行过，且刀头在启动时读取其 F-RAM 寄存器，所以更改需要重启刀头。
@@ -79,7 +79,7 @@
 
 ## 🧩 在 URTC 中的角色
 
-URTC-SMART-RACK 是存放工具头的板子，而不是工具头：一个机架，它识别所容纳的每个头（URTC 使用的 5 位工具 ID），记录每个实体头的使用情况和热故障，知道哪个工具在哪个槽位，并在换刀前不久为焊接或热风工具预热（Smart Idle）。它与 URTC 共用工具 ID 和固件约定，但属于互补工具而非 URTC 的子项目，设计上由 HYDRA-UMC 机器人控制器驱动。目前还没有板子：现在真实存在的是逻辑和机架协议，已在计算机上测试。
+URTC-SMART-RACK 是存放工具头的板卡，而不是工具头：一个机架，它识别所容纳的每个头（URTC 使用的 5 位工具 ID），记录每个实体头的使用情况和热故障，知道哪个工具在哪个槽位，并在换刀前不久为焊接或热风工具预热（Smart Idle）。它与 URTC 共用工具 ID 和固件约定，但属于互补工具而非 URTC 的子项目，设计上由 HYDRA-UMC 机器人控制器驱动。目前还没有板卡：现在真实存在的是逻辑和机架协议，已在计算机上测试。
 
 ## 🏛️ 架构
 
@@ -125,14 +125,14 @@ flowchart TB
 | 预热过久或过热 | `preheat_limit.c` 限制没有换刀时预热可持续的时间（默认 10 分钟，可配置），`tool_limits.c` 限制每个工具配置的最高目标值 |
 | 一个工具出现在两个槽位 | `rack_inventory.c` 让一个真实工具只在一个槽位；把它放到别处会清除原来的槽位 |
 
-这一切都是在计算机上测试的纯 C；从未在板子上运行过，也不是经过认证的安全功能。
+这一切都是在计算机上测试的纯 C；从未在板卡上运行过，也不是经过认证的安全功能。
 
 ## 🔌 接口
 
 * **机架的串行帧：** 版本 2，与总线一样采用大端序，使用 URTC-COMMON 提供的 CRC-8（`src/urtc_crc8.h`、`src/urtc_frame.h`）；`protocol.c` 负责解析和编码，`rack_deframer.c` 在字节流中找出帧（丢字节后重新同步，超时后丢弃半个帧），`rack_link.c` 决定如何处理每一帧。格式见 [docs/OPERATIONS.md](docs/OPERATIONS.md)。
-* **命令的 CAN 形式：** `rack_can.c`（八个数据字节，温度为大端序）。目前还没有板子承载它：机架的帧还不是 CAN 帧。
+* **命令的 CAN 形式：** `rack_can.c`（八个数据字节，温度为大端序）。目前还没有板卡承载它：机架的帧还不是 CAN 帧。
 * **与 URTC 共用：** 5 位工具 ID（`tool_id.c`）以及记录每个实体头使用情况的计数器 `0x1AA` / `0x1AB`（`rack_units.c`）。帧层必须复现的向量来自 URTC-COMMON（`conformance/rack_vectors.json`）。机架对工具头发出的帧以及读取应答的方式（两个查询 `0x110` 和 `0x1AA`，烙铁设定值 `0x130` 和热风设定值 `0x1E0`，在指令有效期间每秒重发）位于 `head_link.c`，已在电脑上测试；还没有带收发器的机架板发送它们。
-* **对命令的应答：** 每个格式正确的帧都会得到一个应答帧，即确认，或在一个字节中带原因的拒绝（长度错误、插槽中没有工具、温度超过上限、无效工具、没有加热器、因来得太早而被暂缓、未知命令）；`rack_reply_encode()` 负责写出，主机测试把它与 URTC-COMMON 的共享向量逐字节比较，因此固件与程序的模型不会各走各的。URTC-TESTER 和 URTC-WEB-STUDIO 的模拟机架试验台会读取它；开发板上还没有传输通道发送它。3D 打印机热端只有在计划配置中设置了 `printer_target_c` 时才会预热（默认 0，并限制在该工具 310 度的上限内）。
+* **对命令的应答：** 每个格式正确的帧都会得到一个应答帧，即确认，或在一个字节中带原因的拒绝（长度错误、插槽中没有工具、温度超过上限、无效工具、没有加热器、因来得太早而被暂缓、未知命令）；`rack_reply_encode()` 负责写出，主机测试把它与 URTC-COMMON 的共享向量逐字节比较，因此固件与程序的模型不会各走各的。URTC-TESTER 和 URTC-WEB-STUDIO 的模拟机架试验台会读取它；板卡上还没有传输通道发送它。3D 打印机热端只有在计划配置中设置了 `printer_target_c` 时才会预热（默认 0，并限制在该工具 310 度的上限内）。
 
 ## 🚀 快速开始
 
@@ -227,14 +227,14 @@ URTC-SMART-RACK/
 
 **目前已知的限制**
 
-* 这块板子还没有 PCB 或原理图（见 `hardware/`）：这里的一切从未驱动过真实的 GPIO 引脚、F-RAM 芯片、加热器或 CAN 收发器。`main.c` 和启动文件只证明了用占位链接脚本为 Cortex-M4F 交叉编译并链接是成功的。
+* 这块板卡还没有 PCB 或原理图（见 `hardware/`）：这里的一切从未驱动过真实的 GPIO 引脚、F-RAM 芯片、加热器或 CAN 收发器。`main.c` 和启动文件只证明了用占位链接脚本为 Cortex-M4F 交叉编译并链接是成功的。
 * 读取每个头的固件版本是计划中的，尚未实现。
-* 命令的 CAN 形式从未运行过：既没有 CAN 驱动也没有板子，机架的帧还不是 CAN 帧。
+* 命令的 CAN 形式从未运行过：既没有 CAN 驱动也没有板卡，机架的帧还不是 CAN 帧。
 * 预测性预热的加热时间是估计值，其开关默认关闭。
 
 **下一步**
 
-* 设计板子，确定 STM32G4 型号，并用 ST 自己的链接脚本和启动文件替换占位文件；编写为逻辑提供数据的 GPIO、F-RAM 和 CAN 驱动。
+* 设计板卡，确定 STM32G4 型号，并用 ST 自己的链接脚本和启动文件替换占位文件；编写为逻辑提供数据的 GPIO、F-RAM 和 CAN 驱动。
 
 ## 🌍 语言
 
@@ -245,14 +245,14 @@ README 和文本提供英语、西班牙语、法语、意大利语、德语、�
 URTC 由相互独立的仓库组成，每个仓库都有自己的版本、测试和 README。以下是按组划分的家族：
 
 * **URTC Tool Platform:**
-  * [URTC](https://github.com/JuanenRac/URTC) - 工具头电路板的固件(25 个工具配置、CAN 引导程序)以及 CAN 协议参考。
+  * [URTC](https://github.com/JuanenRac/URTC) - 工具头板卡的固件(25 个工具配置、CAN 引导程序)以及 CAN 协议参考。
   * [URTC-COMMON](https://github.com/JuanenRac/URTC-COMMON) - 只写一次的 CAN 协议数据(规范、生成的表格、一致性向量)以及各程序共享的代码。
-  * [URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER) - 通过 CAN 或 SWD/JTAG 更新电路板固件的桌面工具。
+  * [URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER) - 通过 CAN 或 SWD/JTAG 更新板卡固件的桌面工具。
   * [URTC-GATEWAY](https://github.com/JuanenRac/URTC-GATEWAY) - 位于 CAN 总线前的网关:只放行列表中的标识符,限制其速率,并要求会话密钥。
   * **URTC-SMART-RACK** (本仓库) - 用于带预热和生命周期跟踪的工具架的、与硬件无关的 C 逻辑和命令协议。
-  * [URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER) - 桌面实时 CAN 总线测试器,显示电路板所报告工具配置的控件和遥测。
+  * [URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER) - 桌面实时 CAN 总线测试器,显示板卡所报告工具配置的控件和遥测。
   * [URTC-VISION-TOOL](https://github.com/JuanenRac/URTC-VISION-TOOL) - C 语言的传感器帧协议,以及用于检测工具头的 Python 热成像/RGB 配套程序。
-  * [URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO) - 通过 Web Serial 和 SLCAN 烧录并测试电路板的浏览器应用,无需安装。
+  * [URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO) - 通过 Web Serial 和 SLCAN 烧录并测试板卡的浏览器应用,无需安装。
 * **Ecosystem Operations:**
   * [URTC-DEVTOOLS](https://github.com/JuanenRac/URTC-DEVTOOLS) - 家族共用的仓库工具，作为带版本的整套工具，并用锁文件区分被改动的副本和已过时的副本。
   * [URTC-DOCS](https://github.com/JuanenRac/URTC-DOCS) - 生态系统的架构、接口、安全基线和生成的目录,以及比较所有仓库的工具。
@@ -277,7 +277,7 @@ URTC 由相互独立的仓库组成，每个仓库都有自己的版本、测试
 * 提交 Pull Request 之前请运行 `URTC_CI=1 python tools/ci_validate.py`：必须通过。参见 [CONTRIBUTING.md](CONTRIBUTING.md) 和[行为准则](CODE_OF_CONDUCT.md)。
 * README 有八种语言：修改文字时要同步修改全部八个文件，与其他仓库共用的章节由 URTC-COMMON 的 `tools/readme_sections.py` 写入。
 * 对 CAN 协议的修改从 URTC-COMMON（`spec/can_protocol.json`）开始，并通过经过核对的副本进入本仓库。
-* 不要把仅仅构建过的东西描述为已在板子上运行。
+* 不要把仅仅构建过的东西描述为已在板卡上运行。
 * 请私下报告漏洞：[SECURITY.md](SECURITY.md)。问题、想法和报告：electrohobby3d@gmail.com（[SUPPORT.md](SUPPORT.md)）。
 
 ## 👤 作者

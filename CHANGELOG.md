@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The main loop is tested against failures:** a frame with one bit flipped at every position is never applied, a frame cut at every length changes nothing, a ring nobody empties drops the surplus without writing beyond itself, the clock never goes back (also at the largest value), and a storm of seeded noise through the whole loop reports no more frames than bytes. The static count of `TEST_ASSERT` checks is 724 in 23 files.
+
 - **The manifest carries the chip and the hardware identifier of the board:** `pcb.chip` and `pcb.hardware_id` in `urtc.project.json`, empty while no board exists (pending). A test checks the shape of a value (`0x` and eight upper-case hexadecimal digits, not 0 and not an erased flash), that evidence from a board needs both, and that a simulator-only repository leaves them empty.
 - **The main loop of the rack is a compilable skeleton that the tests run too:** `rack_main_loop.c` joins the receive ring, the deframer, the link decision, the watchdog, the inventory and the pre-heat limit in one context; `main.c` runs it with weak hooks for the clock and the two transmitters (the defaults keep the image linkable until a board exists) and `tests/virtual_rack.c` now uses the same functions instead of its own copy of the loop. Host tests cover time that never goes back, the reply path for serial and CAN, and the safe state after a link loss.
 

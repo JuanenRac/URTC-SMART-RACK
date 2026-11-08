@@ -9,7 +9,7 @@
 ### 🤖 Gestione Intelligente delle Testine Utensile con Tracciamento del Ciclo di Vita e Termico
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Licencia-GPL%203.0-blue.svg" alt="GPL 3.0">
+  <img src="https://img.shields.io/badge/License-GPL%203.0-blue.svg" alt="GPL 3.0">
   <img src="https://img.shields.io/badge/MCU-STM32G4-003551.svg" alt="STM32G4">
   <img src="https://img.shields.io/badge/Protocollo-solo%20framing%20CAN-orange.svg" alt="solo framing CAN">
   <img src="https://img.shields.io/badge/Tests-715-2ea44f.svg" alt="Tests">
@@ -69,7 +69,7 @@ Non esiste ancora un PCB/schematico per questa scheda (vedi `hardware/`), quindi
 * 🌡️ **Logica di Preriscaldamento** — gestione termica intelligente per utensili di saldatura e aria calda. *(la decisione di attivazione e le temperature target sono reali - vedi sopra; pilotare un riscaldatore reale richiede il PCB.)*
 * 📈 **Registri del Ciclo di Vita** — registra i cicli totali di attuazione e le ore di utilizzo nella F-RAM dell'utensile. *(i contatori e la logica di manutenzione dovuta sono reali - vedi sopra; persisterli su F-RAM reale richiede il PCB.)*
 * 📡 **Integrazione CAN** — pensata per comunicare con il Cervello Cinematico di HYDRA-UMC per un ATC coordinato (cambio utensile automatico); non ha mai funzionato, perché non esistono né un driver CAN né una scheda. *(il protocollo stesso - framing, CRC, validazione dei comandi - è reale e testato sull'host, vedi sotto; serve ancora un vero transceiver CAN per trasportarlo davvero.)*
-* 🔒 **Controlli di Intervallo del Protocollo** — framing versionato con checksum CRC8, validazione dell'intervallo di attuazione e un watchdog di timeout del collegamento/idempotenza con uno stato sicuro definito. Trama in versione 2: ogni valore su più byte è big-endian, come il bus, e una trama di versione 1 viene rifiutata. *(implementato in C puro e testato solo su un PC; mai eseguito su una scheda e non è una funzione di sicurezza certificata)*
+* 🔒 **Controlli di Intervallo del Protocollo** — framing versionato con checksum CRC8, validazione dell'intervallo di attuazione e un watchdog di timeout del collegamento/idempotenza con uno stato sicuro definito. Frame in versione 2: ogni valore su più byte è big-endian, come il bus, e un frame di versione 1 viene rifiutato. *(implementato in C puro e testato solo su un PC; mai eseguito su una scheda e non è una funzione di sicurezza certificata)*
 * ✅ **Toolchain firmware Cortex-M4F** — un'immagine bare-metal reale (avvio + linker + `main.c`) che compila e collega davvero con `arm-none-eabi-gcc`, la stessa toolchain usata dal repository gemello URTC. *(implementato — vedi COMPILAZIONE sotto)*
 
 ## 🧩 Ruolo in URTC
@@ -92,7 +92,7 @@ flowchart TB
     TOOL["Testina URTC"] -- Inserita nel Rack --> RACK["URTC-SMART-RACK"]
     RACK --> IDENT["Legge ID e Dati sul Ciclo di Vita"]
     IDENT --> SYNC["Sincronizza con HYDRA-ORCHESTRATOR"]
-    SYNC -- Attivita Anticipata --> HEAT["PRERISCALDA: Punta Saldante a 200°C"]
+    SYNC -- Attività Anticipata --> HEAT["PRERISCALDA: Punta Saldante a 200°C"]
     RACK -- Controllo Salute --> LOG["Rapporto di Manutenzione"]
 ```
 
@@ -107,7 +107,7 @@ flowchart TB
 * **Come si inserisce nel resto dell'ecosistema.** Usa l'ecosistema utensili proprio di URTC (gli stessi ID utensile; i frame del rack non sono ancora frame CAN, vedi `docs/OPERATIONS.md`), e forma un abbinamento naturale con HYDRA-UMC-DETECTION-HEF per riconoscere visivamente quale utensile è realmente in rack.
 * **Perché il protocollo, la validazione dei comandi e il watchdog del collegamento sono tre moduli separati.** `protocol.c` conosce solo byte, framing e un CRC - non ha idea di cosa sia una temperatura "sicura". `rack_command.c` possiede quel giudizio, decodificando e verificando l'intervallo di un comando reale senza preoccuparsi di come sia arrivato sul filo. `link_watchdog.c` traccia il timeout/l'idempotenza indipendentemente da entrambi - un frame corrotto non deve mai nemmeno raggiungerlo (vedi la stessa asserzione reale di `test_rack_link_scenarios.c` secondo cui un frame con CRC errato non fa mai rivivere il watchdog). Tenerli separati è ciò che rende ciascuno testabile autonomamente sull'host, e mantiene snello un futuro handler di ricezione CAN - chiama ogni livello in ordine, non reimplementa il giudizio di nessuno di essi.
 * **Limitatore di frequenza dei comandi.** Una raffica di comandi per uno stesso utensile viene frenata da un intervallo minimo tra i comandi accettati (20 ms per impostazione predefinita, 0 lo disattiva; `link_watchdog_set_command_interval()`). Un comando trattenuto non cambia nulla e riceve un rifiuto (`HELD_RATE`) e non una conferma, ma conta come collegamento vivo; uno stato sicuro o una ritrasmissione non vengono mai trattenuti. L'intervallo si regola nel banco simulato del rack di URTC-WEB-STUDIO.
-* **Perché un collegamento non provato viene trattato esattamente come uno morto.** `link_watchdog_is_link_lost()` è vero sia dopo un vero timeout SIA prima che sia mai arrivato il primissimo frame - le stesse note di diagnosi lo chiamano "estado seguro al arrancar". Una rack che si accende senza che sia ancora connesso alcun host deve avviarsi nello stato sicuro, non assumere silenziosamente che vada "bene" finché non sia dimostrato il contrario.
+* **Perché un collegamento non provato viene trattato esattamente come uno morto.** `link_watchdog_is_link_lost()` è vero sia dopo un vero timeout SIA prima che sia mai arrivato il primissimo frame - le note di diagnosi lo chiamano «stato sicuro all'avvio» (estado seguro al arrancar). Un rack che si accende senza che sia ancora connesso alcun host deve avviarsi nello stato sicuro, non assumere silenziosamente che vada "bene" finché non sia dimostrato il contrario.
 
 ## 🔒 Sicurezza e protezione
 
@@ -174,7 +174,7 @@ Ogni modulo di `src/` viene compilato anche per Cortex-M4F e tutti vengono colle
 
 Le immagini del firmware (`.bin`, `.hex`, `.elf`) non sono versionate in git: una build di release scrive `firmware/URTC_SMART_RACK_FIRMWARE_v<versione>.*` (ignorato da git; `build/firmware` in modalità CI, `URTC_CI=1`) e sono pubblicate solo come asset della release GitHub di ogni versione. `python tools/publish_release_assets.py` controlla i file, scrive il file `.sha256` mancante e stampa il comando `gh release create` esatto con i file da allegare.
 
-Non c'è ancora nulla da flashare su hardware reale - non esiste un PCB che confermi la parte STM32G4 target, il pinout, o le sue reali dimensioni di flash/RAM. La mappa di memoria del linker script è un placeholder prudente (documentato nella propria intestazione) che verrà sostituito quando esisterà hardware reale, lo stesso momento in cui la tabella dei vettori scritta a mano di `startup_stm32g4_minimal.c` verrà sostituita dal codice di avvio CMSIS/HAL proprio di ST (seguendo il modello del repository gemello URTC in `src/F303-master/` per le sue schede STM32F303).
+Non c'è ancora nulla da caricare su hardware reale - non esiste un PCB che confermi la parte STM32G4 target, il pinout, o le sue reali dimensioni di flash/RAM. La mappa di memoria del linker script è un segnaposto prudente (documentato nella propria intestazione) che verrà sostituito quando esisterà hardware reale, lo stesso momento in cui la tabella dei vettori scritta a mano di `startup_stm32g4_minimal.c` verrà sostituita dal codice di avvio CMSIS/HAL proprio di ST (seguendo il modello del repository gemello URTC in `src/F303-master/` per le sue schede STM32F303).
 
 Vedi [`CHANGELOG.md`](CHANGELOG.md) per la cronologia completa delle versioni; ogni versione vi ha la propria voce.
 

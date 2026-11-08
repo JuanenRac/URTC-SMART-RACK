@@ -9,7 +9,7 @@
 ### 🤖 Gestión Inteligente de Cabezales con Seguimiento de Vida Útil y Térmico
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Licencia-GPL%203.0-blue.svg" alt="GPL 3.0">
+  <img src="https://img.shields.io/badge/License-GPL%203.0-blue.svg" alt="GPL 3.0">
   <img src="https://img.shields.io/badge/MCU-STM32G4-003551.svg" alt="STM32G4">
   <img src="https://img.shields.io/badge/Protocolo-solo%20tramas%20CAN-orange.svg" alt="solo tramas CAN">
   <img src="https://img.shields.io/badge/Tests-715-2ea44f.svg" alt="Tests">

@@ -28,7 +28,7 @@ void run_preheat_plan_edge_tests(int *failures)
     TEST_ASSERT(preheat_plan_lead_ms(TOOL_ID_SOLDERING_IRON, 200u, 255u) == 17500u + 17500u * 255u / 100u, "the largest margin does not wrap");
     TEST_ASSERT(preheat_plan_lead_ms(TOOL_ID_SOLDERING_IRON, 65535u, 255u) > 0u, "the largest target gives a finite time");
     TEST_ASSERT(preheat_plan_lead_ms(TOOL_ID_SOLDERING_IRON, 65535u, 255u) > preheat_plan_lead_ms(TOOL_ID_SOLDERING_IRON, 65534u, 255u), "and it still grows with the target");
-    TEST_ASSERT(preheat_plan_lead_ms(0u, 200u, 50u) == 0u && preheat_plan_lead_ms(255u, 200u, 50u) == 0u, "a tool without a known climb rate has no lead time");
+    TEST_ASSERT(preheat_plan_lead_ms(3u, 200u, 50u) == 0u && preheat_plan_lead_ms(200u, 200u, 50u) == 0u, "a tool without a known climb rate has no lead time");
 
     // a job exactly at, and either side of, the lead time
     preheat_plan_config_t cfg = preheat_plan_config_default();

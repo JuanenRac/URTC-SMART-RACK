@@ -64,6 +64,12 @@ class BuildScriptTests(unittest.TestCase):
             text = read(script)
             self.assertRegex(text, r"src[/\\]\*\.c", f"{script} must compile every src/*.c for the target")
 
+    def test_both_scripts_write_the_manifest_after_the_images(self):
+        for script in ("build_firmware.sh", "build_firmware.bat"):
+            text = read(script)
+            self.assertIn("generate_manifest.py", text, script)
+            self.assertGreater(text.index("generate_manifest.py"), text.index("URTC_SMART_RACK_FIRMWARE_v"), f"{script} writes the manifest before the images")
+
     def test_the_scripts_only_read_the_version(self):
         for script in ("build_firmware.sh", "build_firmware.bat"):
             text = read(script)

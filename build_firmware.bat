@@ -138,6 +138,12 @@ copy /y build\urtc-smart-rack.hex %FIRMWARE_OUT%\URTC_SMART_RACK_FIRMWARE_v%VERS
 echo   OK   firmware\URTC_SMART_RACK_FIRMWARE_v%VERSION%.{elf,bin,hex}
 echo.
 
+echo === 7. Firmware manifest ^(firmware_manifest.json^) ===
+python generate_manifest.py . %FIRMWARE_OUT%
+if errorlevel 1 goto :error
+echo   OK   firmware_manifest.json ^(name, size, CRC32 and SHA-256 of the image of v%VERSION%^)
+echo.
+
 echo =============================================================================
 echo  Build complete - v%VERSION%
 echo =============================================================================

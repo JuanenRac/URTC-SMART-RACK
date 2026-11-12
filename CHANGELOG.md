@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The ceiling of each tool and the verdict of a slot are tested at every threshold:** all 256 values of a tool id, each limit of the verdict exactly on it and one step beyond it (empty and hot, idle and hot, reached, too hot, heating and not reached in time), readings that are not numbers or are infinite, and the faults being exactly four of the nine verdicts.
+
 - **The pre-heat plan is tested at the ends of its ranges, and a very long hold can no longer wrap round:** the lead time at the largest margin and target, a job exactly at and either side of the lead time, the margin changing the answer, jobs listed in any order, a full rack, and a hold time so long that adding it to the lead time wrapped round to a small number and switched off a hot tool whose next job was far away (now the sum stops at its largest value).
 
 - **The shared document policy check is refreshed:** `tools/_doc_policy.py` and `tools/ci_validate.py` are the current copies, which also fail when a build script changes a version and when a script switches into a virtual environment instead of running its python directly.

@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The pre-heat plan is tested at the ends of its ranges, and a very long hold can no longer wrap round:** the lead time at the largest margin and target, a job exactly at and either side of the lead time, the margin changing the answer, jobs listed in any order, a full rack, and a hold time so long that adding it to the lead time wrapped round to a small number and switched off a hot tool whose next job was far away (now the sum stops at its largest value).
+
 - **The shared document policy check is refreshed:** `tools/_doc_policy.py` and `tools/ci_validate.py` are the current copies, which also fail when a build script changes a version and when a script switches into a virtual environment instead of running its python directly.
 
 - **The build scripts write the manifest of the firmware:** `build_firmware.sh` and `build_firmware.bat` call `generate_manifest.py` as their last step, so `firmware_manifest.json` (name, size, CRC32 and SHA-256 of the image of the version in the source) is written next to the images on every build, in the folder the images go to (`build/firmware` in a CI run). A test holds both scripts to it.

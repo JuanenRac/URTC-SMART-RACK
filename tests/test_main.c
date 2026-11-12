@@ -31,6 +31,7 @@ int main(void)
     run_rack_reply_tests(&failures);
     run_rack_rx_tests(&failures);
     run_rack_main_loop_tests(&failures);
+    run_preheat_plan_edge_tests(&failures);
 
     if (failures == 0) {
         printf("All tests passed.\n");

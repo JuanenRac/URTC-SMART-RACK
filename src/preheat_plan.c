@@ -99,13 +99,15 @@ uint8_t preheat_plan_decide(const preheat_plan_config_t *config, const rack_inve
             }
         }
         const uint32_t lead = preheat_plan_lead_ms(s->tool_id, target, config->margin_percent);
+        // a hold so long that the sum would wrap round must not make a far job look near
+        const uint32_t lead_plus_hold = config->hold_ms > UINT32_MAX - lead ? UINT32_MAX : lead + config->hold_ms;
         if (has_job && (next_ms == 0u || preheat_should_activate(next_ms, lead))) {
             if (s->target_temp_c != target) {
                 orders[n].tool_id = s->tool_id;
                 orders[n].target_c = target;
                 n++;
             }
-        } else if (config->cool_unused && s->target_temp_c != 0u && (!has_job || next_ms > lead + config->hold_ms)) {
+        } else if (config->cool_unused && s->target_temp_c != 0u && (!has_job || next_ms > lead_plus_hold)) {
             orders[n].tool_id = s->tool_id;
             orders[n].target_c = 0u;
             n++;

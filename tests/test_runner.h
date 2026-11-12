@@ -36,5 +36,6 @@ void run_rack_persist_tests(int *failures);
 void run_rack_reply_tests(int *failures);
 void run_rack_rx_tests(int *failures);
 void run_rack_main_loop_tests(int *failures);
+void run_preheat_plan_edge_tests(int *failures);
 
 #endif // TEST_RUNNER_H

@@ -222,6 +222,7 @@ URTC-SMART-RACK/
 ├── CONTRIBUTING.md CODE_OF_CONDUCT.md                 貢献方法と行動規範
 ├── .gitattributes .gitignore                          Git の設定
 ├── build_firmware.sh build_firmware.bat               ホストテスト、クロスコンパイル、リンク、イメージの公開
+├── generate_manifest.py                               ファームウェアイメージのマニフェストを書き出す
 ├── bump.py bump_version.py bump_manifest_version.py   バージョンを上げるスクリプト
 └── LICENSE.md ruff.toml                               ドキュメントのライセンスと lint 設定
 ```

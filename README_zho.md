@@ -215,6 +215,7 @@ URTC-SMART-RACK/
 ├── CONTRIBUTING.md CODE_OF_CONDUCT.md                 如何参与贡献和行为准则
 ├── .gitattributes .gitignore                          Git 设置
 ├── build_firmware.sh build_firmware.bat               主机测试、交叉编译、链接并发布镜像
+├── generate_manifest.py                               生成固件镜像的清单
 ├── bump.py bump_version.py bump_manifest_version.py   提升版本号的脚本
 └── LICENSE.md ruff.toml                               文档许可证和 lint 设置
 ```

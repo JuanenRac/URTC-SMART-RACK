@@ -204,6 +204,7 @@ URTC-SMART-RACK/
 ├── CONTRIBUTING.md CODE_OF_CONDUCT.md                 comment contribuer et code de conduite
 ├── .gitattributes .gitignore                          réglages Git
 ├── build_firmware.sh build_firmware.bat               tests hôte, compilation croisée, édition de liens et publication des images
+├── generate_manifest.py                               écrit le manifeste de l'image du firmware
 ├── bump.py bump_version.py bump_manifest_version.py   scripts qui augmentent la version
 └── LICENSE.md ruff.toml                               licence de la documentation et réglages de lint
 ```

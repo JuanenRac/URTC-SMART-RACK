@@ -334,6 +334,20 @@
           }
         },
         {
+          "name": "generate_manifest.py",
+          "desc": {
+            "en": "writes the manifest of the firmware image",
+            "es": "escribe el manifiesto de la imagen de firmware",
+            "de": "schreibt das Manifest des Firmware-Images",
+            "fr": "écrit le manifeste de l'image du firmware",
+            "it": "scrive il manifesto dell'immagine del firmware",
+            "zh": "生成固件镜像的清单",
+            "ja": "ファームウェアイメージのマニフェストを書き出す",
+            "pt": "escreve o manifesto da imagem de firmware"
+          },
+          "tree_name": "generate_manifest.py"
+        },
+        {
           "name": "bump.py  bump_version.py  bump_manifest_version.py",
           "desc": {
             "en": "scripts that raise the version",

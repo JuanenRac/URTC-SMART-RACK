@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **A script that writes the manifest of the firmware:** `generate_manifest.py` reads the version from `src/firmware_common.h` and writes `firmware/firmware_manifest.json` with the name, size, CRC32 and SHA-256 of the image of exactly that version (an older image left in `firmware/` is never indexed); the time written is reproducible (`SOURCE_DATE_EPOCH`, or the date of the last commit with `URTC_CI=1`). It is a separate step and the build scripts do not call it yet.
+
 ## [0.2.7] - The Spanish README says "grabar" instead of the calque "flashear": the same word as the window of the programs. (and 6 more changes)
 
 - **The Spanish README says "grabar" instead of the calque "flashear":** the same word as the window of the programs.

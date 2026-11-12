@@ -13,3 +13,4 @@ We welcome contributions to the intelligent end-effector management system of th
 3. **Link Consistency**: Rack frames follow the format in `docs/OPERATIONS.md` (`src/protocol.h`). That format is not a CAN frame yet; whoever maps it onto the bus must document the identifiers and byte order next to the CAN documentation of the URTC project.
 4. **Hardware Validation**: Once design files exist in `hardware/`, test PCB modifications against them. Until then `hardware/README.md` says what is missing.
 5. **Tests**: every change to `src/` comes with host tests in `tests/`, and `build_firmware.sh` / `build_firmware.bat` list the same sources (a test checks it).
+6. **Documentation language**: the files in `docs/` are written in English only, on purpose: they are technical reference for developers, kept in one language so that a change is made once and cannot drift between eight copies. The README of each repository is the part that is translated into the eight languages.

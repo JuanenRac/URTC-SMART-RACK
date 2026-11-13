@@ -16,6 +16,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The copy of the shared vectors is current again:** the table of magic payloads of the common repository has one more row (the command that lifts a latched error of a tool head), and the copy and its lock follow it. This program does not use that command.
+
 - **The Related Projects section follows the shared texts of the documentation repository:** the programs are called the same way in every language (tester, updater, Web Studio) and the rate limit of the gateway is a frequency, never a bit rate.
 
 - **A second reading of the Spanish, German, French and Portuguese README prose and of the Chinese terminology:** the same word is now used for the same thing within each file (the stream deframer, the heater, the pre-heat target, the acknowledgement of a held command, the memory map of the linker script, the firmware image, flashing), a memory map is no longer called a memory card in German and French, a leftover Spanish phrase was removed from the Chinese text, and a few agreement slips were fixed.

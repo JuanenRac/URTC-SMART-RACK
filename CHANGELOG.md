@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.2.8] - The pre-heat plan, the ceiling of each tool and the verdict of a slot are tested at their limits and a very long hold no longer wraps round
 
 - **The ceiling of each tool and the verdict of a slot are tested at every threshold:** all 256 values of a tool id, each limit of the verdict exactly on it and one step beyond it (empty and hot, idle and hot, reached, too hot, heating and not reached in time), readings that are not numbers or are infinite, and the faults being exactly four of the nine verdicts.
 
@@ -13,6 +13,8 @@ All notable changes to this project are documented here.
 - **The build scripts write the manifest of the firmware:** `build_firmware.sh` and `build_firmware.bat` call `generate_manifest.py` as their last step, so `firmware_manifest.json` (name, size, CRC32 and SHA-256 of the image of the version in the source) is written next to the images on every build, in the folder the images go to (`build/firmware` in a CI run). A test holds both scripts to it.
 
 - **A script that writes the manifest of the firmware:** `generate_manifest.py` reads the version from `src/firmware_common.h` and writes `firmware/firmware_manifest.json` with the name, size, CRC32 and SHA-256 of the image of exactly that version (an older image left in `firmware/` is never indexed); the time written is reproducible (`SOURCE_DATE_EPOCH`, or the date of the last commit with `URTC_CI=1`). It is a separate step and the build scripts do not call it yet.
+
+## [Unreleased]
 
 ## [0.2.7] - The Spanish README says "grabar" instead of the calque "flashear": the same word as the window of the programs. (and 6 more changes)
 

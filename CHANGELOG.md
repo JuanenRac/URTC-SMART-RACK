@@ -16,6 +16,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **A second reading of the Spanish, German, French and Portuguese README prose and of the Chinese terminology:** the same word is now used for the same thing within each file (the stream deframer, the heater, the pre-heat target, the acknowledgement of a held command, the memory map of the linker script, the firmware image, flashing), a memory map is no longer called a memory card in German and French, a leftover Spanish phrase was removed from the Chinese text, and a few agreement slips were fixed.
+
 - **The Spanish, German, French and European Portuguese README were read sentence by sentence:** the grammatical gender of "ranura" and "ranhura", mixed registers and calques ("timeout", "framing", "driver", "assets") were corrected, words of another language that had slipped into the diagrams and into one sentence were translated, and the terms are used the same way throughout: the rate limiter of commands is a "frequency" limiter ("cadence" in French), the watchdog is the watchdog or its translated form in each language, and the bus speed is a "bit rate" only where bits per second are meant.
 
 ## [0.2.7] - The Spanish README says "grabar" instead of the calque "flashear": the same word as the window of the programs. (and 6 more changes)

@@ -3,7 +3,7 @@
   "ecosystem": "URTC",
   "name": "URTC-SMART-RACK",
   "version": "0.2.8",
-  "min_common": "0.2.4",
+  "min_common": "0.2.6",
   "role": "firmware",
   "stack": "firmware-c",
   "technologies": [

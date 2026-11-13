@@ -16,6 +16,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The Spanish, German, French and European Portuguese README were read sentence by sentence:** the grammatical gender of "ranura" and "ranhura", mixed registers and calques ("timeout", "framing", "driver", "assets") were corrected, words of another language that had slipped into the diagrams and into one sentence were translated, and the terms are used the same way throughout: the rate limiter of commands is a "frequency" limiter ("cadence" in French), the watchdog is the watchdog or its translated form in each language, and the bus speed is a "bit rate" only where bits per second are meant.
+
 ## [0.2.7] - The Spanish README says "grabar" instead of the calque "flashear": the same word as the window of the programs. (and 6 more changes)
 
 - **The Spanish README says "grabar" instead of the calque "flashear":** the same word as the window of the programs.

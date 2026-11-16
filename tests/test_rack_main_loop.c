@@ -110,8 +110,9 @@ static void fault_scenarios(int *failures)
     (void)rack_main_step(&ctx, 20u, NULL, NULL);
     TEST_ASSERT(target_of(&ctx, 0) != 200u, "bytes that are not a frame do not set a target");
 
-    // The clock: the largest time, the wrap of the counter to zero, a step back and a step with a time in the past.
+    // The clock: it runs forward in steps of less than half the range, wraps from the largest time to zero and goes on, and a step back is refused.
     fresh_rack(&ctx);
+    TEST_ASSERT(rack_main_set_time(&ctx, 0x40000000u) && rack_main_set_time(&ctx, 0x80000000u) && rack_main_set_time(&ctx, 0xC0000000u), "the clock runs forward");
     TEST_ASSERT(rack_main_set_time(&ctx, 0xFFFFFFFFu) && ctx.now_ms == 0xFFFFFFFFu, "the largest time is accepted");
     TEST_ASSERT(rack_main_set_time(&ctx, 0u) && ctx.now_ms == 0u, "a time that wrapped to zero is accepted: the clock goes on after 49.7 days");
     (void)rack_main_step(&ctx, 5u, NULL, NULL);

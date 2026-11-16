@@ -16,7 +16,8 @@ void rack_main_init(rack_ctx_t *ctx)
 
 bool rack_main_set_time(rack_ctx_t *ctx, uint32_t now_ms)
 {
-    if (now_ms < ctx->now_ms) {
+    // Modular arithmetic: the 32-bit millisecond counter wraps after about 49.7 days and the clock must go on, while a step back is still refused.
+    if ((int32_t)(now_ms - ctx->now_ms) < 0) {
         return false;
     }
     ctx->now_ms = now_ms;

@@ -110,12 +110,16 @@ static void fault_scenarios(int *failures)
     (void)rack_main_step(&ctx, 20u, NULL, NULL);
     TEST_ASSERT(target_of(&ctx, 0) != 200u, "bytes that are not a frame do not set a target");
 
-    // The clock: an earlier time, the largest time and a step with a time in the past are all harmless.
+    // The clock: it runs forward in steps of less than half the range, wraps from the largest time to zero and goes on, and a step back is refused.
     fresh_rack(&ctx);
+    TEST_ASSERT(rack_main_set_time(&ctx, 0x40000000u) && rack_main_set_time(&ctx, 0x80000000u) && rack_main_set_time(&ctx, 0xC0000000u), "the clock runs forward");
     TEST_ASSERT(rack_main_set_time(&ctx, 0xFFFFFFFFu) && ctx.now_ms == 0xFFFFFFFFu, "the largest time is accepted");
-    TEST_ASSERT(!rack_main_set_time(&ctx, 0u) && ctx.now_ms == 0xFFFFFFFFu, "a time that wrapped to zero is ignored, the clock never goes back");
+    TEST_ASSERT(rack_main_set_time(&ctx, 0u) && ctx.now_ms == 0u, "a time that wrapped to zero is accepted: the clock goes on after 49.7 days");
     (void)rack_main_step(&ctx, 5u, NULL, NULL);
-    TEST_ASSERT(ctx.now_ms == 0xFFFFFFFFu, "a step with a time in the past keeps the clock");
+    TEST_ASSERT(ctx.now_ms == 5u, "a step after the wrap moves the clock");
+    TEST_ASSERT(!rack_main_set_time(&ctx, 0xFFFFFFF0u) && ctx.now_ms == 5u, "a time a little before the clock is refused, the clock never goes back");
+    (void)rack_main_step(&ctx, 3u, NULL, NULL);
+    TEST_ASSERT(ctx.now_ms == 5u, "a step with a time in the past keeps the clock");
 
     // A storm of noise through the whole loop: no crash, no more frames than bytes, and the sanitizers see no bad access.
     fresh_rack(&ctx);

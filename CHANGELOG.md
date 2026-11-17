@@ -16,6 +16,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The link watchdog can be fed by the preheat command only:** `link_watchdog_set_commands_only` (off after init, so nothing changes by default) makes a frame with a good CRC but another command, answered as unknown as before, stop keeping the link alive, so a sender that repeats an unknown command can no longer hold the heaters on without refreshing a set point. Tested with an unknown command repeated every 100 ms, with and without the setting.
+
 - **The security note of the README describes the Ed25519 bootloader:** the main bootloader checks the image against a table of public keys and holds no secret, official releases are signed with the release image-signing key and bench builds trust the public development key; the note no longer speaks of a shared-key HMAC. The eight languages follow.
 
 - **The rack clock goes on after the millisecond counter wraps:** the clock now compares times in modular arithmetic, so after about 49.7 days it no longer freezes (a frozen clock stopped the link watchdog, the preheat limit and the rate limiter, and left a heater at its set point). A step back is still refused. Covered by the loop test.

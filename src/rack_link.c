@@ -112,7 +112,9 @@ void rack_link_decide(link_watchdog_t *lw, const uint8_t *buf, uint8_t buf_len, 
     if (protocol_parse_frame(buf, buf_len, &frame) != PROTOCOL_OK) {
         return; // a corrupt/malformed frame never reaches command validation, and changes nothing: noise must not switch a heater off
     }
-    note_valid_frame(lw, now_ms);
+    if (!lw->commands_only || frame.cmd == RACK_CMD_SET_PREHEAT) {
+        note_valid_frame(lw, now_ms);
+    }
 
     out->reply_cmd = frame.cmd;
     out->reply_seq = frame.seq;

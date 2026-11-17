@@ -39,6 +39,7 @@ typedef struct {
     uint32_t last_rx_ms;
     uint32_t timeout_ms;
     bool has_received_any_frame;
+    bool commands_only; // true: only a frame that carries the preheat command keeps the link alive (see link_watchdog_set_commands_only)
     uint8_t last_seq_by_tool_id[LINK_WATCHDOG_TOOL_SLOTS];
     bool has_seq_by_tool_id[LINK_WATCHDOG_TOOL_SLOTS];
     urtc_rate_limiter_t command_rate_by_tool_id[LINK_WATCHDOG_TOOL_SLOTS];
@@ -95,6 +96,10 @@ void link_watchdog_reset_all_sequences(link_watchdog_t *lw);
 
 // Sets the least time (ms) between two accepted commands for one tool, for every tool; 0 switches the limit off. The time already counted is forgotten.
 void link_watchdog_set_command_interval(link_watchdog_t *lw, uint32_t min_interval_ms);
+
+// By default any frame with a good CRC keeps the link alive, whatever command it carries. With `commands_only` set, only a frame that carries the preheat command does:
+// a sender that repeats an unknown command can then no longer keep the heaters on without refreshing a set point. Off after link_watchdog_init(), as before.
+void link_watchdog_set_commands_only(link_watchdog_t *lw, bool commands_only);
 
 // The interval in force (0 = no limit); 0 too for a missing watchdog.
 uint32_t link_watchdog_command_interval(const link_watchdog_t *lw);

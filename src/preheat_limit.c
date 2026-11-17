@@ -23,8 +23,19 @@ void preheat_limit_init(preheat_limit_t *pl, uint32_t max_ms)
         return;
     }
     pl->max_ms = (max_ms == 0u) ? RACK_PREHEAT_MAX_MS : max_ms;
+    pl->rearm_ms = RACK_PREHEAT_REARM_MS;
     for (uint8_t slot = 0; slot < RACK_INVENTORY_MAX_SLOTS; slot++) {
         clear_slot(pl, slot);
+        pl->cooling[slot] = false;
+        pl->off_ms[slot] = 0;
+        pl->off_tool[slot] = 0;
+    }
+}
+
+void preheat_limit_set_rearm(preheat_limit_t *pl, uint32_t rearm_ms)
+{
+    if (pl != NULL) {
+        pl->rearm_ms = rearm_ms;
     }
 }
 
@@ -34,11 +45,25 @@ bool preheat_limit_allow(preheat_limit_t *pl, uint8_t slot, uint8_t tool_id, uin
         return false;
     }
     if (target_temp_c == 0u) {
+        if (pl->rearm_ms != 0u && (pl->running[slot] || pl->expired[slot])) {
+            // it was heating: remember when and for which tool, so the next pre-heat waits for the cooling time
+            pl->off_tool[slot] = pl->tool_id[slot];
+            pl->off_ms[slot] = now_ms;
+            pl->cooling[slot] = true;
+        }
         clear_slot(pl, slot); // the host switched it off: the pre-heat is over and so is any latch
         return true;
     }
     if (pl->max_ms == PREHEAT_LIMIT_OFF) {
         return true;
+    }
+    if (pl->cooling[slot]) {
+        // Unsigned subtraction: correct across the wrap of the millisecond counter.
+        if (pl->off_tool[slot] != tool_id || (uint32_t)(now_ms - pl->off_ms[slot]) >= pl->rearm_ms) {
+            pl->cooling[slot] = false; // another tool, or it has cooled long enough
+        } else {
+            return false; // the same tool was switched off a moment ago: it waits
+        }
     }
     if ((pl->running[slot] || pl->expired[slot]) && pl->tool_id[slot] != tool_id) {
         clear_slot(pl, slot); // another tool in the slot is a new pre-heat, not the one that ran out

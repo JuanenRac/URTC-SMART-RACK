@@ -16,6 +16,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **A minimum cooling time before a pre-heat can start again (off by default):** `RACK_PREHEAT_REARM_MS` (build option) or `preheat_limit_set_rearm()` (run time) sets how long the same tool must wait after the host ended its pre-heat with a target of 0; until then a new target for it is refused like the one of the latch, so alternating 0 and a target no longer gives every cycle a new ten minutes. Zero (the default) keeps the behaviour as it was; another tool in the slot is never held back. Tested with the default, the refusal, a repeated 0, the end of the time and a 0 with nothing heating (6 more checks, 786 in all).
+
 - **The link watchdog can be fed by the preheat command only:** `link_watchdog_set_commands_only` (off after init, so nothing changes by default) makes a frame with a good CRC but another command, answered as unknown as before, stop keeping the link alive, so a sender that repeats an unknown command can no longer hold the heaters on without refreshing a set point. Tested with an unknown command repeated every 100 ms, with and without the setting.
 
 - **The security note of the README describes the Ed25519 bootloader:** the main bootloader checks the image against a table of public keys and holds no secret, official releases are signed with the release image-signing key and bench builds trust the public development key; the note no longer speaks of a shared-key HMAC. The eight languages follow.

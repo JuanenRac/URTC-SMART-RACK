@@ -15,6 +15,7 @@ void link_watchdog_init(link_watchdog_t *lw, uint32_t timeout_ms)
     lw->last_rx_ms = 0;
     lw->timeout_ms = (timeout_ms == 0u) ? LINK_WATCHDOG_DEFAULT_TIMEOUT_MS : timeout_ms;
     lw->has_received_any_frame = false;
+    lw->commands_only = false;
     for (uint8_t i = 0; i < LINK_WATCHDOG_TOOL_SLOTS; i++) {
         lw->last_seq_by_tool_id[i] = 0;
         lw->has_seq_by_tool_id[i] = false;
@@ -123,6 +124,13 @@ void link_watchdog_set_command_interval(link_watchdog_t *lw, uint32_t min_interv
     }
     for (uint8_t i = 0; i < LINK_WATCHDOG_TOOL_SLOTS; i++) {
         urtc_rate_limiter_init(&lw->command_rate_by_tool_id[i], min_interval_ms);
+    }
+}
+
+void link_watchdog_set_commands_only(link_watchdog_t *lw, bool commands_only)
+{
+    if (lw != NULL) {
+        lw->commands_only = commands_only;
     }
 }
 

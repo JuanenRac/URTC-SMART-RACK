@@ -27,6 +27,31 @@ static rack_decision_t decide(link_watchdog_t *lw, uint8_t seq, uint8_t tool, ui
 
 void run_rack_link_scenario_tests(int *failures)
 {
+    // --- Scenario: with commands_only, an unknown command repeated forever does not keep the link alive (and without it, as before, it does) ---
+    {
+        link_watchdog_t lw;
+        link_watchdog_init(&lw, 1000);
+        uint8_t payload[1] = {0};
+        uint8_t buf[PROTOCOL_MAX_FRAME_SIZE];
+        uint8_t len = protocol_encode_frame(5, 0x7Eu, payload, 1, buf);
+        rack_decision_t d;
+        TEST_ASSERT(link_watchdog_is_link_lost(&lw, 0) == true, "a link that has never heard a frame is lost");
+        rack_link_decide(&lw, buf, len, 100, &d);
+        TEST_ASSERT(d.reply == RACK_REPLY_UNKNOWN_COMMAND && link_watchdog_is_link_lost(&lw, 100) == false, "by default an unknown command with a good CRC keeps the link alive, as before");
+
+        link_watchdog_t strict;
+        link_watchdog_init(&strict, 1000);
+        link_watchdog_set_commands_only(&strict, true);
+        for (uint32_t t = 100; t <= 2000; t += 100) {
+            rack_link_decide(&strict, buf, len, t, &d);
+        }
+        TEST_ASSERT(d.reply == RACK_REPLY_UNKNOWN_COMMAND, "with commands_only an unknown command is still answered as unknown");
+        TEST_ASSERT(link_watchdog_is_link_lost(&strict, 2000) == true, "with commands_only an unknown command repeated every 100 ms does not keep the link alive");
+        rack_decision_t ok = decide(&strict, 6, 0, 200, 2100);
+        TEST_ASSERT(ok.action == RACK_ACT_SET_TARGET && link_watchdog_is_link_lost(&strict, 2100) == false, "with commands_only a valid preheat command keeps it alive");
+        link_watchdog_set_commands_only(NULL, true);
+    }
+
     // --- Scenario 1: a valid frame asks for the requested temperature of its tool ---
     {
         link_watchdog_t lw;

@@ -144,6 +144,33 @@ void run_preheat_limit_tests(int *failures)
     (void)rack_app_tick_limited(&inv, &lw, &pl, before_wrap + 10u * MINUTE);
     TEST_ASSERT(target_of(&inv, TOOL_ID_SOLDERING_IRON) == 0, "ten minutes across the wrap of the clock end the pre-heat");
 
+    // The minimum cooling time: by default there is none, so switching 0 and a target on and off starts a new clock every time (the behaviour before the option).
+    preheat_limit_init(&pl, 10u * MINUTE);
+    rack_inventory_set_preheat_target(&inv, TOOL_ID_SOLDERING_IRON, 0);
+    TEST_ASSERT(pl.rearm_ms == 0u && RACK_PREHEAT_REARM_MS == 0u, "there is no cooling time unless it is set");
+    (void)rack_app_apply_decision_limited(&inv, &pl, &iron200, 0);
+    (void)rack_app_apply_decision_limited(&inv, &pl, &iron0, 9u * MINUTE);
+    TEST_ASSERT(rack_app_apply_decision_limited(&inv, &pl, &iron200, 9u * MINUTE + 1u), "without a cooling time the host can start again at once");
+
+    // With a cooling time, a pre-heat the host ended cannot be started again for the same tool until it has passed, and a tool put in its place is not held back.
+    preheat_limit_init(&pl, 10u * MINUTE);
+    preheat_limit_set_rearm(&pl, 5u * MINUTE);
+    rack_inventory_set_preheat_target(&inv, TOOL_ID_SOLDERING_IRON, 0);
+    (void)rack_app_apply_decision_limited(&inv, &pl, &iron200, 0);
+    (void)rack_app_apply_decision_limited(&inv, &pl, &iron0, 9u * MINUTE);
+    TEST_ASSERT(!rack_app_apply_decision_limited(&inv, &pl, &iron200, 9u * MINUTE + 1u) && target_of(&inv, TOOL_ID_SOLDERING_IRON) == 0, "the same tool is refused while it cools");
+    (void)rack_app_apply_decision_limited(&inv, &pl, &iron0, 9u * MINUTE + 2u); // a repeated 0 does not restart the cooling
+    TEST_ASSERT(!rack_app_apply_decision_limited(&inv, &pl, &iron200, 14u * MINUTE - 1u), "and it is still refused just before the cooling time is over");
+    TEST_ASSERT(rack_app_apply_decision_limited(&inv, &pl, &iron200, 14u * MINUTE) && target_of(&inv, TOOL_ID_SOLDERING_IRON) == 200, "when the time has passed a new pre-heat starts");
+    preheat_limit_set_rearm(NULL, 1u);
+
+    // A pre-heat that was never started leaves nothing to wait for.
+    preheat_limit_init(&pl, 10u * MINUTE);
+    preheat_limit_set_rearm(&pl, 5u * MINUTE);
+    rack_inventory_set_preheat_target(&inv, TOOL_ID_SOLDERING_IRON, 0);
+    (void)rack_app_apply_decision_limited(&inv, &pl, &iron0, 100u);
+    TEST_ASSERT(rack_app_apply_decision_limited(&inv, &pl, &iron200, 101u), "a 0 with nothing heating does not start a cooling time");
+
     // A target for a tool that is not racked starts no clock; arguments are checked.
     preheat_limit_init(&pl, 10u * MINUTE);
     rack_decision_t ghost = set_target(TOOL_ID_HOTAIR_REWORK, 300);

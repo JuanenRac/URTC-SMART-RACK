@@ -17,7 +17,12 @@
 //     targets above 0 are refused until the host sends a target of 0 (an explicit
 //     acknowledgement) or the tool in the slot changes (the swap);
 //   * a target of 0, a lost link, an emptied slot or another tool in the slot end the
-//     pre-heat (and clear the latch).
+//     pre-heat (and clear the latch);
+//   * with a minimum cooling time (RACK_PREHEAT_REARM_MS, 0 = none, as before) a pre-heat that
+//     the host ended with a target of 0 cannot be started again for the same tool until that
+//     time has passed: switching 0 and a target on and off would otherwise give every cycle a
+//     new full budget. The refusal is the same as the one of the latch (the command is not
+//     applied); another tool in the slot is not held back.
 //
 // Configuration: the limit is a run-time value given to preheat_limit_init(). The default is
 // RACK_PREHEAT_MAX_MS (10 minutes), which a build can change with -DRACK_PREHEAT_MAX_MS=...;
@@ -36,6 +41,10 @@
 #define RACK_PREHEAT_MAX_MS 600000u // 10 minutes
 #endif
 
+#ifndef RACK_PREHEAT_REARM_MS
+#define RACK_PREHEAT_REARM_MS 0u // no minimum cooling time: a new pre-heat may start at once (the behaviour before this option)
+#endif
+
 // Value of `max_ms` that turns the limit off.
 #define PREHEAT_LIMIT_OFF 0xFFFFFFFFu
 
@@ -45,11 +54,18 @@ typedef struct {
     bool expired[RACK_INVENTORY_MAX_SLOTS];
     uint32_t started_ms[RACK_INVENTORY_MAX_SLOTS];
     uint8_t tool_id[RACK_INVENTORY_MAX_SLOTS]; // the tool the running pre-heat belongs to
+    uint32_t rearm_ms;                         // the minimum time between the end of a pre-heat and the start of the next one for the same tool (0 = none)
+    bool cooling[RACK_INVENTORY_MAX_SLOTS];    // the host ended a pre-heat of `off_tool` at `off_ms`
+    uint32_t off_ms[RACK_INVENTORY_MAX_SLOTS];
+    uint8_t off_tool[RACK_INVENTORY_MAX_SLOTS];
 } preheat_limit_t;
 
 // A `max_ms` of 0 is replaced by RACK_PREHEAT_MAX_MS (a zero limit would never let a heater
 // start); PREHEAT_LIMIT_OFF disables the limit.
 void preheat_limit_init(preheat_limit_t *pl, uint32_t max_ms);
+
+// The minimum cooling time after a pre-heat ended by the host (0 = none). Set it after preheat_limit_init().
+void preheat_limit_set_rearm(preheat_limit_t *pl, uint32_t rearm_ms);
 
 // May the slot take `target_temp_c` now? Call it before storing a target. A target of 0 is
 // always allowed and ends the pre-heat of the slot (clearing the latch). A target above 0 is

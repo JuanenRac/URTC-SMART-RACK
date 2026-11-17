@@ -173,6 +173,11 @@ cc -std=c11 -Wall -Wextra -Isrc -Itests -o build/host_tests \
 
 主机测试是 `tests/` 中的 C 程序（24 个文件中的 786 个 `TEST_ASSERT` 检查），用电脑自己的 C 编译器编译运行，从不使用 `arm-none-eabi-gcc`：工具 ID、工具限值、生命周期、预热、帧、命令检查、链路看门狗、完整的链路场景、库存、对错误输入的鲁棒性、应用层、拆帧器（19 个字节流，带有每一块到达的时间：分块的帧、噪声、错误的 CRC、错误的版本或长度、恰在超时边界的静默、毫秒时钟回绕）、CAN 形式、预热限制和每个头的单元；向量来自 URTC-COMMON。五个 Python 测试文件（25 个测试）检查构建脚本、发布资源、版本文件和公布的测试数量是否一致。CI 用 AddressSanitizer 和 UBSan 构建 C 测试，并在 `src/` 已执行行的覆盖率低于下限时失败（`tools/run_host_tests.py`）。`bash build_firmware.sh` 在交叉编译前运行它们，任何断言失败则构建失败。接收中断填充的字节环（`rack_ring.c`）以及生命周期和库存的双份存储（`rack_persist.c`，在一次保存的每个字节处断电进行测试）同样是纯逻辑；存储背后的存储器芯片尚未选定。
 
+### 运维与工具
+
+* **预热重新启用等待（默认关闭）：** `RACK_PREHEAT_REARM_MS`（构建选项）或 `preheat_limit_set_rearm()`（运行时）设置主机以目标 0 结束预热后，同一工具必须等待多久；在此之前，新的目标会像锁存时一样被拒绝。设为 0 则保持原有行为，槽位中换成别的工具时不会被拖延。
+* **只由预热命令维持的链路看门狗：** `link_watchdog_set_commands_only()`（初始化后为关闭）启用后，CRC 正确但命令不同的帧不再维持链路；重复发送未知命令的发送方因此无法在不刷新设定值的情况下让加热器一直开着。
+
 ## 🏗️ 构建与发布
 
 构建首先用*电脑自己的* C 编译器编译并运行 `tests/`（从不使用 `arm-none-eabi-gcc`：这些是纯逻辑测试，不接触 MCU 寄存器），任何断言失败整个构建就失败。之后才为 Cortex-M4F 编译 `main.c` 和 `startup_stm32g4_minimal.c`，与占位的 `STM32G4_MINIMAL.ld` 内存映射链接，并把带版本号的 `.elf`/`.bin`/`.hex` 文件发布到 `firmware/`。构建从不改变版本。

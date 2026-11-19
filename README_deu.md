@@ -28,7 +28,7 @@
 
 | | |
 |---|---|
-| Version | `0.2.8` |
+| Version | `0.2.9` |
 | Reifegrad | Funktionsfähig |
 | Tests | 786 |
 | Technik | C / STM32G4 / arm-none-eabi-gcc |

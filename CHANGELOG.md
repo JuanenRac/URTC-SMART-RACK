@@ -2,19 +2,9 @@
 
 All notable changes to this project are documented here.
 
-## [0.2.8] - The pre-heat plan, the ceiling of each tool and the verdict of a slot are tested at their limits and a very long hold no longer wraps round
-
-- **The ceiling of each tool and the verdict of a slot are tested at every threshold:** all 256 values of a tool id, each limit of the verdict exactly on it and one step beyond it (empty and hot, idle and hot, reached, too hot, heating and not reached in time), readings that are not numbers or are infinite, and the faults being exactly four of the nine verdicts.
-
-- **The pre-heat plan is tested at the ends of its ranges, and a very long hold can no longer wrap round:** the lead time at the largest margin and target, a job exactly at and either side of the lead time, the margin changing the answer, jobs listed in any order, a full rack, and a hold time so long that adding it to the lead time wrapped round to a small number and switched off a hot tool whose next job was far away (now the sum stops at its largest value).
-
-- **The shared document policy check is refreshed:** `tools/_doc_policy.py` and `tools/ci_validate.py` are the current copies, which also fail when a build script changes a version and when a script switches into a virtual environment instead of running its python directly.
-
-- **The build scripts write the manifest of the firmware:** `build_firmware.sh` and `build_firmware.bat` call `generate_manifest.py` as their last step, so `firmware_manifest.json` (name, size, CRC32 and SHA-256 of the image of the version in the source) is written next to the images on every build, in the folder the images go to (`build/firmware` in a CI run). A test holds both scripts to it.
-
-- **A script that writes the manifest of the firmware:** `generate_manifest.py` reads the version from `src/firmware_common.h` and writes `firmware/firmware_manifest.json` with the name, size, CRC32 and SHA-256 of the image of exactly that version (an older image left in `firmware/` is never indexed); the time written is reproducible (`SOURCE_DATE_EPOCH`, or the date of the last commit with `URTC_CI=1`). It is a separate step and the build scripts do not call it yet.
-
 ## [Unreleased]
+
+## [0.2.9] - Re-arm delay for pre-heat, command-fed link watchdog, millisecond clock wrap fix and shared vector refresh
 
 - **A minimum cooling time before a pre-heat can start again (off by default):** `RACK_PREHEAT_REARM_MS` (build option) or `preheat_limit_set_rearm()` (run time) sets how long the same tool must wait after the host ended its pre-heat with a target of 0; until then a new target for it is refused like the one of the latch, so alternating 0 and a target no longer gives every cycle a new ten minutes. Zero (the default) keeps the behaviour as it was; another tool in the slot is never held back. Tested with the default, the refusal, a repeated 0, the end of the time and a 0 with nothing heating (6 more checks, 786 in all).
 
@@ -31,6 +21,18 @@ All notable changes to this project are documented here.
 - **A second reading of the Spanish, German, French and Portuguese README prose and of the Chinese terminology:** the same word is now used for the same thing within each file (the stream deframer, the heater, the pre-heat target, the acknowledgement of a held command, the memory map of the linker script, the firmware image, flashing), a memory map is no longer called a memory card in German and French, a leftover Spanish phrase was removed from the Chinese text, and a few agreement slips were fixed.
 
 - **The Spanish, German, French and European Portuguese README were read sentence by sentence:** the grammatical gender of "ranura" and "ranhura", mixed registers and calques ("timeout", "framing", "driver", "assets") were corrected, words of another language that had slipped into the diagrams and into one sentence were translated, and the terms are used the same way throughout: the rate limiter of commands is a "frequency" limiter ("cadence" in French), the watchdog is the watchdog or its translated form in each language, and the bus speed is a "bit rate" only where bits per second are meant.
+
+## [0.2.8] - The pre-heat plan, the ceiling of each tool and the verdict of a slot are tested at their limits and a very long hold no longer wraps round
+
+- **The ceiling of each tool and the verdict of a slot are tested at every threshold:** all 256 values of a tool id, each limit of the verdict exactly on it and one step beyond it (empty and hot, idle and hot, reached, too hot, heating and not reached in time), readings that are not numbers or are infinite, and the faults being exactly four of the nine verdicts.
+
+- **The pre-heat plan is tested at the ends of its ranges, and a very long hold can no longer wrap round:** the lead time at the largest margin and target, a job exactly at and either side of the lead time, the margin changing the answer, jobs listed in any order, a full rack, and a hold time so long that adding it to the lead time wrapped round to a small number and switched off a hot tool whose next job was far away (now the sum stops at its largest value).
+
+- **The shared document policy check is refreshed:** `tools/_doc_policy.py` and `tools/ci_validate.py` are the current copies, which also fail when a build script changes a version and when a script switches into a virtual environment instead of running its python directly.
+
+- **The build scripts write the manifest of the firmware:** `build_firmware.sh` and `build_firmware.bat` call `generate_manifest.py` as their last step, so `firmware_manifest.json` (name, size, CRC32 and SHA-256 of the image of the version in the source) is written next to the images on every build, in the folder the images go to (`build/firmware` in a CI run). A test holds both scripts to it.
+
+- **A script that writes the manifest of the firmware:** `generate_manifest.py` reads the version from `src/firmware_common.h` and writes `firmware/firmware_manifest.json` with the name, size, CRC32 and SHA-256 of the image of exactly that version (an older image left in `firmware/` is never indexed); the time written is reproducible (`SOURCE_DATE_EPOCH`, or the date of the last commit with `URTC_CI=1`). It is a separate step and the build scripts do not call it yet.
 
 ## [0.2.7] - The Spanish README says "grabar" instead of the calque "flashear": the same word as the window of the programs. (and 6 more changes)
 

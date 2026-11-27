@@ -54,7 +54,8 @@ uint16_t preheat_plan_target_c(const preheat_plan_config_t *config, uint8_t tool
 uint32_t preheat_plan_lead_ms(uint8_t tool_id, uint16_t target_c, uint8_t margin_percent);
 
 // Fills `orders` (room for PREHEAT_PLAN_MAX_ORDERS) and returns how many. A job for a tool that is not racked, or whose job is already
-// due but whose pre-heat is already at its target, gives no order. Only the earliest job of each tool counts.
+// due but whose pre-heat is already at its target, gives no order. Only the earliest job of each tool counts. When two heads of one type are
+// racked there is at most one order for that type, decided from the slot a command by type reaches (the first one that holds it).
 uint8_t preheat_plan_decide(const preheat_plan_config_t *config, const rack_inventory_t *inv, const preheat_job_t *jobs, uint8_t job_count,
                             preheat_order_t orders[PREHEAT_PLAN_MAX_ORDERS]);
 

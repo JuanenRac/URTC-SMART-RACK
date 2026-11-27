@@ -86,6 +86,12 @@ uint8_t preheat_plan_decide(const preheat_plan_config_t *config, const rack_inve
         if (!s->occupied) {
             continue;
         }
+        // an order carries only the type, and a command by type reaches the first slot that holds it (rack_inventory_find_tool): another head
+        // of the same type cannot be addressed, so an order for it would change nothing and would be given again on every call
+        uint8_t reached = 0u;
+        if (!rack_inventory_find_tool(inv, s->tool_id, &reached) || reached != slot) {
+            continue;
+        }
         const uint16_t target = preheat_plan_target_c(config, s->tool_id);
         if (target == 0u) {
             continue; // no heater the rack warms up

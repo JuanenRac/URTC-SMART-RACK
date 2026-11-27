@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The pre-heat plan gives one order per tool type:** with two heads of the same type racked, the plan gave the same order twice and then repeated it on every call, because an order carries only the type and reaches the first slot that holds it. The plan now decides from that slot alone. Checked by host tests; nothing here has run on a board.
+
 ## [0.2.9] - Re-arm delay for pre-heat, command-fed link watchdog, millisecond clock wrap fix and shared vector refresh
 
 - **A minimum cooling time before a pre-heat can start again (off by default):** `RACK_PREHEAT_REARM_MS` (build option) or `preheat_limit_set_rearm()` (run time) sets how long the same tool must wait after the host ended its pre-heat with a target of 0; until then a new target for it is refused like the one of the latch, so alternating 0 and a target no longer gives every cycle a new ten minutes. Zero (the default) keeps the behaviour as it was; another tool in the slot is never held back. Tested with the default, the refusal, a repeated 0, the end of the time and a 0 with nothing heating (6 more checks, 786 in all).

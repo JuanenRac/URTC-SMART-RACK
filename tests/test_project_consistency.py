@@ -89,6 +89,11 @@ class PublishedNumbersTests(unittest.TestCase):
             numbers = re.findall(r"(\d+)[^`\d\n]{0,24}`TEST_ASSERT`", read(name))
             self.assertTrue(numbers, f"{name} must state how many TEST_ASSERT checks back it")
             self.assertEqual(set(numbers), {str(count)}, f"{name} quotes a stale assertion count")
+        # the pictures of the README and their sources quote the same count
+        for name in ("docs/architecture.json", "docs/structure.json", "images/architecture.svg"):
+            numbers = re.findall(r"(\d+) checks", read(name))
+            self.assertTrue(numbers, f"{name} must state how many checks back it")
+            self.assertEqual(set(numbers), {str(count)}, f"{name} quotes a stale assertion count")
 
 
 class PcbFieldsTests(unittest.TestCase):

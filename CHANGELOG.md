@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The coverage of the C host suites is the union of the lines the suites run:** `tools/run_host_tests.py` kept, for each source, the best figure of any one suite, so the lines that only another suite runs were not counted. It now reads the lines of every suite (`gcov -t`) and counts a line as run when any suite ran it, and as runnable when any suite compiled it.
+
 - **A recorded script can be replayed whatever its comments say:** `tools/rack_bench.py --replay` stopped, or never returned, when the script had a byte order mark (Notepad writes one) or a comment with a character the Windows code page does not have. The file is now read and passed to the virtual rack as UTF-8. Checked by a host test. The README files also state the real number of Python test files, held by a test.
 
 - **The pre-heat plan gives one order per tool type:** with two heads of the same type racked, the plan gave the same order twice and then repeated it on every call, because an order carries only the type and reaches the first slot that holds it. The plan now decides from that slot alone. Checked by host tests; nothing here has run on a board.

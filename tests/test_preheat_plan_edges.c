@@ -87,4 +87,20 @@ void run_preheat_plan_edge_tests(int *failures)
     for (uint8_t i = 0; i < n; i++) {
         TEST_ASSERT(orders[i].target_c > 0u && orders[i].target_c <= tool_limits_max_preheat_c(orders[i].tool_id), "every order is within the ceiling of its tool");
     }
+
+    // two heads of the same type are racked: a command goes by type and reaches the first slot that holds it, so there is one order per type,
+    // and once it has been applied it is not repeated
+    rack_inventory_init(&inv);
+    rack_inventory_set_slot_unit(&inv, 0, TOOL_ID_SOLDERING_IRON, 1u);
+    rack_inventory_set_slot_unit(&inv, 1, TOOL_ID_SOLDERING_IRON, 2u);
+    cfg = preheat_plan_config_default();
+    cfg.enabled = true;
+    cfg.cool_unused = true;
+    const preheat_job_t due[] = {{TOOL_ID_SOLDERING_IRON, 0u}};
+    TEST_ASSERT(preheat_plan_decide(&cfg, &inv, due, 1u, orders) == 1u && orders[0].tool_id == TOOL_ID_SOLDERING_IRON, "two heads of one type give one order, not two");
+    TEST_ASSERT(rack_inventory_set_preheat_target(&inv, orders[0].tool_id, orders[0].target_c), "the order is applied by type");
+    TEST_ASSERT(preheat_plan_decide(&cfg, &inv, due, 1u, orders) == 0u, "and it is not ordered again for the second head");
+    TEST_ASSERT(preheat_plan_decide(&cfg, &inv, NULL, 0u, orders) == 1u && orders[0].target_c == 0u, "with no job the hot head gets one order to switch off");
+    TEST_ASSERT(rack_inventory_set_preheat_target(&inv, orders[0].tool_id, orders[0].target_c), "which is applied by type too");
+    TEST_ASSERT(preheat_plan_decide(&cfg, &inv, NULL, 0u, orders) == 0u, "and nothing is left to order");
 }
